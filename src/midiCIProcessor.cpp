@@ -22,7 +22,7 @@
 
 void midiCIProcessor::endSysex7(){
     if(midici._reqTupleSet){
-        cleanupRequest(midici.peReqIdx);
+        cleanupRequest(midici._peReqIdx);
     }
 }
 
@@ -621,10 +621,10 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
         default: {
 
             if (sysexPos == 13) {
-                midici.peReqIdx = std::make_tuple(midici.remoteMUID,s7Byte);
+                midici._peReqIdx = std::make_tuple(midici.remoteMUID,s7Byte);
                 midici._reqTupleSet = true; //Used for cleanup
-                peRequestDetails[midici.peReqIdx] = peHeader();
-                peRequestDetails[midici.peReqIdx].requestId = s7Byte;
+                peRequestDetails[midici._peReqIdx] = peHeader();
+                peRequestDetails[midici._peReqIdx].requestId = s7Byte;
                 return;
             }
 
@@ -637,7 +637,7 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
             uint16_t headerLength = intTemp[0];
 
             if (sysexPos >= 16 && sysexPos <= 15 + headerLength) {
-                processPEHeader(midici.peReqIdx, s7Byte);
+                processPEHeader(midici._peReqIdx, s7Byte);
 
                 if (sysexPos == 15 + headerLength
                     && (
@@ -648,30 +648,30 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                     )
                         ) {
                     if (midici.ciType == MIDICI_PE_GET && recvPEGetInquiry != nullptr) {
-                        recvPEGetInquiry(midici, peRequestDetails[midici.peReqIdx]);
+                        recvPEGetInquiry(midici, peRequestDetails[midici._peReqIdx]);
                     }
                     if (midici.ciType == MIDICI_PE_SETREPLY && recvPESetReply != nullptr) {
-                        recvPESetReply(midici, peRequestDetails[midici.peReqIdx]);
+                        recvPESetReply(midici, peRequestDetails[midici._peReqIdx]);
                     }
                     if (midici.ciType == MIDICI_PE_SUBREPLY && recvPESubReply != nullptr) {
-                        recvPESubReply(midici, peRequestDetails[midici.peReqIdx]);
+                        recvPESubReply(midici, peRequestDetails[midici._peReqIdx]);
                     }
                     if (midici.ciType == MIDICI_PE_NOTIFY && recvPENotify != nullptr) {
-                        recvPENotify(midici, peRequestDetails[midici.peReqIdx]);
+                        recvPENotify(midici, peRequestDetails[midici._peReqIdx]);
                     }
-                    cleanupRequest(midici.peReqIdx);
+                    cleanupRequest(midici._peReqIdx);
                 }
                 return;
             }
 
             if (sysexPos == 16 + headerLength || sysexPos == 17 + headerLength) {
-                peRequestDetails[midici.peReqIdx].totalChunks +=
+                peRequestDetails[midici._peReqIdx]._totalChunks +=
                         s7Byte << (7 * (sysexPos - 16 - headerLength));
                 return;
             }
 
             if (sysexPos == 18 + headerLength || sysexPos == 19 + headerLength) {
-                peRequestDetails[midici.peReqIdx].numChunk += s7Byte << (7 * (sysexPos - 18 - headerLength));
+                peRequestDetails[midici._peReqIdx]._numChunk += s7Byte << (7 * (sysexPos - 18 - headerLength));
                 return;
             }
 
@@ -694,27 +694,27 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                 if (bodyLength != 0)buffer[charOffset] = s7Byte;
 
                 bool lastByteOfSet = (
-                        peRequestDetails[midici.peReqIdx].numChunk == peRequestDetails[midici.peReqIdx].totalChunks &&
+                        peRequestDetails[midici._peReqIdx]._numChunk == peRequestDetails[midici._peReqIdx]._totalChunks &&
                         sysexPos == initPos - 1 + bodyLength);
                 bool lastByteOfChunk = (bodyLength == 0 || sysexPos == initPos - 1 + bodyLength);
 
 
                 if (charOffset == S7_BUFFERLEN - 1 || lastByteOfChunk) {
                     if (midici.ciType == MIDICI_PE_SUB && recvPESubInquiry != nullptr) {
-                        recvPESubInquiry(midici, peRequestDetails[midici.peReqIdx],
+                        recvPESubInquiry(midici, peRequestDetails[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
 
                     if (midici.ciType == MIDICI_PE_SET && recvPESetInquiry != nullptr) {
-                        recvPESetInquiry(midici, peRequestDetails[midici.peReqIdx],
+                        recvPESetInquiry(midici, peRequestDetails[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
 
-                    peRequestDetails[midici.peReqIdx].partialChunkCount++;
+                    peRequestDetails[midici._peReqIdx]._partialChunkCount++;
                 }
 
                 if (lastByteOfSet) {
-                    cleanupRequest(midici.peReqIdx);
+                    cleanupRequest(midici._peReqIdx);
                 }
             }
             break;
@@ -807,16 +807,16 @@ void midiCIProcessor::processPEHeader(reqId peReqIdx, uint8_t s7Byte){
                 peRequestDetails[peReqIdx]._pvoid = nullptr;
             }else if(peRequestDetails[peReqIdx]._headerProp == 2){
                 if(!strcmp((const char*)buffer,"copy")){
-                    peRequestDetails[peReqIdx].action = EXP_MIDICI_PE_ACTION_COPY;
+                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_COPY;
                 }
                 if(!strcmp((const char*)buffer,"move")){
-                    peRequestDetails[peReqIdx].action = EXP_MIDICI_PE_ACTION_MOVE;
+                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_MOVE;
                 }
                 if(!strcmp((const char*)buffer,"delete")){
-                    peRequestDetails[peReqIdx].action = EXP_MIDICI_PE_ACTION_DELETE;
+                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_DELETE;
                 }
                 if(!strcmp((const char*)buffer,"createDirectory")){
-                    peRequestDetails[peReqIdx].action = EXP_MIDICI_PE_ACTION_CREATE_DIR;
+                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_CREATE_DIR;
                 }
                 peRequestDetails[peReqIdx]._headerProp=0;
                 peRequestDetails[peReqIdx]._pvoid = nullptr;

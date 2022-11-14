@@ -524,34 +524,6 @@ uint16_t sendPESetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uin
                                      uint16_t headerLen, uint8_t* header){
     return sendPEHeaderOnly(sysex, midiCIVer,  srcMUID, destMuid, requestId, headerLen, header, (uint8_t) MIDICI_PE_SETREPLY);
 }
-//*****
-//uint16_t sendPEGetReplyStreamStart(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId,
-//                                                uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks,
-//                                                uint16_t numberOfThisChunk, uint16_t bodyLength){
-//
-//    MIDICI midiCiHeader;
-//    midiCiHeader.ciType = MIDICI_PE_GETREPLY;
-//    midiCiHeader.localMUID = srcMUID;
-//    midiCiHeader.remoteMUID = destMuid;
-//    midiCiHeader.ciVer = midiCIVer;
-//    createCIHeader(sysex, midiCiHeader);
-//    sysex[13] = requestId;
-//    uint16_t length = 14;
-//    setBytesFromNumbers(sysex, headerLen, 1, 2);
-//    length +=2;
-//    concatSysexArray(sysex, length, header,headerLen);
-//    length += headerLen;
-//
-//    setBytesFromNumbers(sysex, numberOfChunks, 0, 2);
-//    setBytesFromNumbers(sysex, numberOfThisChunk, 2, 2);
-//    setBytesFromNumbers(sysex, bodyLength, 4, 2);
-//    sendOutSysex(group,sysex,6,2);
-//}
-//
-//uint16_t sendPEGetReplyStreamContinue(uint8_t* sysex, uint8_t midiCIVer, uint16_t partialLength, uint8_t* part, bool last ){
-//
-//    sendOutSysex(group,part,partialLength, last?3:2);
-//}
 
 //Process Inquiry
 uint16_t sendPICapabilityRequest(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid){

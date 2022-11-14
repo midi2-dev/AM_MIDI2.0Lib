@@ -140,13 +140,13 @@
 #define MIDICI_PE_COMMAND_FULL 4
 #define MIDICI_PE_COMMAND_NOTIFY 5
 
-#define EXP_MIDICI_PE_ACTION_COPY 1
-#define EXP_MIDICI_PE_ACTION_MOVE 2
-#define EXP_MIDICI_PE_ACTION_DELETE 3
-#define EXP_MIDICI_PE_ACTION_CREATE_DIR 4
+#define MIDICI_PE_ACTION_COPY 1
+#define MIDICI_PE_ACTION_MOVE 2
+#define MIDICI_PE_ACTION_DELETE 3
+#define MIDICI_PE_ACTION_CREATE_DIR 4
 
 #define MIDICI_PE_ASCII 1
-#define MIDICI_PE_MCODED7 1
+#define MIDICI_PE_MCODED7 2
 #define MIDICI_PE_MCODED7ZLIB 3
 
 #define MIDI_PORT 0x7F
@@ -196,7 +196,7 @@ struct MIDICI{
     uint32_t remoteMUID;
     uint32_t localMUID;
     bool _reqTupleSet;
-    reqId peReqIdx;
+    reqId _peReqIdx;
 };
 
 

@@ -18,8 +18,8 @@
 struct peHeader {
     peHeader() : resource(""),
                  command(0), action(0), resId(""), subscribeId(""), path(""),
-                 offset(-1), limit(-1), status(0), partial(false),totalChunks(-1), numChunk(-1),
-                 partialChunkCount(-1), mutualEncoding(-1), mediaType(""), _pvoid(nullptr),
+                 offset(-1), limit(-1), status(0), partial(false),_totalChunks(-1), _numChunk(-1),
+                 _partialChunkCount(-1), mutualEncoding(-1), mediaType(""), _pvoid(nullptr),
                  _headerProp(0), _headerState(PE_HEAD_KEY + PE_HEAD_STATE_IN_OBJECT),
                  _headerPos(0) {}
     uint8_t requestId;
@@ -33,9 +33,9 @@ struct peHeader {
     int  limit;
     int  status;
     bool partial;
-    int  totalChunks;
-    int  numChunk;
-    int  partialChunkCount;
+    int  _totalChunks;
+    int  _numChunk;
+    int  _partialChunkCount;
     int mutualEncoding;
     char mediaType[PE_HEAD_BUFFERLEN];
     void * _pvoid;
@@ -151,13 +151,11 @@ public:
     inline void setRecvDiscovery(void (*fptr)(MIDICI ciDetails,std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                               std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint16_t maxSysex,
                                               uint8_t outputPathId
-            //, uint8_t productInstanceIdLength, uint8_t* productInstanceId
     )){ recvDiscoveryRequest = fptr;}
     inline void setRecvDiscoveryReply(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                                    std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint16_t maxSysex,
                                                    uint8_t outputPathId,
                                                    uint8_t fbIdx
-            //, uint8_t productInstanceIdLength, uint8_t* productInstanceId
     )){ recvDiscoveryReply = fptr;}
     inline void setRecvNAK(void (*fptr)(MIDICI ciDetails, uint8_t origSubID, uint8_t statusCode,
                                         uint8_t statusData, uint8_t* ackNakDetails, uint16_t messageLength,

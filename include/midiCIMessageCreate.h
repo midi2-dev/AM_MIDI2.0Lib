@@ -102,11 +102,6 @@ uint16_t sendPEGetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uin
                     uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk,
                     uint16_t bodyLength , uint8_t* body );
 
-uint16_t sendPEGetReplyStreamStart(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid,  uint8_t requestId,
-                               uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks,
-                               uint16_t numberOfThisChunk, uint16_t bodyLength);
-uint16_t sendPEGetReplyStreamContinue(uint16_t partialLength, uint8_t* part, bool last );
-
 uint16_t sendPESubReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId,
                     uint16_t headerLen, uint8_t* header);
 uint16_t sendPENotify(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId,
