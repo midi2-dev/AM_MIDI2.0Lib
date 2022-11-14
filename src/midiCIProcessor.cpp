@@ -20,7 +20,11 @@
 
 #include "../include/midiCIProcessor.h"
 
-void midiCIProcessor::endSysex7(){}
+void midiCIProcessor::endSysex7(){
+    if(midici._reqTupleSet){
+        cleanupRequest(midici.peReqIdx);
+    }
+}
 
 void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
 
@@ -617,9 +621,10 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
         default: {
 
             if (sysexPos == 13) {
-                midici.peRequestId =  s7Byte;
                 midici.peReqIdx = std::make_tuple(midici.remoteMUID,s7Byte);
+                midici._reqTupleSet = true; //Used for cleanup
                 peRequestDetails[midici.peReqIdx] = peHeader();
+                peRequestDetails[midici.peReqIdx].requestId = s7Byte;
                 return;
             }
 

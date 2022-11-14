@@ -21,11 +21,11 @@
 #ifndef BSUMP_H
 #define BSUMP_H
 
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <cstdint>
 
-class midiBsToUMP{
+class bytestreamToUMP{
 
 	private:
 		uint8_t d0;
@@ -46,20 +46,20 @@ class midiBsToUMP{
 		uint8_t rpnMsb[16];
 		uint8_t rpnLsb[16];
 	    	
-		void bytetreamToUMP(uint8_t b0, uint8_t b1, uint8_t b2);
+		void bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2);
 
 
 	public:
 		uint8_t defaultGroup = 0;
 		bool outputMIDI2 = false;
 		
-		midiBsToUMP();
+   		bytestreamToUMP();
 		
 		bool availableUMP();
 		
 		uint32_t readUMP();
 		
-		void midi1BytestreamParse(uint8_t midi1Byte);
+		void bytestreamParse(uint8_t midi1Byte);
 
 	
 };

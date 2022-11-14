@@ -13,6 +13,38 @@
 
 #include "utils.h"
 
+
+
+struct peHeader {
+    peHeader() : resource(""),
+                 command(0), action(0), resId(""), subscribeId(""), path(""),
+                 offset(-1), limit(-1), status(0), partial(false),totalChunks(-1), numChunk(-1),
+                 partialChunkCount(-1), mutualEncoding(-1), mediaType(""), _pvoid(nullptr),
+                 _headerProp(0), _headerState(PE_HEAD_KEY + PE_HEAD_STATE_IN_OBJECT),
+                 _headerPos(0) {}
+    uint8_t requestId;
+    char resource[PE_HEAD_BUFFERLEN];
+    uint8_t command;
+    uint8_t action;
+    char resId[PE_HEAD_BUFFERLEN];
+    char subscribeId[PE_HEAD_BUFFERLEN];
+    char path[EXP_MIDICI_PE_EXPERIMENTAL_PATH];
+    int  offset;
+    int  limit;
+    int  status;
+    bool partial;
+    int  totalChunks;
+    int  numChunk;
+    int  partialChunkCount;
+    int mutualEncoding;
+    char mediaType[PE_HEAD_BUFFERLEN];
+    void * _pvoid;
+    uint8_t _headerProp;
+    uint8_t _headerState;
+    uint8_t _headerPos;
+
+};
+
 class midiCIProcessor{
 private:
     MIDICI midici;
@@ -91,8 +123,8 @@ private:
     void (*recvPESubInquiry)(MIDICI ciDetails, peHeader requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet) = nullptr;
 
-    void cleanupRequest(reqId peRequestIdx);
-    void processPEHeader(reqId peRequestIdx, uint8_t s7Byte);
+    void cleanupRequest(reqId peReqIdx);
+    void processPEHeader(reqId peReqIdx, uint8_t s7Byte);
     void processPESysex(uint8_t s7Byte);
 
 //Process Inquiry
@@ -110,7 +142,7 @@ private:
 public:
 
 
-
+    inline void setCheckMUID(bool (*fptr)(uint8_t group, uint32_t muid)){ checkMUID = fptr; }
     void endSysex7();
     void startSysex7(uint8_t group, uint8_t deviceId);
     void processMIDICI(uint8_t s7Byte);
@@ -138,7 +170,7 @@ public:
     inline void setRecvUnknownMIDICI(void (*fptr)(MIDICI ciDetails,
                                                   uint8_t s7Byte)){ recvUnknownMIDICI = fptr;}
 
-    inline void setCheckMUID(bool (*fptr)(uint8_t group, uint32_t muid)){ checkMUID = fptr; }
+
     inline void setRecvEndpointInfo(void (*fptr)(MIDICI ciDetails, uint8_t status)){ recvEndPointInfo = fptr;}
     inline void setRecvEndpointInfoReply(void (*fptr)(MIDICI ciDetails, uint8_t status, uint16_t infoLength,
                                                       uint8_t* infoData)){ recvEndPointInfoReply = fptr;}

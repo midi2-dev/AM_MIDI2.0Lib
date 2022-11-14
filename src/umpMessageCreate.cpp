@@ -18,7 +18,7 @@
  * 
  * ********************************************************/
 #include "../include/utils.h"
-#include "../include/messageCreate.h"
+#include "../include/umpMessageCreate.h"
 
 uint32_t mt0NOOP(/*uint8_t group*/){
 	return 0;//(group + 0L) << 24;
@@ -249,8 +249,7 @@ std::array<uint32_t, 4> mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> m
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFMidiEndpointTextNotify(uint16_t replyType, uint8_t offset, uint8_t* text,
-                                                  uint8_t textLen){
+std::array<uint32_t, 4> mtFMidiEndpointTextNotify(uint16_t replyType, uint8_t offset, uint8_t* text, uint8_t textLen){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     uint8_t form = 0;
     if(offset==0){

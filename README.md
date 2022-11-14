@@ -57,7 +57,7 @@ Here is a quick Arduino example
 ```C++
 #include "bytestreamUMP.h"
 
-midiBsToUMP BS2UMP;
+bytestreamToUMP BS2UMP;
 
 void setup()
 {

@@ -20,15 +20,15 @@
 
 
 #include "../include/utils.h"
-#include "../include/UMPtoBytestream.h"
+#include "../include/umpToBytestream.h"
 
-UMPtoBytestream::UMPtoBytestream(){}
+umpToBytestream::umpToBytestream(){}
 
-bool UMPtoBytestream::availableBS(){
+bool umpToBytestream::availableBS(){
     return bsOutLength;
 }
 
-uint8_t UMPtoBytestream::readBS(){
+uint8_t umpToBytestream::readBS(){
     uint8_t mess = bsOut[0];
     for(uint8_t i=0;i<bsOutLength;i++){
         bsOut[i]=bsOut[i+1];
@@ -37,7 +37,7 @@ uint8_t UMPtoBytestream::readBS(){
     return mess;
 }
 
-void UMPtoBytestream::UMPStreamParse(uint32_t UMP){
+void umpToBytestream::UMPStreamParse(uint32_t UMP){
     uint8_t byPos = 0;
     switch(UMPPos){
         case 0: { //First UMP Packet

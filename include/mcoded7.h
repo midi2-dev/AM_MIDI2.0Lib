@@ -22,7 +22,7 @@
 #define MC7_H
 
 #include <cstdint>
-
+#include <cstring>
 
 class mcoded7Decode{
 
@@ -86,8 +86,7 @@ class mcoded7Encode{
 			dump[dumpPos] = c;
 			if (cnt == 0) {
 				cnt = 6;
-			}
-			else {
+			} else {
 				cnt--;
 			}
 			dumpPos++;

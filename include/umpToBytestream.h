@@ -21,11 +21,11 @@
 #ifndef UMPBS_H
 #define UMPBS_H
 
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 #include <cstdint>
 
-class UMPtoBytestream{
+class umpToBytestream{
 
 	private:
         uint8_t mType;
@@ -35,20 +35,16 @@ class UMPtoBytestream{
         uint8_t bsOutLength;
         uint8_t bsOut[12];
 
-
 	public:
         uint8_t group;
 
-        UMPtoBytestream();
+        umpToBytestream();
 		
-		bool availableBS();
-		
-		uint8_t readBS();
-		
-		void UMPStreamParse(uint32_t UMP);
-		
-		//inline void setDebug(void (*fptr)(char *message)){ sendOutDebug = fptr; }
+	bool availableBS();
 	
+	uint8_t readBS();
+	
+	void UMPStreamParse(uint32_t UMP);
 };
 
 #endif

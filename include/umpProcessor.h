@@ -169,7 +169,6 @@ class umpProcessor{
 
 	inline void setMidiEndpoint(void (*fptr)(uint8_t majVer, uint8_t minVer, uint8_t filter)){
         midiEndpoint = fptr; }
-
 	inline void setMidiEndpointNameNotify(void (*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name)){
         midiEndpointName = fptr; }
     inline void setMidiEndpointProdIdNotify(void (*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name)){

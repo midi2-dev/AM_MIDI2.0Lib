@@ -21,14 +21,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define M2_DISABLE_IDREQ 1
-#define EXP_MIDICI_PE_EXPERIMENTAL_PATH 150
-//#define M2_ENABLE_PROTOCOL 1
-#define S7_BUFFERLEN 488
-
 #include <cstdint>
-#include <cmath>
 #include <tuple>
+
 
 #define NOTE_OFF 0x80
 #define NOTE_ON 0x90
@@ -64,8 +59,6 @@
 #define UTILITY_JRTS 0x2
 #define UTILITY_DELTACLOCKTICK 0x3
 #define UTILITY_DELTACLOCKSINCE 0x4
-
-
 
 #define FLEXDATA_COMMON 0x00
 #define FLEXDATA_COMMON_TEMPO 0x00
@@ -190,51 +183,20 @@
     #define UMPGROUPS 16
 #endif
 
-typedef std::tuple<uint32_t, uint8_t> reqId;
+
+
+typedef std::tuple<uint32_t, uint8_t> reqId;  //muid-requestId
 
 struct MIDICI{
-    MIDICI() : umpGroup(255), deviceId(MIDI_PORT),ciType(255),ciVer(1), remoteMUID(0), localMUID(0),
-    peRequestId(255)  {}
+    MIDICI() : umpGroup(255), deviceId(MIDI_PORT),ciType(255),ciVer(1), remoteMUID(0), localMUID(0), _reqTupleSet(false){}
     uint8_t umpGroup;
     uint8_t deviceId;
     uint8_t ciType;
     uint8_t ciVer;
     uint32_t remoteMUID;
     uint32_t localMUID;
-    uint8_t peRequestId;
+    bool _reqTupleSet;
     reqId peReqIdx;
-};
-
-struct peHeader {
-    peHeader() : requestId(255),group(255),muid(0), resource(""),
-                 command(0), action(0), resId(""), subscribeId(""), path(""),
-                 offset(-1), limit(-1), status(0), partial(false),totalChunks(-1), numChunk(-1),
-                 partialChunkCount(-1), mutualEncoding(-1), mediaType(""), _pvoid(nullptr),
-                 _headerProp(0), _headerState(PE_HEAD_KEY + PE_HEAD_STATE_IN_OBJECT),
-                 _headerPos(0) {}
-    uint8_t requestId;
-    uint8_t group;
-    uint32_t muid;
-    char resource[PE_HEAD_BUFFERLEN];
-    uint8_t command;
-    uint8_t action;
-    char resId[PE_HEAD_BUFFERLEN];
-    char subscribeId[PE_HEAD_BUFFERLEN];
-    char path[EXP_MIDICI_PE_EXPERIMENTAL_PATH];
-    int  offset;
-    int  limit;
-    int  status;
-    bool partial;
-    int  totalChunks;
-    int  numChunk;
-    int  partialChunkCount;
-    int mutualEncoding;
-    char mediaType[PE_HEAD_BUFFERLEN];
-    void * _pvoid;
-    uint8_t _headerProp;
-    uint8_t _headerState;
-    uint8_t _headerPos;
-
 };
 
 

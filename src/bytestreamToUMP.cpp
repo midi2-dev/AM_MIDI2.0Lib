@@ -20,9 +20,9 @@
 
 
 #include "../include/utils.h"
-#include "../include/bytestreamUMP.h"
+#include "../include/bytestreamToUMP.h"
 
-midiBsToUMP::midiBsToUMP(){
+bytestreamToUMP::bytestreamToUMP(){
 	memset(bankMSB, 255, sizeof(bankMSB));
 	memset(bankLSB, 255, sizeof(bankLSB));
 	memset(rpnMsbValue, 255, sizeof(rpnMsbValue));
@@ -30,7 +30,7 @@ midiBsToUMP::midiBsToUMP(){
 	memset(rpnLsb, 255, sizeof(rpnLsb));
 }
 	 
-void midiBsToUMP::bytetreamToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
+void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
   uint8_t status = b0 & 0xF0;
  
    if(d0 >= TIMING_CODE){
@@ -143,11 +143,11 @@ void midiBsToUMP::bytetreamToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 }
 
 
-bool midiBsToUMP::availableUMP(){
+bool bytestreamToUMP::availableUMP(){
 	return messPos;
 }
 
-uint32_t midiBsToUMP::readUMP(){
+uint32_t bytestreamToUMP::readUMP(){
 	uint32_t mess = umpMess[0];			
 	for(uint8_t i=0;i<messPos;i++){
 		umpMess[i]=umpMess[i+1];
@@ -158,10 +158,10 @@ uint32_t midiBsToUMP::readUMP(){
 }
 
 
-void midiBsToUMP::midi1BytestreamParse(uint8_t midi1Byte){
+void bytestreamToUMP::bytestreamParse(uint8_t midi1Byte){
 		  
   if (midi1Byte == TUNEREQUEST || midi1Byte >=  TIMINGCLOCK) { 
-	  bytetreamToUMP(midi1Byte,0,0);
+	  bsToUMP(midi1Byte,0,0);
 	  return;
   }
   
@@ -202,7 +202,7 @@ void midiBsToUMP::midi1BytestreamParse(uint8_t midi1Byte){
 	  sysex7Pos++;
   } else
   if (d1 != 255) { // Second byte
-		bytetreamToUMP(d0, d1, midi1Byte);
+      bsToUMP(d0, d1, midi1Byte);
 		d1 = 255;
   } else if (d0){ // status byte set
 	  if (
@@ -211,7 +211,7 @@ void midiBsToUMP::midi1BytestreamParse(uint8_t midi1Byte){
 		|| d0 == CHANNEL_PRESSURE
 		|| d0 == SONG_SELECT
 	  ) { 
-		  bytetreamToUMP(d0, midi1Byte, 0);
+          bsToUMP(d0, midi1Byte, 0);
 		  return;
 	  } else 
 	  if (d0 < SYSEX_START || d0 == SPP) { // First data byte
