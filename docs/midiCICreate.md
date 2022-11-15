@@ -5,7 +5,7 @@ minus the 0xF0 and 0xF7 at beginning and end of the SysEx.
 For each message a sysex buffer is needed. The return of each function is the length of the buffer used e.g.:
 ```c++
 uint8_t sysexBuffer[512];
-int len = sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION,m2procMUID, ciDetails.remoteMUID,
+int len = sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION,localMUID, ciDetails.remoteMUID,
                              {DEVICE_MFRID}, {DEVICE_FAMID}, {DEVICE_MODELID},
                              {DEVICE_VERSIONID},0,
                              512, outputPathId, 0
@@ -31,7 +31,7 @@ MIDI-CI Messages that are only available from certain version will return a leng
 
 ## Protocol Negotiation (MIDI-CI 1.1)
 Protocol Negotiation is deprecated from MIDI-CI 1.2 onwards. However, Devices that support a later version of MIDI-CI
-can still respond and handle Protocol Negotiation.
+can still respond and handle Protocol Negotiation. 
 
 #### uint16_t sendProtocolNegotiation(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t authorityLevel, uint8_t numProtocols, uint8_t* protocols, uint8_t* currentProtocol)
 #### uint16_t sendProtocolNegotiationReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t authorityLevel, uint8_t numProtocols, uint8_t* protocols)
@@ -45,7 +45,7 @@ can still respond and handle Protocol Negotiation.
 ```profilesEnabledLen``` and ```profilesDisabledLen``` represent how many Profiles. ```profilesEnabled``` and ```profilesDisabled``` arguments should be 5 times the length of ```profilesEnabledLen``` and ```profilesDisabledLen``` respectively.
 
 ```c++
-void handleProfileInquiry(uint8_t group, uint32_t remoteMUID, uint8_t destination){  
+void handleProfileInquiry(uint8_t umpGroup, uint32_t remoteMUID, uint8_t destination){  
   uint8_t profileNone[0] = {};
   uint8_t sysexBuffer[512];
   int len;
@@ -55,12 +55,12 @@ void handleProfileInquiry(uint8_t group, uint32_t remoteMUID, uint8_t destinatio
   // the Profile is also returned for Channel 1 or destination = 0x7F
   if(destination == 0 || destination == 0x7F){
     uint8_t profileDrawBar[5] = {0x7E, 0x40, 0x01, 0x01};
-    len = sendProfileListResponse(group, remoteMUID, 1, 0, 1, profileDrawBar, 0, profileNone);
+    len = sendProfileListResponse(umpGroup, remoteMUID, 1, 0, 1, profileDrawBar, 0, profileNone);
     sendOutSysextoUMP(umpGroup, sysexBuffer, len);
   }
 
   if(destination == 0x7F){
-   len = sendProfileListResponse(group, remoteMUID, 1, 0x7F, 0, profileNone, 0, profileNone);
+   len = sendProfileListResponse(umpGroup, remoteMUID, 1, 0x7F, 0, profileNone, 0, profileNone);
    sendOutSysextoUMP(umpGroup, sysexBuffer, len);
   }
 }
@@ -87,14 +87,39 @@ MIDI2.setRecvProfileInquiry(profileInquiry);
 #### uint16_t sendPECapabilityReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid,  uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)
 
 #### uint16_t sendPEGet(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
+#### uint16_t sendPEGetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body )
+A complete reply to an Inquiry: Get Property Data can be split over one or more Reply to Get Property Data 
+messages. Here is an examples of how this can be done.
+
+__Example Sending a JSON string in 512 byte Sysex message chunks__
+```c++
+void returnPE(uint8_t umpGroup, uint32_t remoteMUID, uint8_t requestId, char *propertyData, 
+                    unint32_t propertyDataLength){
+  uint8_t sysexBuffer[512];
+  char header[14] = "{\"status\":200}";
+  int totalChunks = ceil((double)(strL + 14)/480); //480 is 512 minus the bytes used for heading etc.
+  for (int chunk = 1; chunk <= totalChunks; chunk ++){
+    int hLen = chunk == 1 ? 14 : 0;
+    int bodyLen = 480 - hLen;
+    if (bodyLen > propertyDataLength) bodyLen = propertyDataLength;
+
+    int len = sendPEGetReply(sysexBuffer, localMUID, remoteMUID, requestId, hLen, 
+		                     (uint8_t*)header, totalChunks, chunk, bodyLen, 
+		                     (uint8_t*)(propertyData + (((chunk - 1) * 480) - (chunk == 1 ? 0 : hLen))));
+    sendOutSysextoUMP(umpGroup, sysexBuffer, len);
+    propertyDataLength -= bodyLen ;
+  }
+}
+```
+
 #### uint16_t sendPESet(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body)
+#### uint16_t sendPESetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
 
 #### uint16_t sendPESub(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body)
-#### uint16_t sendPEGetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body )
+
 
 #### uint16_t sendPESubReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
 #### uint16_t sendPENotify(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
-#### uint16_t sendPESetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
 
 
 ## Process Inquiry

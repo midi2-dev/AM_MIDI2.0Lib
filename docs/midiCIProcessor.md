@@ -15,32 +15,32 @@ The ```midiCIProcessor``` takes in 1 byte at a time when processing MIDI-CI. Thi
 not require lots of memory and processing can occur as the  UMP Sysex is delivered.
 
 ```c++ 
-midiCIProcessor midiciMain1;
-bool isProcMIDICI = false;
+midiCIProcessor midiciMain;
 
-void processUMPSysex(uint8_t group, uint8_t *sysex ,uint8_t length, uint8_t state){
-    //Example of Processing UMP into MIDI-CI processor
-    if(state==1 && sysex[0] == S7UNIVERSAL_NRT && sysex[2] == S7MIDICI){
-        if(group==0) {
-            midiciMain1.startSysex7(group, sysex[1]);
-            isProcMIDICI = true;
-        }
-    }
-    for (int i = 0; i < length; i++) {
-        if(group==0 && isProcMIDICI){
-            midiciMain1.processMIDICI(sysex[i]);
-        }else{
-            //Process other SysEx
-        }
-    }
-    if(state==3 && group==0 && isProcMIDICI){
-        midiciMain1.endSysex7();
-        isProcMIDICI = false;
-    }
+void processSysex(uint8_t umpGroup, uint8_t *sysex ,uint16_t lengthOfSysex){
+  //note sysex argument does not include 0xF0 and 0xF7
+  if(sysex[0] == S7UNIVERSAL_NRT && sysex[2] == S7MIDICI){
+      if(umpGroup==0) {
+          midiciMain.startSysex7(umpGroup, sysex[1]);
+          for (int i = 0; i < lengthOfSysex; i++) {
+                midiciMain.processMIDICI(sysex[i]);
+          }
+          midiciMain.endSysex7();
+      }
+  }
 }
 ```
 
-#### void startSysex7(uint8_t group, uint8_t deviceId)
+#### void startSysex7(uint8_t umpGroup, uint8_t deviceId)
+```umpGroup``` is the UMP Group this SysEx was received on. It is passed onto the callbacks as part of the MIDI-CI
+struct.
+
+```deviceId``` is provided by the Sysex byte containing the Device Id data. In MIDI-CI this is the Source or Destination
+byte and represent either:
+* 0x00 -0x0F Channel 1-16
+* 0x7E The current UMP Group
+* 0x7F The entire Function Block.
+
 #### void endSysex7();
 #### void processMIDICI(uint8_t s7Byte);
 
@@ -49,10 +49,10 @@ This is a simple check to make sure that the message being processed is meant fo
 Return true if it is a match.
 
 ```c++
-uint32_t m2procMUID = random(0xFFFFEFF);
+uint32_t localMUID = random(0xFFFFEFF);
 
-bool checkMUIDCallback(uint8_t group, uint32_t muid){
-    return (m2procMUID==muid);
+bool checkMUIDCallback(uint8_t umpGroup, uint32_t muid){
+    return (localMUID==muid);
 }
 ```
 
@@ -106,7 +106,7 @@ void recvDiscoveryCallback(struct MIDICI ciDetails, std::array<uint8_t, 3> manuI
     //All MIDI-CI Devices shall reply to a Discovery message
     printf("Received Discover on Group %d remote MUID: %d\n", ciDetails.umpGroup, ciDetails.remoteMUID);
     unint8_t sysexBuffer[64];
-    int len = sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION,m2procMUID, ciDetails.remoteMUID,
+    int len = sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID,
                              {DEVICE_MFRID}, {DEVICE_FAMID}, {DEVICE_MODELID},
                              {DEVICE_VERSIONID},0,
                              512, outputPathId,
@@ -138,7 +138,7 @@ void recvNAKCallback(struct MIDICI ciDetails, uint8_t origSubID, uint8_t statusC
 }
 ```
 
-#### inline void setRecvInvalidateMUID(void (\*fptr)(uint8_t group, uint32_t remoteMuid, uint32_t terminateMuid))
+#### inline void setRecvInvalidateMUID(void (\*fptr)(uint8_t umpGroup, uint32_t remoteMuid, uint32_t terminateMuid))
 
 #### inline void setRecvUnknownMIDICI(void (\*fptr)(MIDICI ciDetails, uint8_t s7Byte))
 #### inline void setRecvEndpointInfo(void (\*fptr)(MIDICI ciDetails, uint8_t status))
@@ -155,28 +155,134 @@ can still respond and handle Protocol Negotiation.
 ####  inline void setRecvSetProtocolTest(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel, bool testDataAccurate)
 
 ### Profile Configuration 
-#### inline void setRecvProfileInquiry(void (\*fptr)(MIDICI ciDetails))
+#### inline void setRecvProfileInquiry(profileInquiryCallback)
+Upon receiving a Profile Inquiry message the application should return a result. Please read the MIDI-CI v1.2 specifications
+for more information.
 
-#### inline void setRecvProfileEnabled(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5>, uint8_t numberOfChannels))
-#### inline void setRecvSetProfileRemoved(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5>))
-#### inline void setRecvProfileDisabled(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5>, uint8_t numberOfChannels))
-#### inline void setRecvProfileOn(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t numberOfChannels))
-#### inline void setRecvProfileOff(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile))
-#### inline void setRecvProfileDetails(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t\*  data, uint16_t part, bool lastByteOfSet))
+```c++
+void profileInquiryCallback(struct MIDICI ciDetails){
+
+  printf("->profile Inquiry: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+
+  uint8_t profileNone[0] = {};
+  unint8_t sysexBuffer[64];
+  int len;
+  if(ciDetails.deviceId == 0 || ciDetails.deviceId == 0x7F){
+    uint8_t profileDrawBar[5] = {0x7E, 0x40, 0x01, 0x01};
+    //return 1 enabled profile
+    len = sendProfileListResponse(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, 
+                                  0, 1, profileDrawBar, 0, profileNone);
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+  }
+
+  if(ciDetails.deviceId == 0x7F){
+   //return no profiles   
+   len = sendProfileListResponse(sysexBuffer, 0x02, localMUID, ciDetails.remoteMUID, 
+                                 0x7F, 0, profileNone, 0, profileNone);
+   sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+  }
+}
+```
+
+#### inline void setRecvProfileEnabled(profileEnabledCallback)
+This callback can be triggered in 2 ways:
+* Upon receiving a Reply to Profile Inquiry the ```midiCIProcessor``` triggers off this callback for every enabled profile
+* Upon receiving a Profile Enabled Message
+
+```c++
+void profileEnabledCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t numberOfChannels){
+  printf("->profile Enabled: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+}
+```
+_Note: ```numberOfChannels``` is set to 0 if this is triggered by Reply to Profile Inquiry or MIDI-CI 1.1 Profile 
+Enabled Message._
+
+#### inline void setRecvProfileDisabled(profileDisabledCallback)
+See setRecvProfileEnabled for the callback structure.
+
+This callback can be triggered in 3 ways:
+* Upon receiving a Reply to Profile Inquiry the ```midiCIProcessor``` triggers off this callback for every disabled profile
+* Upon receiving a Profile Disabled message
+* Upon receiving a Profile Added Report message (MIDI-CI v1.2 and higher)
+
+Profile Added Report messages always declare that the Profile is added to the list of disabled Profiles.
+
+_Note: ```numberOfChannels``` is set to 0 if this is triggered by Reply to Profile Inquiry or MIDI-CI 1.1 Profile
+  Disabled Message._
+
+
+#### inline void setRecvSetProfileRemoved(profileRemovedCallback)
+This callback is triggered upon receiving a Profile Remove Report
+```c++
+void profileRemovedCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile){
+  printf("->profile Removed: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+}
+```
+
+#### inline void setRecvProfileOn(profileOnCallback)
+This callback is triggered upon receiving a Set Profile On message
+```c++
+void profileOnCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t numberOfChannels){
+  printf("->profile On: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+}
+```
+
+#### inline void setRecvProfileOff(profileOffCallback)
+This callback is triggered upon receiving a Set Profile Off message
+```c++
+void profileOffCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile){
+  printf("->profile Off: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+}
+```
+
 #### inline void setRecvProfileDetailsInquiry(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile,   uint8_t InquiryTarget))
 #### inline void setRecvProfileDetailsReply(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t InquiryTarget, uint16_t datalen, uint8_t\*  data))
 
+#### inline void setRecvProfileSpecificData(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t\*  data, uint16_t part, bool lastByteOfSet))
+
+
 ### Property Exchange
-#### inline void setPECapabilities(void (\*fptr)(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer))
-#### inline void setPECapabilitiesReply(void (\*fptr)(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer))
+#### inline void setPECapabilities(PECapabilityCallback)
+Upon receiving an Inquiry: Property Exchange Capabilities message the application should send back a Reply to Property 
+Exchange Capabilities message.
+```c++
+void PECapabilityCallback(uint8_t group,  struct MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer){
+	printf("->PE Capability: remoteMuid %d", ciDetails.remoteMUID);
+    uint8_t sysexBuffer[64];
+	int len = sendPECapabilityReply(group, m2procMUID, ciDetails.remoteMUID, 4, 0, 0);
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+}
+```
+
+#### inline void setPECapabilitiesReply(PECapabilityReplyCallback)
+See setPECapabilities for the structure of PECapabilityReplyCallback
+
 #### inline void setRecvPEGetInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
+
+```c++
+void PEGetInquiry(uint8_t group, struct MIDICI ciDetails, struct peHeader requestDetails){
+  printf("->PE GET Inquiry: remoteMuid %d requestId %s Resource %s resId %s", ciDetails.remoteMUID, 
+         requestDetails.requestId, requestDetails.resource, requestDetails.resId);
+  
+  if (!strcmp(requestDetails.resource,"LocalOn")){
+	char header[14] = "{\"status\":200}";
+    uint8_t sysexBuffer[128];
+	int len = sendPEGetReply(sysexBuffer, m2procMUID, ciDetails.remoteMUID, requestDetails.requestId,
+                         14, (uint8_t*)header, 1, 1, 4, (uint8_t*)"true");
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+  }
+  
+}
+  
+```
 #### inline void setRecvPESetReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
 #### inline void setRecvPESubReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
 #### inline void setRecvPENotify(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
 #### inline void setRecvPESetInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
 #### inline void setRecvPESubInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
 
-### Process Inquiry
+### Process Inquiry (MIDI-CI 1.2 onwards)
+
 #### inline void setRecvPICapabilities(void (\*fptr)(MIDICI ciDetails))
 #### inline void setRecvPICapabilitiesReply(void (\*fptr)(MIDICI ciDetails, uint8_t supportedFeatures))
 

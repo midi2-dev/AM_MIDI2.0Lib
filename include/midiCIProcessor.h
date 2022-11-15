@@ -101,7 +101,7 @@ private:
     void (*recvSetProfileDisabled)(MIDICI ciDetails, std::array<uint8_t, 5>, uint8_t numberOfChannels) = nullptr;
     void (*recvSetProfileOn)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t numberOfChannels) = nullptr;
     void (*recvSetProfileOff)(MIDICI ciDetails, std::array<uint8_t, 5> profile) = nullptr;
-    void (*recvProfileDetails)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t*  data,
+    void (*recvProfileSpecificData)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t*  data,
                                uint16_t part, bool lastByteOfSet) = nullptr;
     void (*recvSetProfileDetailsInquiry)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t InquiryTarget) = nullptr;
     void (*recvSetProfileDetailsReply)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t InquiryTarget,
@@ -195,8 +195,8 @@ public:
         recvSetProfileOn = fptr;}
     inline void setRecvProfileOff(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile)){
         recvSetProfileOff = fptr;}
-    inline void setRecvProfileDetails(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen,
-                                                   uint8_t*  data, uint16_t part, bool lastByteOfSet)){ recvProfileDetails = fptr;}
+    inline void setRecvProfileSpecificData(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen,
+                                                   uint8_t*  data, uint16_t part, bool lastByteOfSet)){ recvProfileSpecificData = fptr;}
     inline void setRecvProfileDetailsInquiry(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile,
                                                           uint8_t InquiryTarget)){recvSetProfileDetailsInquiry = fptr;}
     inline void setRecvProfileDetailsReply(void (*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile,

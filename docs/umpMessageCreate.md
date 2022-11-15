@@ -12,50 +12,50 @@ MIDI messages.
 
 
 ## System Messages (Message Type 0x1)
-#### uint32_t mt1MTC(uint8_t group, uint8_t timeCode);
-#### uint32_t mt1SPP(uint8_t group, uint16_t position);
-#### uint32_t mt1SongSelect(uint8_t group, uint8_t song);
-#### uint32_t mt1TuneRequest(uint8_t group);
-#### uint32_t mt1TimingClock(uint8_t group);
-#### uint32_t mt1SeqStart(uint8_t group);
-#### uint32_t mt1SeqCont(uint8_t group);
-#### uint32_t mt1SeqStop(uint8_t group);
-#### uint32_t mt1ActiveSense(uint8_t group);
-#### uint32_t mt1SystemReset(uint8_t group);
+#### uint32_t mt1MTC(uint8_t umpGroup, uint8_t timeCode);
+#### uint32_t mt1SPP(uint8_t umpGroup, uint16_t position);
+#### uint32_t mt1SongSelect(uint8_t umpGroup, uint8_t song);
+#### uint32_t mt1TuneRequest(uint8_t umpGroup);
+#### uint32_t mt1TimingClock(uint8_t umpGroup);
+#### uint32_t mt1SeqStart(uint8_t umpGroup);
+#### uint32_t mt1SeqCont(uint8_t umpGroup);
+#### uint32_t mt1SeqStop(uint8_t umpGroup);
+#### uint32_t mt1ActiveSense(uint8_t umpGroup);
+#### uint32_t mt1SystemReset(uint8_t umpGroup);
 
 
 
 ## MIDI 1.0 Channel Voice Messages (Message Type 0x2)
-#### uint32_t mt2NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity);
-#### uint32_t mt2NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity);
-#### uint32_t mt2PolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pressure);
-#### uint32_t mt2CC(uint8_t group, uint8_t channel, uint8_t index, uint32_t value);
-#### uint32_t mt2ProgramChange(uint8_t group, uint8_t channel, uint8_t program);
-#### uint32_t mt2ChannelPressure(uint8_t group, uint8_t channel, uint32_t pressure);
-#### uint32_t mt2PitchBend(uint8_t group, uint8_t channel, uint32_t value);
+#### uint32_t mt2NoteOn(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity);
+#### uint32_t mt2NoteOff(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity);
+#### uint32_t mt2PolyPressure(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint32_t pressure);
+#### uint32_t mt2CC(uint8_t umpGroup, uint8_t channel, uint8_t index, uint32_t value);
+#### uint32_t mt2ProgramChange(uint8_t umpGroup, uint8_t channel, uint8_t program);
+#### uint32_t mt2ChannelPressure(uint8_t umpGroup, uint8_t channel, uint32_t pressure);
+#### uint32_t mt2PitchBend(uint8_t umpGroup, uint8_t channel, uint32_t value);
 
 ## System Exclusive 7 (Message Type 0x3)
 System Exclusive 7 messages return ```std::array<uint32_t, 2>```.
 
-#### std::array<uint32_t, 2> mt3Sysex7(uint8_t group, uint8_t status, uint8_t numBytes, std::array<uint8_t, 6> sx);
+#### std::array<uint32_t, 2> mt3Sysex7(uint8_t umpGroup, uint8_t status, uint8_t numBytes, std::array<uint8_t, 6> sx);
 It is up to the application to convert Sysex and generate the correct status in this function. Below is example code to
 output UMP Sysex from a complete array of SysEx bytes.
 
 ```c++
-void sendOutSysex(uint8_t group, uint8_t *sysex ,uint16_t length ){
+void sendOutSysex(uint8_t umpGroup, uint8_t *sysex ,uint16_t length ){
     std::array<uint8_t, 6> sx = {0,0,0,0,0,0};
     uint8_t sxPos=0;
 
     for (int i = 0; i < length; i++) {
         sx[sxPos++]=sysex[i] & 0x7F;
         if(sxPos == 6){
-            std::array<uint32_t, 2> ump = mt3Sysex7(group, i < 6 ? 1 : i==length ? 3 : 2, 6, sx);
+            std::array<uint32_t, 2> ump = mt3Sysex7(umpGroup, i < 6 ? 1 : i==length ? 3 : 2, 6, sx);
             sendUMP(ump.data(),2);
             sxPos=0;
         }
     }
     if (sxPos) {
-        std::array<uint32_t, 2> ump = mt3Sysex7(group, length < 7 ? 0 : 3, sxPos, sx);
+        std::array<uint32_t, 2> ump = mt3Sysex7(umpGroup, length < 7 ? 0 : 3, sxPos, sx);
         sendUMP(ump.data(),2);
     }
 
@@ -66,17 +66,17 @@ void sendOutSysex(uint8_t group, uint8_t *sysex ,uint16_t length ){
 ## MIDI 2.0 Channel voice messages (Message Type 0x4)
 MIDI 2.0 Channel voice messages return ```std::array<uint32_t, 2>```.
 
-#### std::array<uint32_t, 2> mt4NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);
-#### std::array<uint32_t, 2> mt4NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);
-#### std::array<uint32_t, 2> mt4CPolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pressure);
-#### std::array<uint32_t, 2> mt4PitchBend(uint8_t group, uint8_t channel, uint32_t pitch);
-#### std::array<uint32_t, 2> mt4CC(uint8_t group, uint8_t channel, uint8_t index, uint32_t value);
-#### std::array<uint32_t, 2> mt4RPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value);
-#### std::array<uint32_t, 2> mt4NRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value);
-#### std::array<uint32_t, 2> mt4RelativeRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value);
-#### std::array<uint32_t, 2> mt4RelativeNRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value);
-#### std::array<uint32_t, 2> mt4ChannelPressure(uint8_t group, uint8_t channel,uint32_t pressure);
-#### std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index);
+#### std::array<uint32_t, 2> mt4NoteOn(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);
+#### std::array<uint32_t, 2> mt4NoteOff(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);
+#### std::array<uint32_t, 2> mt4CPolyPressure(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint32_t pressure);
+#### std::array<uint32_t, 2> mt4PitchBend(uint8_t umpGroup, uint8_t channel, uint32_t pitch);
+#### std::array<uint32_t, 2> mt4CC(uint8_t umpGroup, uint8_t channel, uint8_t index, uint32_t value);
+#### std::array<uint32_t, 2> mt4RPN(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value);
+#### std::array<uint32_t, 2> mt4NRPN(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value);
+#### std::array<uint32_t, 2> mt4RelativeRPN(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value);
+#### std::array<uint32_t, 2> mt4RelativeNRPN(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value);
+#### std::array<uint32_t, 2> mt4ChannelPressure(uint8_t umpGroup, uint8_t channel,uint32_t pressure);
+#### std::array<uint32_t, 2> mt4ProgramChange(uint8_t umpGroup, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index);
 
 
 ## Flex Data Messages (Message Type 0x5)

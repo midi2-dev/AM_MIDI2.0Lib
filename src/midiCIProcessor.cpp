@@ -562,7 +562,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
                    || sysexPos == 21 + dataLength
                    || dataLength == 0
                         ){
-                    recvProfileDetails(midici, {buffer[0], buffer[1],
+                    recvProfileSpecificData(midici, {buffer[0], buffer[1],
                                                 buffer[2], buffer[3],
                                                 buffer[4]}, charOffset+1, buffer, intTemp[1], lastByteOfSet);
                     intTemp[1]++;

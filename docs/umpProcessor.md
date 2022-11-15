@@ -46,12 +46,12 @@ If the application does not use a particular message it does not need to be hand
 ### inline void setNoteOff(noteOffCallback)
 Set the callable function when a Note Off is processed by ```processUMP```
 ```c++ 
-void noteOffCallback(uint8_t group, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint16_t velocity, 
+void noteOffCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint16_t velocity, 
         uint8_t attributeType, uint16_t attributeData){
     printf("->MIDI Off: CH %d Note: %d Velocity: %d", channel, noteNumber, velocity);
 } 
 ```
-* ```group``` is the UMP Group
+* ```umpGroup``` is the UMP Group
 * ```messageType``` is the UMP Message Type
 
 _Note: Velocity is scaled to 16 bits if ```messageType``` equals 0x2_
@@ -62,7 +62,7 @@ _See Note Off Callback for structure of ```noteOnCallback```_
 
 ### inline void setControlChange(ccCallBack)
 ```c++ 
-void ccCallback(uint8_t group, uint8_t messageType, uint8_t channel, uint8_t index, uint32_t value){
+void ccCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t index, uint32_t value){
     printf("->MIDI CC: CH %d index: %d value: %d", channel, index, value);
 } 
 ```
@@ -70,7 +70,7 @@ _Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
 
 ### inline void setPolyPressure(polyPressureCallback)
 ```c++ 
-void polyPressureCallback(uint8_t group, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint32_t value){
+void polyPressureCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint32_t value){
     printf("->MIDI Poly Press.: CH %d Note: %d value: %d", channel, noteNumber, value);
 } 
 ```
@@ -78,15 +78,15 @@ _Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
 
 ### inline void setChannelPressure(channelPressureCallback)
 ```c++ 
-void channelPressureCallback(uint8_t group, uint8_t messageType, uint8_t channel, uint32_t value){
+void channelPressureCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint32_t value){
     printf("->MIDI Channel Press.: CH %d Value: %d", channel, value);
 } 
 ```
 _Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
 
-### inline void setPitchBend(void (\*fptr)(uint8_t group, uint8_t messageType, uint8_t channel, uint32_t value))
+### inline void setPitchBend(void (\*fptr)(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint32_t value))
 
-### inline void setProgramChange(void (\*fptr)(uint8_t group, uint8_t messageType, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index))
+### inline void setProgramChange(void (\*fptr)(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index))
 _Note: In MIDI 1.0 Program Change messages, the ```bankValid``` is always false._
 
 ## MIDI 2.0 Channel Voice Message Handlers
@@ -94,7 +94,7 @@ These callbacks should only be sent if MIDI 2.0 Protocol is enabled and these me
 
 ### inline void setRPN(rpnCallBack)
 ```c++ 
-void rpnCallback(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, uint32_t value){
+void rpnCallback(uint8_t umpGroup, uint8_t channel, uint8_t bank, uint8_t index, uint32_t value){
     printf("->MIDI RPN: CH %d index: %d value: %d", channel, index, value);
 } 
 ```
@@ -106,25 +106,25 @@ _See RPN Callback for structure of ```nrpnCallback```_
 _Note: This message is only triggered when a MIDI 2.0 RPN message is sent. This is not triggered when a MIDI 1.0 RPN
 message is sent. Those messages are processed using the function set by ```setControlChange```_
 
-### inline void setRelativeRPN(void (\*fptr)(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, int32_t value))
-### inline void setRelativeNRPN(void (\*fptr)(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value)
-### inline void setRpnPerNote(void (\*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
-### inline void setNrpnPerNote(void (\*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
-###  inline void setPerNoteManage(void (\*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber, bool detach, bool reset))
-### inline void setPerNotePB(void (\*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber,  uint32_t value))
+### inline void setRelativeRPN(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t bank, uint8_t index, int32_t value))
+### inline void setRelativeNRPN(void (\*fptr)(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value)
+### inline void setRpnPerNote(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
+### inline void setNrpnPerNote(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
+###  inline void setPerNoteManage(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, bool detach, bool reset))
+### inline void setPerNotePB(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber,  uint32_t value))
 
 ## Common System Message Handlers
 
-### inline void setTimingCode(void (\*fptr)(uint8_t group,uint8_t timeCode))
-### inline void setSongSelect(void (\*fptr)(uint8_t group,uint8_t song))
-### inline void setSongPositionPointer(void (*fptr)(uint8_t group,uint16_t position))
-### inline void setTuneRequest(void (\*fptr)(uint8_t group))
-### inline void setTimingClock(void (\*fptr)(uint8_t group))
-### inline void setSeqStart(void (\*fptr)(uint8_t group))
-### inline void setSeqCont(void (\*fptr)(uint8_t group))
-### inline void setSeqStop(void (\*fptr)(uint8_t group))
-### inline void setActiveSense(void (\*fptr)(uint8_t group))
-### inline void setSystemReset(void (\*fptr)(uint8_t group))
+### inline void setTimingCode(void (\*fptr)(uint8_t umpGroup,uint8_t timeCode))
+### inline void setSongSelect(void (\*fptr)(uint8_t umpGroup,uint8_t song))
+### inline void setSongPositionPointer(void (*fptr)(uint8_t umpGroup,uint16_t position))
+### inline void setTuneRequest(void (\*fptr)(uint8_t umpGroup))
+### inline void setTimingClock(void (\*fptr)(uint8_t umpGroup))
+### inline void setSeqStart(void (\*fptr)(uint8_t umpGroup))
+### inline void setSeqCont(void (\*fptr)(uint8_t umpGroup))
+### inline void setSeqStop(void (\*fptr)(uint8_t umpGroup))
+### inline void setActiveSense(void (\*fptr)(uint8_t umpGroup))
+### inline void setSystemReset(void (\*fptr)(uint8_t umpGroup))
 
 
 
@@ -135,22 +135,22 @@ message is sent. Those messages are processed using the function set by ```setCo
 midiCIProcessor midiciMain1;
 bool isProcMIDICI = false;
 
-void processUMPSysex(uint8_t group, uint8_t *sysex ,uint8_t length, uint8_t state){
+void processUMPSysex(uint8_t umpGroup, uint8_t *sysex ,uint8_t length, uint8_t state){
     //Example of Processing UMP into MIDI-CI processor
     if(state==1 && sysex[0] == S7UNIVERSAL_NRT && sysex[2] == S7MIDICI){
-        if(group==0) {
-            midiciMain1.startSysex7(group, sysex[1]);
+        if(umpGroup==0) {
+            midiciMain1.startSysex7(umpGroup, sysex[1]);
             isProcMIDICI = true;
         }
     }
     for (int i = 0; i < length; i++) {
-        if(group==0 && isProcMIDICI){
+        if(umpGroup==0 && isProcMIDICI){
             midiciMain1.processMIDICI(sysex[i]);
         }else{
             //Process other SysEx
         }
     }
-    if(state==3 && group==0 && isProcMIDICI){
+    if(state==3 && umpGroup==0 && isProcMIDICI){
         midiciMain1.endSysex7();
         isProcMIDICI = false;
     }

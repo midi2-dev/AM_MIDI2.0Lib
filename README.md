@@ -137,7 +137,7 @@ MIDI-CI requires a lot of SysEx messages. This library abstracts the complexity 
 
 #include "midiCIProcessor.h"
 midi2Processor midiCIProcess; 
-uint32_t m2procMUID;
+uint32_t localMUID;
 uint8_t sysexId[3] = {0x00 , 0x02, 0x22};
 uint8_t famId[2] = {0x7F, 0x00};
 uint8_t modelId[2] = {0x7F, 0x00};
@@ -145,18 +145,18 @@ uint8_t ver[4];
 unint8_t sysexBuffer[512];
 
 bool checkMUID(uint8_t group, uint32_t muid){
-	return (m2procMUID==muid);  
+	return (localMUID==muid);  
 }
 
 void recvDiscovery(uint8_t group, struct MIDICI ciDetails, uint8_t* remotemanuId, uint8_t* remotefamId, uint8_t* remotemodelId, uint8_t *remoteverId, uint8_t remoteciSupport, uint16_t remotemaxSysex){
 	Serial.print("->Discovery: remoteMuid ");Serial.println(ciDetails.remoteMUID);
-    uint16_t sBuffLen = sendDiscoveryReply(sysexBuffer, m2procMUID, ciDetails.remoteMUID, sysexId, famId, modelId, ver, 0b11100, 512);
+    uint16_t sBuffLen = sendDiscoveryReply(sysexBuffer, localMUID, ciDetails.remoteMUID, sysexId, famId, modelId, ver, 0b11100, 512);
     sendSysExOutOfDevice(sysexBuffer, sBuffLen);
 }
 
 void setup()
 {
-  m2procMUID = random(0xFFFFEFF);
+  localMUID = random(0xFFFFEFF);
   
   midiCIProcess.setRecvDiscovery(recvDiscovery);
   midiCIProcess.setCheckMUID(checkMUID);
