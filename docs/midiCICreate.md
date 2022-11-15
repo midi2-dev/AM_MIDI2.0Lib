@@ -1,4 +1,5 @@
 # MIDI-CI SysEx Creation
+
 These function create the SysEx needed for various MIDI-CI messages. It creates the complete SysEx uint8_t array 
 minus the 0xF0 and 0xF7 at beginning and end of the SysEx.
 
@@ -113,6 +114,7 @@ void returnPE(uint8_t umpGroup, uint32_t remoteMUID, uint8_t requestId, char *pr
 ```
 
 #### uint16_t sendPESet(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body)
+
 #### uint16_t sendPESetReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header)
 
 #### uint16_t sendPESub(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t requestId, uint16_t headerLen, uint8_t* header, uint16_t numberOfChunks, uint16_t numberOfThisChunk, uint16_t bodyLength , uint8_t* body)

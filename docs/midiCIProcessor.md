@@ -4,12 +4,15 @@
 not attempt to solve the logic and handling of that data. It is up to the application to send responses to queries 
 from an Initiator.
 
+```midiCIProcessor``` is a forward and backward compatible with different MIDI-CI versions. On incoming MIDI-CI 
+messages it will ignore bytes at the end of the message it does not understand.
+
 ```c++
 midiCIProcessor MIDICIHandler;
 MIDICIHandler.setCheckMUID(checkMUID);
 MIDICIHandler.setRecvDiscovery(discoveryHandler);
-
 ```
+
 ## Process Handling Commands
 The ```midiCIProcessor``` takes in 1 byte at a time when processing MIDI-CI. This is done so longer complex SysEx does 
 not require lots of memory and processing can occur as the  UMP Sysex is delivered.
@@ -149,10 +152,20 @@ void recvNAKCallback(struct MIDICI ciDetails, uint8_t origSubID, uint8_t statusC
 Protocol Negotiation is deprecated from MIDI-CI 1.2 onwards. However, Devices that support a later version of MIDI-CI
 can still respond and handle Protocol Negotiation.
 
-####  inline void setRecvProtocolAvailable(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel, uint8_t\* protocol)
-####  inline void setRecvSetProtocol(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel, uint8_t\* protocol)
-####  inline void setRecvSetProtocolConfirm(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel))
+####  inline void setRecvProtocolAvailable(recvProtocolAvailableCallback)
+This callback is triggered upon receiving a Reply to Protocol Negotiation. The ```midiCIProcessor``` triggers off 
+this callback for every Protocol returned.
+```c++
+void recvProtocolAvailableCallback(struct MIDICI ciDetails, uint8_t authorityLevel, uint8_t* protocol){
+    printf("Received Protocol Available on Group %d remote MUID: %d\n", ciDetails.umpGroup, ciDetails.remoteMUID);
+}
+```
+
+####  inline void setRecvSetProtocol(recvSetProtocolCallback)
+See _setRecvProtocolAvailable_ for the callback structure
+
 ####  inline void setRecvSetProtocolTest(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel, bool testDataAccurate)
+####  inline void setRecvSetProtocolConfirm(void (\*fptr)(MIDICI ciDetails, uint8_t authorityLevel))
 
 ### Profile Configuration 
 #### inline void setRecvProfileInquiry(profileInquiryCallback)
@@ -238,8 +251,21 @@ void profileOffCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile)
 #### inline void setRecvProfileDetailsInquiry(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile,   uint8_t InquiryTarget))
 #### inline void setRecvProfileDetailsReply(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint8_t InquiryTarget, uint16_t datalen, uint8_t\*  data))
 
-#### inline void setRecvProfileSpecificData(void (\*fptr)(MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t\*  data, uint16_t part, bool lastByteOfSet))
+#### inline void setRecvProfileSpecificData(profileSpecificDataCallback)
+This callback is triggered upon receiving a Profile Specific Data message.
 
+A long Profile Specific Data message may have a length longer than __S7_BUFFERLEN__. As such this callback may be triggered 
+multiple times for the same message. The ```lastByteOfSet``` bool is set to true if this is the last time this
+callback is triggered.
+
+```c++
+void profileSpecificDataCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t\*  data, uint16_t part, bool lastByteOfSet){
+  printf("->profile Off: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+}
+```
+
+_Note: While data length field in the SysEx can declare a potential length of 268435455 bytes, it is extremely unlikely
+that this is feasible, so it is kept as a uin16_t value._
 
 ### Property Exchange
 #### inline void setPECapabilities(PECapabilityCallback)
@@ -258,7 +284,7 @@ void PECapabilityCallback(uint8_t group,  struct MIDICI ciDetails, uint8_t numSi
 See setPECapabilities for the structure of PECapabilityReplyCallback
 
 #### inline void setRecvPEGetInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
-
+This callback is triggered upon receiving an Inquiry: Get Property Data message.
 ```c++
 void PEGetInquiry(uint8_t group, struct MIDICI ciDetails, struct peHeader requestDetails){
   printf("->PE GET Inquiry: remoteMuid %d requestId %s Resource %s resId %s", ciDetails.remoteMUID, 
@@ -271,21 +297,109 @@ void PEGetInquiry(uint8_t group, struct MIDICI ciDetails, struct peHeader reques
                          14, (uint8_t*)header, 1, 1, 4, (uint8_t*)"true");
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
   }
-  
 }
   
 ```
+#### inline void setRecvPESetInquiry(PESetCallback)
+
+This callback is triggered upon receiving an Inquiry: Set Property Data message.
+
+A long Inquiry: Set Property Data message is usually sent over many chunks and each chunck may have a length 
+longer than __S7_BUFFERLEN__. As such this callback may be triggered multiple times for the same set of messages.
+
+The ```lastByteOfChunk``` bool is set to true if this is the last body data in a single chunk message.
+The ```lastByteOfSet``` bool is set to true if this is the last time this callback is triggered for a set of messages.
+
+```c++
+mcoded7Decode m7d;
+
+void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t*  body, 
+        bool lastByteOfChunk, bool lastByteOfSet){
+  if (!strcmp(requestDetails.resource,"State")){
+      //This code assumes the data is using Mcoded7
+      if (requestDetails.numChunk == 1 && requestDetails.partialChunkCount == 1){
+          file.open(fullPath,  O_RDWR | O_TRUNC | O_CREAT);
+          m7d.reset();
+      }
+      for(uint16_t i=0; i < bodyLen;i++){
+          m7d.parseS7Byte(body[i]);
+          if(m7d.currentPos() == 7){
+              file.write(m7d.dump, 7);
+              m7d.reset();
+          }
+      }
+
+      if(lastByteOfSet){
+          file.write(m7d.dump,m7d.currentPos());
+          file.close();
+          char header[14] = "{\"status\":200}";
+          uint8_t sysexBuffer[128];
+          int len = sendPESetReply(sysexBuffer, m2procMUID, ciDetails.remoteMUID, requestDetails.requestId,
+                       14, (uint8_t*)header);
+          sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+      }
+    }
+}
+```
+
 #### inline void setRecvPESetReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
+
+#### inline void setRecvPESubInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
 #### inline void setRecvPESubReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
 #### inline void setRecvPENotify(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
-#### inline void setRecvPESetInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
-#### inline void setRecvPESubInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
 
 ### Process Inquiry (MIDI-CI 1.2 onwards)
 
-#### inline void setRecvPICapabilities(void (\*fptr)(MIDICI ciDetails))
+#### inline void setRecvPICapabilities(PICapabilitiesCallback)
+
+```c++
+void PICapabilitiesCallback(struct MIDICI ciDetails){
+    printf("MIDI Process Inquiry Capabilities");
+    uint8_t sysexBuffer[128];
+    int len = sendPICapabilityReply(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID,  1);
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+}
+```
+
 #### inline void setRecvPICapabilitiesReply(void (\*fptr)(MIDICI ciDetails, uint8_t supportedFeatures))
 
-#### inline void setRecvPIMMReport(void (\*fptr)(MIDICI ciDetails, uint8_t MDC, uint8_t systemBitmap,uint8_t chanContBitmap, uint8_t chanNoteBitmap))
-#### inline void setRecvPIMMReportReply(void (\*fptr)(MIDICI ciDetails, uint8_t systemBitmap, uint8_t chanContBitmap, uint8_t chanNoteBitmap)){
-#### inline void setRecvPIMMEnd(void (\*fptr)(MIDICI ciDetails)){recvPIMMReportEnd = fptr;}
+#### inline void setRecvPIMMReport(PIMMReportCallback)
+
+```c++
+void PIMMReportCallback(struct MIDICI ciDetails, uint8_t MDC, uint8_t systemBitmap,
+                                                    uint8_t chanContBitmap, uint8_t chanNoteBitmap){
+    uint8_t sysexBuffer[128];
+    int len;
+    len = sendPIMMReportReply(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId,
+                              0, 0b10010 &  chanContBitmap, 0);
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+
+    if(
+        (MDC & 0b1) &&
+        (chanContBitmap & 0b10) &&
+        (midiChannel == ciDetails.deviceId || ciDetails.deviceId == 0x7f)
+        ){
+        
+        sendControlChange(7, volume>>3, midiChannel);
+        sendControlChange(14, osc1Volume>>3, midiChannel);
+        sendControlChange(94, map(osc1Detune, -24, 24, 0, 127), midiChannel);
+        sendControlChange(74, map(filterCutoff, 0, 255, 0, 127), midiChannel);
+        sendControlChange(73, attackTime>>3, midiChannel);
+        sendControlChange(76, decayTime>>3, midiChannel);
+        sendControlChange(77, sustainLevel>>3, midiChannel);
+        sendControlChange(72, releaseTime>>3, midiChannel);
+    }
+    if(
+        (MDC & 0b1) &&
+        (chanContBitmap & 0b10000) &&
+        (midiChannel == ciDetails.deviceId  || ciDetails.deviceId == 0x7f)
+        ){
+        sendProgramChange((uint8_t)patchLoaded,midiChannel);
+    }
+    len = sendPIMMReportEnd(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId);
+    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
+}
+
+```
+#### inline void setRecvPIMMReportReply(void (\*fptr)(MIDICI ciDetails, uint8_t systemBitmap, uint8_t chanContBitmap, uint8_t chanNoteBitmap))
+#### inline void setRecvPIMMEnd(void (\*fptr)(MIDICI ciDetails))

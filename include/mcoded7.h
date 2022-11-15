@@ -1,5 +1,5 @@
 /**********************************************************
- * MIDI 2.0 Library 
+ * MIDI 2.0 Library
  * Author: Andrew Mee
  * 
  * MIT License
@@ -28,8 +28,6 @@ class mcoded7Decode{
 
 	private:
 		uint8_t dumpPos=255;
-
-		
 		uint8_t fBit=0;
 		uint8_t cnt=0;
 		uint8_t bits=0;
@@ -40,7 +38,6 @@ class mcoded7Decode{
         uint8_t dump[7];
 
         uint16_t currentPos(){ return dumpPos;}
-		
 
 		void reset(){
             memset(dump,0,7);
@@ -57,7 +54,6 @@ class mcoded7Decode{
 				dump[dumpPos++] = s7Byte | fBit;
 			}
 		}
-	
 };
 
 
@@ -68,7 +64,6 @@ class mcoded7Encode{
 		uint8_t cnt = 6;
 
 	public:
-
         uint8_t dump[8];
 		mcoded7Encode(){};
 

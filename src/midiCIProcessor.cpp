@@ -336,7 +336,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
 //                    uint8_t protocol[5] = {buffer[0], buffer[1],
 //                                           buffer[2], buffer[3],
 //                                           buffer[4]};
-                    if (recvProtocolAvailable != nullptr)recvSetProtocolConfirm(midici, intTemp[0]);
+                    if (recvSetProtocolConfirm != nullptr)recvSetProtocolConfirm(midici, intTemp[0]);
                 }
             }
             break;

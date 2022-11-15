@@ -38,7 +38,10 @@ This library can:
 This library is designed to use a small footprint. It does this by processing each UMP packet (or MIDI 1.0 Byte stream) 
 one at a time. This way large data is handled in small chunks to keep memory small.
 
-This means it is upto the application to:
+This set of files allows you to pick and choose which parts of MIDI 2.0 you wish to include. For example if you are 
+only working with MIDI 1.0 Byte streams and just need a MIDI-CI handler? Then great just pull in that header :)
+
+Note it is upto the application to:
  * Store Remote MIDI-CI Device details
  * Upon receiving MIDI-CI Message to interpret the Messages data structure (e.g. Profile Id bytes, Note On Articulation 
 etc.)
@@ -52,7 +55,7 @@ Can be found on the [WIKI](https://github.com/starfishmod/MIDI2_CPP/wiki)
 
 ### Example: Translate MIDI 1.0 Byte stream to UMP
 
-Here is a quick Arduino example
+Here is a quick example
 
 ```C++
 #include "bytestreamUMP.h"
