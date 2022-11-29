@@ -20,22 +20,26 @@
 #include "../include/utils.h"
 #include "../include/umpMessageCreate.h"
 
-uint32_t mt0NOOP(/*uint8_t group*/){
-	return 0;//(group + 0L) << 24;
-}
-uint32_t mt0JRClock(/*uint8_t group,*/ uint16_t clockTime){
-	return /*((group + 0L) << 24 ) +*/ ((UTILITY_JRCLOCK + 0L) << 20) + clockTime;
-}
-uint32_t mt0JRTimeStamp(/*uint8_t group,*/ uint16_t timestamp){
-	return /*((group + 0L) << 24 ) +*/ ((UTILITY_JRTS + 0L) << 20) + timestamp;
+
+
+uint32_t UMPMessage::mt0NOOP(){
+	return 0;
 }
 
-uint32_t mt0DeltaClockTick(/*uint8_t group,*/ uint16_t ticksPerQtrNote){
-    return /*((group + 0L) << 24 ) +*/ ((UTILITY_DELTACLOCKTICK + 0L) << 20) + ticksPerQtrNote;
+uint32_t UMPMessage::mt0JRClock(uint16_t clockTime){
+	return  ((UTILITY_JRCLOCK + 0L) << 20) + clockTime;
 }
 
-uint32_t mt0DeltaTicksSinceLast(/*uint8_t group,*/ uint16_t noTicksSince){
-    return /*((group + 0L) << 24 ) +*/ ((UTILITY_DELTACLOCKSINCE + 0L) << 20) + noTicksSince;
+uint32_t UMPMessage::mt0JRTimeStamp(uint16_t timestamp){
+	return ((UTILITY_JRTS + 0L) << 20) + timestamp;
+}
+
+uint32_t UMPMessage::mt0DeltaClockTick( uint16_t ticksPerQtrNote){
+    return ((UTILITY_DELTACLOCKTICK + 0L) << 20) + ticksPerQtrNote;
+}
+
+uint32_t UMPMessage::mt0DeltaTicksSinceLast(uint16_t noTicksSince){
+    return ((UTILITY_DELTACLOCKSINCE + 0L) << 20) + noTicksSince;
 }
 
 
@@ -44,34 +48,34 @@ uint32_t m1Create(uint8_t group, uint8_t status, uint8_t val1, uint8_t val2){
 	return (((UMP_SYSTEM << 4) + group + 0L) << 24) + ((status + 0L) << 16) + ((val1 + 0L) << 8) + val2;
 }
 
-uint32_t mt1MTC(uint8_t group, uint8_t timeCode){
+uint32_t UMPMessage::mt1MTC(uint8_t group, uint8_t timeCode){
 	return m1Create(group, TIMING_CODE, timeCode, 0);
 }
-uint32_t mt1SPP(uint8_t group, uint16_t position){
+uint32_t UMPMessage::mt1SPP(uint8_t group, uint16_t position){
 	return m1Create(group, SPP, position & 0x7F , (position >> 7) & 0x7F );
 }
-uint32_t mt1SongSelect(uint8_t group, uint8_t song){
+uint32_t UMPMessage::mt1SongSelect(uint8_t group, uint8_t song){
 	return m1Create(group, SONG_SELECT, song, 0 );
 }
-uint32_t mt1TuneRequest(uint8_t group){
+uint32_t UMPMessage::mt1TuneRequest(uint8_t group){
 	return m1Create(group, TUNEREQUEST, 0, 0 );
 }
-uint32_t mt1TimingClock(uint8_t group){
+uint32_t UMPMessage::mt1TimingClock(uint8_t group){
 	return m1Create(group, TIMINGCLOCK, 0, 0 );
 }
-uint32_t mt1SeqStart(uint8_t group){
+uint32_t UMPMessage::mt1SeqStart(uint8_t group){
 	return m1Create(group, SEQSTART, 0, 0 );
 }
-uint32_t mt1SeqCont(uint8_t group){
+uint32_t UMPMessage::mt1SeqCont(uint8_t group){
 	return m1Create(group, SEQCONT, 0, 0 );
 }
-uint32_t mt1SeqStop(uint8_t group){
+uint32_t UMPMessage::mt1SeqStop(uint8_t group){
 	return m1Create(group, SEQSTOP, 0, 0 );
 }
-uint32_t mt1ActiveSense(uint8_t group){
+uint32_t UMPMessage::mt1ActiveSense(uint8_t group){
 	return m1Create(group, ACTIVESENSE, 0, 0 );
 }
-uint32_t mt1SystemReset(uint8_t group){
+uint32_t UMPMessage::mt1SystemReset(uint8_t group){
 	return m1Create(group, SYSTEMRESET, 0, 0 );
 }
 
@@ -84,30 +88,30 @@ uint32_t mt2Create(uint8_t group,  uint8_t status, uint8_t channel, uint8_t val1
 	return message;
 } 
 
-uint32_t mt2NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
+uint32_t UMPMessage::mt2NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
 	return mt2Create(group,  NOTE_ON, channel, noteNumber, velocity);
 } 
-uint32_t mt2NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
+uint32_t UMPMessage::mt2NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
 	return mt2Create(group,  NOTE_OFF, channel, noteNumber, velocity);
 }
 
-uint32_t mt2PolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t pressure){
+uint32_t UMPMessage::mt2PolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t pressure){
 	return mt2Create(group,  KEY_PRESSURE, channel, noteNumber, pressure);
 } 
-uint32_t mt2CC(uint8_t group, uint8_t channel, uint8_t index, uint8_t value){
+uint32_t UMPMessage::mt2CC(uint8_t group, uint8_t channel, uint8_t index, uint8_t value){
 	return mt2Create(group,  CC, channel, index, value);
 } 
-uint32_t mt2ProgramChange(uint8_t group, uint8_t channel, uint8_t program){
+uint32_t UMPMessage::mt2ProgramChange(uint8_t group, uint8_t channel, uint8_t program){
 	return mt2Create(group,  PROGRAM_CHANGE, channel, program, 0);
 } 
-uint32_t mt2ChannelPressure(uint8_t group, uint8_t channel, uint8_t pressure){
+uint32_t UMPMessage::mt2ChannelPressure(uint8_t group, uint8_t channel, uint8_t pressure){
 	return mt2Create(group,  CHANNEL_PRESSURE, channel, pressure, 0);
 } 
-uint32_t mt2PitchBend(uint8_t group, uint8_t channel, uint16_t value){
+uint32_t UMPMessage::mt2PitchBend(uint8_t group, uint8_t channel, uint16_t value){
 	return mt2Create(group,  PITCH_BEND, channel, value & 0x7F, (value >> 7) & 0x7F);
 }
 
-std::array<uint32_t, 2> mt3Sysex7(uint8_t group, uint8_t status, uint8_t numBytes, std::array<uint8_t, 6> sx){
+std::array<uint32_t, 2> UMPMessage::mt3Sysex7(uint8_t group, uint8_t status, uint8_t numBytes, std::array<uint8_t, 6> sx){
     std::array<uint32_t, 2> umpMess = {0,0};
     umpMess[0] = (0x3 << 28) + (group << 24) + (status << 20)+ (numBytes << 16);
     if(numBytes > 0 ) umpMess[0] += (sx[0] << 8);
@@ -130,7 +134,7 @@ uint32_t mt4CreateFirstWord(uint8_t group,  uint8_t status, uint8_t channel, uin
 	return message;
 }
 
-std::array<uint32_t, 2> mt4NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
+std::array<uint32_t, 2> UMPMessage::mt4NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  NOTE_ON, channel, noteNumber, attributeType);
 	umpMess[1] = velocity << 16;
@@ -138,7 +142,7 @@ std::array<uint32_t, 2> mt4NoteOn(uint8_t group, uint8_t channel, uint8_t noteNu
 	return umpMess;
 }
 
-std::array<uint32_t, 2> mt4NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
+std::array<uint32_t, 2> UMPMessage::mt4NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  NOTE_OFF, channel, noteNumber, attributeType);
 	umpMess[1] = velocity << 16;
@@ -146,35 +150,35 @@ std::array<uint32_t, 2> mt4NoteOff(uint8_t group, uint8_t channel, uint8_t noteN
 	return umpMess;
 }  
 
-std::array<uint32_t, 2> mt4CPolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pressure){
+std::array<uint32_t, 2> UMPMessage::mt4CPolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pressure){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  KEY_PRESSURE, channel, noteNumber, 0);
 	umpMess[1] = pressure;
 	return umpMess;
 }
 
-std::array<uint32_t, 2> mt4PitchBend(uint8_t group, uint8_t channel, uint32_t pitch){
+std::array<uint32_t, 2> UMPMessage::mt4PitchBend(uint8_t group, uint8_t channel, uint32_t pitch){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  PITCH_BEND, channel, 0, 0);
 	umpMess[1] = pitch;
 	return umpMess;
 } 
 
-std::array<uint32_t, 2> mt4CC(uint8_t group, uint8_t channel, uint8_t index, uint32_t value){
+std::array<uint32_t, 2> UMPMessage::mt4CC(uint8_t group, uint8_t channel, uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  CC , channel, index, 0);
 	umpMess[1] = value;
 	return umpMess;
 } 
 
-std::array<uint32_t, 2> mt4RPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
+std::array<uint32_t, 2> UMPMessage::mt4RPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};;
 	umpMess[0] = mt4CreateFirstWord(group,  RPN , channel, bank, index);
 	umpMess[1] = value;
 	return umpMess;
 } 
 
-std::array<uint32_t, 2> mt4NRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
+std::array<uint32_t, 2> UMPMessage::mt4NRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  NRPN , channel, bank, index);
 	umpMess[1] = value;
@@ -182,28 +186,28 @@ std::array<uint32_t, 2> mt4NRPN(uint8_t group, uint8_t channel,uint8_t bank,  ui
 } 
 
 
-std::array<uint32_t, 2> mt4RelativeRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
+std::array<uint32_t, 2> UMPMessage::mt4RelativeRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  RPN_RELATIVE , channel, bank, index);
 	umpMess[1] = (uint32_t)value;
 	return umpMess;
 } 
 
-std::array<uint32_t, 2> mt4RelativeNRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
+std::array<uint32_t, 2> UMPMessage::mt4RelativeNRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  NRPN_RELATIVE , channel, bank, index);
 	umpMess[1] = (uint32_t)value;
 	return umpMess;
 } 
 
-std::array<uint32_t, 2> mt4ChannelPressure(uint8_t group, uint8_t channel,uint32_t pressure){
+std::array<uint32_t, 2> UMPMessage::mt4ChannelPressure(uint8_t group, uint8_t channel,uint32_t pressure){
     std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  CHANNEL_PRESSURE, channel, 0, 0);
 	umpMess[1] = pressure;
 	return umpMess;
 }
 
-std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index){
+std::array<uint32_t, 2> UMPMessage::mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index){
 	std::array<uint32_t, 2> umpMess  = {0,0};
 	umpMess[0] = mt4CreateFirstWord(group,  PROGRAM_CHANGE, channel, program, bankValid?1:0);
 	umpMess[1] = bankValid? ((uint32_t)bank << 8)+ index :0;
@@ -212,14 +216,14 @@ std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t
 
 //TODO mtD*
 
-std::array<uint32_t, 4> mtFMidiEndpoint(uint8_t filter){
+std::array<uint32_t, 4> UMPMessage::mtFMidiEndpoint(uint8_t filter){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
 	umpMess[0] = (0xF << 28) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR;
     umpMess[1] = filter;
 	return umpMess;
 }
 
-std::array<uint32_t, 4> mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock, bool m2, bool m1, bool rxjr, bool txjr){
+std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock, bool m2, bool m1, bool rxjr, bool txjr){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (MIDIENDPOINT_INFO_NOTIFICATION << 16) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR;
     umpMess[1] = (numOfFuncBlock << 24)
@@ -230,7 +234,7 @@ std::array<uint32_t, 4> mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock, bool m
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
+std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                                   std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (MIDIENDPOINT_DEVICEINFO_NOTIFICATION << 16) /*+  numOfFuncBlock*/;
@@ -249,7 +253,7 @@ std::array<uint32_t, 4> mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> m
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFMidiEndpointTextNotify(uint16_t replyType, uint8_t offset, uint8_t* text, uint8_t textLen){
+std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointTextNotify(uint16_t replyType, uint8_t offset, uint8_t* text, uint8_t textLen){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     uint8_t form = 0;
     if(offset==0){
@@ -273,13 +277,13 @@ std::array<uint32_t, 4> mtFMidiEndpointTextNotify(uint16_t replyType, uint8_t of
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFFunctionBlock(uint8_t fbIdx, uint8_t filter ){
+std::array<uint32_t, 4> UMPMessage::mtFFunctionBlock(uint8_t fbIdx, uint8_t filter ){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK << 16) + (fbIdx << 8) + filter;
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
+std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
                                                    bool validCI,  uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK_INFO_NOTFICATION << 16)
@@ -295,7 +299,7 @@ std::array<uint32_t, 4> mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, u
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t offset, uint8_t* text, uint8_t textLen){
+std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t offset, uint8_t* text, uint8_t textLen){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     uint8_t form = 0;
     if(offset==0){
@@ -318,21 +322,21 @@ std::array<uint32_t, 4> mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t offset
     return umpMess;
 }
 
-std::array<uint32_t, 4> mtFStartOfSeq(){
+std::array<uint32_t, 4> UMPMessage::mtFStartOfSeq(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (STARTOFSEQ << 16);
     return umpMess;
 
 }
 
-std::array<uint32_t, 4> mtFEndOfFile(){
+std::array<uint32_t, 4> UMPMessage::mtFEndOfFile(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (ENDOFFILE << 16);
     return umpMess;
 }
 
 
-std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, bool jrtx){
+std::array<uint32_t, 4> UMPMessage::mtFRequestProtocol(uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
     umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_PROTOCOL_REQUEST << 16)
             + (protocol << 8)
@@ -342,7 +346,7 @@ std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, bool jrt
 
 }
 
-std::array<uint32_t, 4> mtFNotifyProtocol( uint8_t protocol, bool jrrx, bool jrtx){
+std::array<uint32_t, 4> UMPMessage::mtFNotifyProtocol( uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
     umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_PROTOCOL_NOTIFICATION << 16)
                  + (protocol << 8)
@@ -350,7 +354,6 @@ std::array<uint32_t, 4> mtFNotifyProtocol( uint8_t protocol, bool jrrx, bool jrt
                  + jrtx;
     return umpMess;
 }
-
 
 
 

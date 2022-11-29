@@ -151,7 +151,7 @@ void umpToBytestream::UMPStreamParse(uint32_t UMP){
                             bsOut[byPos++] = ump64word1 >> 16 & 0xFF;bsOutLength++;
                             bsOut[byPos++] = val1; bsOutLength++;
 
-                            uint8_t velocity = (uint8_t) scaleDown((UMP >> 16), 16, 7);
+                                uint8_t velocity = (uint8_t) M2Utils::scaleDown((UMP >> 16), 16, 7);
                             if (velocity == 0 && status == NOTE_ON) {
                                 velocity = 1;
                             }
@@ -163,13 +163,13 @@ void umpToBytestream::UMPStreamParse(uint32_t UMP){
                         case CC: {//CC
                             bsOut[byPos++] = ump64word1 >> 16 & 0xFF;bsOutLength++;
                             bsOut[byPos++] = val1; bsOutLength++;
-                            uint8_t value = (uint8_t)scaleDown(UMP , 32, 7);
+                                uint8_t value = (uint8_t)M2Utils::scaleDown(UMP , 32, 7);
                             bsOut[byPos++] = value; bsOutLength++;
                             break;
                         }
                         case CHANNEL_PRESSURE: { //Channel Pressure
                             bsOut[byPos++] = ump64word1 >> 16 & 0xFF;bsOutLength++;
-                            uint8_t value = (uint8_t) scaleDown(UMP, 32, 7);
+                                uint8_t value = (uint8_t) M2Utils::scaleDown(UMP, 32, 7);
                             bsOut[byPos++] = value; bsOutLength++;
                             break;
                         }
@@ -181,7 +181,7 @@ void umpToBytestream::UMPStreamParse(uint32_t UMP){
                             bsOut[byPos++] = 100;bsOutLength++;
                             bsOut[byPos++] = val2;bsOutLength++;
 
-                            uint16_t val14bit = (uint16_t)scaleDown(UMP , 32, 14);
+                                uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
                             bsOut[byPos++] = CC + channel;bsOutLength++;
                             bsOut[byPos++] = 6;bsOutLength++;
                             bsOut[byPos++] = (val14bit >> 7) & 0x7F;bsOutLength++;
@@ -199,7 +199,7 @@ void umpToBytestream::UMPStreamParse(uint32_t UMP){
                             bsOut[byPos++] = 98;bsOutLength++;
                             bsOut[byPos++] = val2;bsOutLength++;
 
-                            uint16_t val14bit = (uint16_t)scaleDown(UMP, 32, 14);
+                                uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP, 32, 14);
                             bsOut[byPos++] = CC + channel;bsOutLength++;
                             bsOut[byPos++] = 6;bsOutLength++;
                             bsOut[byPos++] = (val14bit >> 7) & 0x7F;bsOutLength++;

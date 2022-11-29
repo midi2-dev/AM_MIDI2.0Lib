@@ -30,12 +30,14 @@ void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
 
     sysexPos = 0;
     buffer[0]='\0';
-
     midici =  MIDICI();
     midici.deviceId = deviceId;
     midici.umpGroup = group;
 }
 
+void midiCIProcessor::cleanupRequest(reqId peReqIdx){
+    peRequestDetails.erase(peReqIdx);
+}
 
 void midiCIProcessor::processMIDICI(uint8_t s7Byte){
     //printf("s7 Byte %d\n", s7Byte);
@@ -623,8 +625,9 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
             if (sysexPos == 13) {
                 midici._peReqIdx = std::make_tuple(midici.remoteMUID,s7Byte);
                 midici._reqTupleSet = true; //Used for cleanup
-                peRequestDetails[midici._peReqIdx] = peHeader();
-                peRequestDetails[midici._peReqIdx].requestId = s7Byte;
+                //peRequestDetails[midici._peReqIdx] = peHeader();
+                midici.requestId = s7Byte;
+                intTemp[0]=0;
                 return;
             }
 
@@ -637,8 +640,18 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
             uint16_t headerLength = intTemp[0];
 
             if (sysexPos >= 16 && sysexPos <= 15 + headerLength) {
-                processPEHeader(midici._peReqIdx, s7Byte);
+                uint16_t charOffset = (sysexPos - 16);
+                buffer[charOffset] = s7Byte;
 
+                //processPEHeader(midici._peReqIdx, s7Byte);
+                peRequestDetails[midici._peReqIdx] = peHeader();
+                if (sysexPos == 15 + headerLength){
+                    JS::ParseContext context((char *)buffer);
+                    if (context.parseTo(peRequestDetails[midici._peReqIdx]) != JS::Error::NoError) {
+                        //we haz error
+                    }
+
+                }
                 if (sysexPos == 15 + headerLength
                     && (
                             midici.ciType == MIDICI_PE_GET
@@ -665,13 +678,13 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
             }
 
             if (sysexPos == 16 + headerLength || sysexPos == 17 + headerLength) {
-                peRequestDetails[midici._peReqIdx]._totalChunks +=
+                midici.totalChunks +=
                         s7Byte << (7 * (sysexPos - 16 - headerLength));
                 return;
             }
 
             if (sysexPos == 18 + headerLength || sysexPos == 19 + headerLength) {
-                peRequestDetails[midici._peReqIdx]._numChunk += s7Byte << (7 * (sysexPos - 18 - headerLength));
+                midici.numChunk += s7Byte << (7 * (sysexPos - 18 - headerLength));
                 return;
             }
 
@@ -694,7 +707,7 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                 if (bodyLength != 0)buffer[charOffset] = s7Byte;
 
                 bool lastByteOfSet = (
-                        peRequestDetails[midici._peReqIdx]._numChunk == peRequestDetails[midici._peReqIdx]._totalChunks &&
+                        midici.numChunk == midici.totalChunks &&
                         sysexPos == initPos - 1 + bodyLength);
                 bool lastByteOfChunk = (bodyLength == 0 || sysexPos == initPos - 1 + bodyLength);
 
@@ -709,8 +722,7 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                         recvPESetInquiry(midici, peRequestDetails[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
-
-                    peRequestDetails[midici._peReqIdx]._partialChunkCount++;
+                    midici.partialChunkCount++;
                 }
 
                 if (lastByteOfSet) {
@@ -722,164 +734,6 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
     }
 
 }
-
-void midiCIProcessor::processPEHeader(reqId peReqIdx, uint8_t s7Byte){
-
-    /*char messStr[20];
-    sprintf(messStr," p: %d %c",peRequestDetails[peReqIdx]._headerPos, s7Byte);
-    debug(messStr);*/
-
-    int clear=0;
-
-    if((peRequestDetails[peReqIdx]._headerState & 0xF) == PE_HEAD_STATE_IN_STRING){
-        if (s7Byte == '"' && buffer[peRequestDetails[peReqIdx]._headerPos-1]!='\\') {
-            if((peRequestDetails[peReqIdx]._headerState & 0xF0) == PE_HEAD_KEY){
-                peRequestDetails[peReqIdx]._pvoid = nullptr;
-                peRequestDetails[peReqIdx]._headerProp = 0;
-                if(!strcmp((const char*)buffer,"resource")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].resource;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"path")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].path;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"mediaType")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].mediaType;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"command")){
-                    //_pvoid = &peRequestDetails[peReqIdx].command;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"action")){
-                    //_pvoid = &peRequestDetails[peReqIdx].command;
-                    peRequestDetails[peReqIdx]._headerProp = 2;
-                }
-                if(!strcmp((const char*)buffer,"resId")){
-                    // debug("resId!");
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].resId;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"subscribeId")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].subscribeId;
-                    peRequestDetails[peReqIdx]._headerProp = 1;
-                }
-                if(!strcmp((const char*)buffer,"status")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].status;
-                }
-                if(!strcmp((const char*)buffer,"offset")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].offset;
-                }
-                if(!strcmp((const char*)buffer,"limit")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].limit;
-                }
-                if(!strcmp((const char*)buffer,"setPartial")){
-                    peRequestDetails[peReqIdx]._pvoid = &peRequestDetails[peReqIdx].partial;
-                }
-                if(!strcmp((const char*)buffer,"mutualEncoding")){
-                    peRequestDetails[peReqIdx]._headerProp = 3;
-                }
-            }else if(peRequestDetails[peReqIdx]._pvoid != nullptr){
-                if(peRequestDetails[peReqIdx]._headerProp == 0){
-                    memcpy(peRequestDetails[peReqIdx]._pvoid, buffer, PE_HEAD_BUFFERLEN * sizeof(char));
-                }
-
-                peRequestDetails[peReqIdx]._headerProp=0;
-                peRequestDetails[peReqIdx]._pvoid = nullptr;
-            }else if(peRequestDetails[peReqIdx]._headerProp == 1){
-                if(!strcmp((const char*)buffer,"start")){
-                    peRequestDetails[peReqIdx].command = MIDICI_PE_COMMAND_START;
-                }
-                if(!strcmp((const char*)buffer,"end")){
-                    peRequestDetails[peReqIdx].command = MIDICI_PE_COMMAND_END;
-                }
-                if(!strcmp((const char*)buffer,"partial")){
-                    peRequestDetails[peReqIdx].command = MIDICI_PE_COMMAND_PARTIAL;
-                }
-                if(!strcmp((const char*)buffer,"full")){
-                    peRequestDetails[peReqIdx].command = MIDICI_PE_COMMAND_FULL;
-                }
-                if(!strcmp((const char*)buffer,"notify")){
-                    peRequestDetails[peReqIdx].command = MIDICI_PE_COMMAND_NOTIFY;
-                }
-                peRequestDetails[peReqIdx]._headerProp=0;
-                peRequestDetails[peReqIdx]._pvoid = nullptr;
-            }else if(peRequestDetails[peReqIdx]._headerProp == 2){
-                if(!strcmp((const char*)buffer,"copy")){
-                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_COPY;
-                }
-                if(!strcmp((const char*)buffer,"move")){
-                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_MOVE;
-                }
-                if(!strcmp((const char*)buffer,"delete")){
-                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_DELETE;
-                }
-                if(!strcmp((const char*)buffer,"createDirectory")){
-                    peRequestDetails[peReqIdx].action = MIDICI_PE_ACTION_CREATE_DIR;
-                }
-                peRequestDetails[peReqIdx]._headerProp=0;
-                peRequestDetails[peReqIdx]._pvoid = nullptr;
-            }else if(peRequestDetails[peReqIdx]._headerProp == 3){
-                if(!strcmp((const char*)buffer,"ASCII")){
-                    peRequestDetails[peReqIdx].mutualEncoding = MIDICI_PE_ASCII;
-                }
-                if(!strcmp((const char*)buffer,"Mcoded7")){
-                    peRequestDetails[peReqIdx].mutualEncoding = MIDICI_PE_MCODED7;
-                }
-                if(!strcmp((const char*)buffer,"zlib+Mcoded7")){
-                    peRequestDetails[peReqIdx].mutualEncoding = MIDICI_PE_MCODED7ZLIB;
-                }
-                peRequestDetails[peReqIdx]._headerProp=0;
-                peRequestDetails[peReqIdx]._pvoid = nullptr;
-            }
-            clear=1;
-        }else if(peRequestDetails[peReqIdx]._headerProp >= 1 && peRequestDetails[peReqIdx]._pvoid != nullptr){
-
-            char *t = (char *)peRequestDetails[peReqIdx]._pvoid;
-            t[peRequestDetails[peReqIdx]._headerProp-1] = s7Byte;
-            t[peRequestDetails[peReqIdx]._headerProp]='\0';
-            peRequestDetails[peReqIdx]._headerProp++;
-        }else if(peRequestDetails[peReqIdx]._headerPos +1 < PE_HEAD_BUFFERLEN){
-            buffer[peRequestDetails[peReqIdx]._headerPos++] = s7Byte;
-        }
-    } else if((peRequestDetails[peReqIdx]._headerState & 0xF) == PE_HEAD_STATE_IN_NUMBER) {
-        if ((s7Byte >= '0' && s7Byte <= '9') ) {
-            int *n = (int *)peRequestDetails[peReqIdx]._pvoid;
-            *n =  *n * 10 + (s7Byte - '0');
-        }else if(peRequestDetails[peReqIdx]._pvoid != nullptr){
-            peRequestDetails[peReqIdx]._pvoid = nullptr;
-            clear=1;
-            peRequestDetails[peReqIdx]._headerState=PE_HEAD_KEY + (peRequestDetails[peReqIdx]._headerState & 0xF);
-        }
-    } else if (s7Byte == ':') {
-        peRequestDetails[peReqIdx]._headerState=PE_HEAD_VALUE + (peRequestDetails[peReqIdx]._headerState & 0xF);
-    }else if (s7Byte == ',') {
-        peRequestDetails[peReqIdx]._headerState = PE_HEAD_KEY + (peRequestDetails[peReqIdx]._headerState & 0xF);
-    }else if ((s7Byte >= '0' && s7Byte <= '9') ) {
-        int *n = (int *)peRequestDetails[peReqIdx]._pvoid;
-        *n =  s7Byte - '0';
-        peRequestDetails[peReqIdx]._headerState = (peRequestDetails[peReqIdx]._headerState & 0xF0) + PE_HEAD_STATE_IN_NUMBER;
-    }else if (s7Byte == 't' || s7Byte == 'f') {
-        bool *b = (bool *)peRequestDetails[peReqIdx]._pvoid;
-        *b = s7Byte == 't';
-        peRequestDetails[peReqIdx]._headerState = (peRequestDetails[peReqIdx]._headerState & 0xF0) + PE_HEAD_STATE_IN_BOOL;
-    }else if (s7Byte == '"') {
-        peRequestDetails[peReqIdx]._headerState = (peRequestDetails[peReqIdx]._headerState & 0xF0) + PE_HEAD_STATE_IN_STRING;
-    }
-
-    if(clear){
-        memset(buffer, 0, PE_HEAD_BUFFERLEN);
-        peRequestDetails[peReqIdx]._headerPos=0;
-        peRequestDetails[peReqIdx]._headerState = (peRequestDetails[peReqIdx]._headerState & 0xF0) + PE_HEAD_STATE_IN_OBJECT;
-    }
-
-}
-
-void midiCIProcessor::cleanupRequest(reqId peReqIdx){
-    peRequestDetails.erase(peReqIdx);
-}
-
 
 void midiCIProcessor::processPISysex(uint8_t s7Byte) {
     if(midici.ciVer == 1) return;
@@ -913,7 +767,7 @@ void midiCIProcessor::processPISysex(uint8_t s7Byte) {
             if (sysexPos == 16) {//Bitmap of requested Channel Controller Message Types
                 buffer[2] = s7Byte;
             }
-            if (sysexPos == 17 &&recvPIMMReport != nullptr){
+            if (sysexPos == 17 && recvPIMMReport != nullptr){
                 recvPIMMReport(midici,
                                buffer[0],
                                buffer[1],

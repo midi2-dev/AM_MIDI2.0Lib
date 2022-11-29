@@ -28,43 +28,77 @@
 #include <map>
 
 #include "utils.h"
+#include "json_struct.h"
 
+typedef std::tuple<uint32_t, uint8_t> reqId;  //muid-requestId
 
+struct MIDICI{
+    MIDICI() : umpGroup(255), deviceId(FUNCTION_BLOCK),ciType(255),ciVer(1), remoteMUID(0), localMUID(0),
+        _reqTupleSet(false), totalChunks(0), numChunk(0), partialChunkCount(0), requestId(255) {}
+    uint8_t umpGroup;
+    uint8_t deviceId;
+    uint8_t ciType;
+    uint8_t ciVer;
+    uint32_t remoteMUID;
+    uint32_t localMUID;
+    bool _reqTupleSet;
+    reqId _peReqIdx;
+
+    uint8_t totalChunks;
+    uint8_t numChunk;
+    uint8_t partialChunkCount;
+    uint8_t requestId;
+};
 
 struct peHeader {
-    peHeader() : resource(""),
-                 command(0), action(0), resId(""), subscribeId(""), path(""),
-                 offset(-1), limit(-1), status(0), partial(false),_totalChunks(-1), _numChunk(-1),
-                 _partialChunkCount(-1), mutualEncoding(-1), mediaType(""), _pvoid(nullptr),
-                 _headerProp(0), _headerState(PE_HEAD_KEY + PE_HEAD_STATE_IN_OBJECT),
-                 _headerPos(0) {}
-    uint8_t requestId;
-    char resource[PE_HEAD_BUFFERLEN];
-    uint8_t command;
-    uint8_t action;
-    char resId[PE_HEAD_BUFFERLEN];
-    char subscribeId[PE_HEAD_BUFFERLEN];
-    char path[EXP_MIDICI_PE_EXPERIMENTAL_PATH];
-    int  offset;
-    int  limit;
-    int  status;
-    bool partial;
-    int  _totalChunks;
-    int  _numChunk;
-    int  _partialChunkCount;
-    int mutualEncoding;
-    char mediaType[PE_HEAD_BUFFERLEN];
-    void * _pvoid;
-    uint8_t _headerProp;
-    uint8_t _headerState;
-    uint8_t _headerPos;
+    std::string resId;
+    std::string resource;
+    uint16_t  offset;
+    uint16_t  limit;
+    std::string mutualEncoding;
+    std::string path;
+    std::string action;
+    bool setPartial;
 
+    JS_OBJ(resId, resource, offset, limit, mutualEncoding, path, action, setPartial);
 };
+
+struct peHeaderReply {
+    uint16_t  status;
+    uint16_t  totalCount;
+    uint16_t  cacheTime;
+    std::string mutualEncoding;
+    std::string mediaType;
+    std::string message;
+    std::string stateRev;
+
+    JS_OBJ(status, totalCount, cacheTime, mutualEncoding, mediaType, message, stateRev);
+};
+
+struct peHeaderSubscribe {
+    std::string resId;
+    std::string resource;
+    std::string subscribeId;
+    std::string command;
+
+    JS_OBJ(resId, resource, command, subscribeId);
+};
+
+struct peHeaderSubscribeReply {
+    uint16_t  status;
+    std::string subscribeId;
+    std::string command;
+    std::string message;
+
+    JS_OBJ(status, command, subscribeId, message);
+};
+
+
 
 class midiCIProcessor{
 private:
     MIDICI midici;
-    uint8_t buffer[S7_BUFFERLEN];
+    uint8_t buffer[256];
     /*
      * in Discovery this is [sysexID1,sysexID2,sysexID3,famId1,famid2,modelId1,modelId2,ver1,ver2,ver3,ver4,...product Id]
      * in Profiles this is [pf1, pf1, pf3, pf4, pf5]
@@ -140,7 +174,7 @@ private:
                              bool lastByteOfChunk, bool lastByteOfSet) = nullptr;
 
     void cleanupRequest(reqId peReqIdx);
-    void processPEHeader(reqId peReqIdx, uint8_t s7Byte);
+
     void processPESysex(uint8_t s7Byte);
 
 //Process Inquiry

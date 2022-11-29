@@ -7,16 +7,56 @@ __Example Setup__
 ```c++
 umpProcessor UMPHandler;
 
-UMPHandler.setNoteOn(handleNoteOn);
-UMPHandler.setNoteOff(handleNoteOff);
-UMPHandler.setControlChange(handleCC);
-UMPHandler.setProgramChange(handleProgramChange);
-UMPHandler.setTimingClock(handleClock);
+UMPHandler.setUtility(utilityCallback);
+UMPHandler.setCVM(handleChannelVoiceMessages);
+UMPHandler.setSystem(handleSystemMessages);
+UMPHandler.setSysEx(processUMPSysex);
 
-UMPHandler.setMidiEndpoint(midiendpoint);
-UMPHandler.setFunctionBlock(functionblock);
-UMPHandler.setRawSysEx(processUMPSysex);
+UMPHandler.setMidiEndpoint(midiEndpointCallback);
+UMPHandler.setFunctionBlock(functionblockCallback);
+
 ...
+```
+
+## Structs
+### umpCVM - UMP Channel Voice Message 
+UMP messages of Message Type 0x2 and 0x4 are presented in this format. See below for the value meaning for each status. 
+```c++
+struct umpCVM{
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint8_t channel;
+    uint8_t note;
+    uint32_t value;
+    uint16_t index;
+    uint8_t bank;
+    bool flag1;
+    bool flag2;
+};
+```
+### umpGeneric - UMP Generic Structure
+UMP messages of Message Type 0x0 and 0x1 are presented in this format. See below for the value meaning for each status.
+```c++
+struct umpGeneric{
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint16_t value;
+};
+```
+_Note: Utility Messages (MT 0x0) are groupless and therefore the ```umpGproup``` value is ignored._
+
+### umpData - UMP Data Messages
+```c++
+struct umpData{
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint8_t form;
+    uint8_t* data;
+    uint8_t dataLength;
+};
 ```
 
 ## Common Methods
@@ -26,11 +66,62 @@ Process incoming UMP messages broken up into 32bit words.
 Reset the current processing of incoming UMP.
 
 ## Utility message Handlers
-_WIP_
+### inline void setUtility(utilityCallback)
+```c++ 
+void utilityCallback(struct umpGeneric mess){
+    printf("->Utility Message: status %d value: %d", mess.status, mess.value);
+} 
+```
+__Values in the umpGeneric struct:__
 
-## Common Channel Voice Message Handlers
+| status                   | value                          |
+|--------------------------|--------------------------------|
+| UTILITY_NOOP             | -                              |
+| UTILITY_JRCLOCK          | sender clock time              |
+| UTILITY_JRTS             | sender clock timestamp         |
+| UTILITY_DELTACLOCKTICK   | # of ticks PQN                 |
+| UTILITY_DELTACLOCKSINCE  | # of ticks since last event    |
 
-These are the common handles for UMP Messages received and processed by ```umpProcessor```. 
+
+## Common Channel Voice Message Handler
+
+### inline void setCVM(handleChannelVoiceMessages)
+Set the callable function when a Channel Voice Message is processed by ```processUMP```
+```c++ 
+void handleChannelVoiceMessages(struct umpCVM mess){
+    printf("->CVM: Group %d CH %d Note: %d status: %d", mess.umpGroup, mess.channel, mess.status);
+} 
+```
+
+__Values in the umpCVM struct:__
+
+| status               | note  | value     | bank          | index         | flag1      | flag2  |     
+|----------------------|-------|-----------|---------------|---------------|------------|--------|
+| NOTE_OFF             | note  | velocity♠ | attributeType | attributeData |            |        |
+| NOTE_ON              | note  | velocity♠ | attributeType | attributeData |            |        |
+| KEY_PRESSURE         | note  | value\*   |               |               |            |        |
+| CC                   |       | value\*   |               | index         |            |        |
+| PROGRAM_CHANGE       |       | program   | bank          | index         | bank valid |        |
+| CHANNEL_PRESSURE     |       | value\*   |               |               |            |        |
+| PITCH_BEND           |       | value\*   |               |               |            |        |
+| RPN †♥               |       | value     | bank          | index         |            |        |
+| NRPN †♥              |       | value     | bank          | index         |            |        |
+| RPN_RELATIVE †       |       | value‡    | bank          | index         |            |        |
+| NRPN_RELATIVE †      |       | value‡    | bank          | index         |            |        |
+| PITCH_BEND_PERNOTE † | note  | value     |               |               |            |        |
+| RPN_PERNOTE †        | note  | value     |               | index         |            |        |
+| NRPN_PERNOTE †       | note  | value     |               | index         |            |        |
+| PERNOTE_MANAGE †     | note  |           |               |               | detach     | reset  |
+
+_† MIDI 2.0 Protocol messages only_  
+_\* M1 Values are scaled to 32 bit value_  
+_♠ M1 Values are scaled to 16 bit value_  
+_♥ Message is only triggered when a MIDI 2.0 RPN message is sent. This is not triggered when a MIDI 1.0 (N)RPN
+messages are sent. Those messages are processed using the function set by ```setControlChange```_  
+_‡ These values are twos complement and will need to cast e.g:_
+```c++
+int32_t relativeValue = (int32_t)mess.value;
+```
 
 The ```umpProcessor``` makes some distinction between different Protocols. This means that Channel Voice Messages (e.g. 
 Note On) handlers are called the same way regardless if is a MIDI 1.0 Channel Voice Message (Message Type 0x2) or a MIDI 
@@ -38,119 +129,57 @@ Note On) handlers are called the same way regardless if is a MIDI 1.0 Channel Vo
 
 This allows for ```umpProcessor``` to process both types of Channel Voice Messages simultaneously.
 
-Jitter Reduction Messages are also handled using handlers for those Messages. It is up to the 
-application to manage the combination of JR messages and other UMP messages.
+It is up to the application to manage the combination of JR messages and other UMP messages.
 
-If the application does not use a particular message it does not need to be handled.
+## Common System Message Handler
 
-### inline void setNoteOff(noteOffCallback)
-Set the callable function when a Note Off is processed by ```processUMP```
+### inline void setSystem(handleSystemMessages)
+Set the callable function when a System Message is processed by ```processUMP```
 ```c++ 
-void noteOffCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint16_t velocity, 
-        uint8_t attributeType, uint16_t attributeData){
-    printf("->MIDI Off: CH %d Note: %d Velocity: %d", channel, noteNumber, velocity);
+void handleSystemMessages(struct umpGeneric mess){
+    printf("->CVM: Group %d status: %d", mess.umpGroup, mess.status);
 } 
 ```
-* ```umpGroup``` is the UMP Group
-* ```messageType``` is the UMP Message Type
 
-_Note: Velocity is scaled to 16 bits if ```messageType``` equals 0x2_
+__Values in the umpGeneric struct:__
 
-
-### inline void setMidiNoteOn(noteOnCallback)
-_See Note Off Callback for structure of ```noteOnCallback```_
-
-### inline void setControlChange(ccCallBack)
-```c++ 
-void ccCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t index, uint32_t value){
-    printf("->MIDI CC: CH %d index: %d value: %d", channel, index, value);
-} 
-```
-_Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
-
-### inline void setPolyPressure(polyPressureCallback)
-```c++ 
-void polyPressureCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t noteNumber, uint32_t value){
-    printf("->MIDI Poly Press.: CH %d Note: %d value: %d", channel, noteNumber, value);
-} 
-```
-_Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
-
-### inline void setChannelPressure(channelPressureCallback)
-```c++ 
-void channelPressureCallback(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint32_t value){
-    printf("->MIDI Channel Press.: CH %d Value: %d", channel, value);
-} 
-```
-_Note: Value is scaled to 32 bits if ```messageType``` equals 0x2_
-
-### inline void setPitchBend(void (\*fptr)(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint32_t value))
-
-### inline void setProgramChange(void (\*fptr)(uint8_t umpGroup, uint8_t messageType, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index))
-_Note: In MIDI 1.0 Program Change messages, the ```bankValid``` is always false._
-
-## MIDI 2.0 Channel Voice Message Handlers
-These callbacks should only be sent if MIDI 2.0 Protocol is enabled and these messages are sent using Message Type 0x4.
-
-### inline void setRPN(rpnCallBack)
-```c++ 
-void rpnCallback(uint8_t umpGroup, uint8_t channel, uint8_t bank, uint8_t index, uint32_t value){
-    printf("->MIDI RPN: CH %d index: %d value: %d", channel, index, value);
-} 
-```
-_Note: This message is only triggered when a MIDI 2.0 RPN message is sent. This is not triggered when a MIDI 1.0 RPN
-message is sent. Those messages are processed using the function set by ```setControlChange```_
-
-### inline void setNRPN(nrpnCallBack)
-_See RPN Callback for structure of ```nrpnCallback```_
-_Note: This message is only triggered when a MIDI 2.0 RPN message is sent. This is not triggered when a MIDI 1.0 RPN
-message is sent. Those messages are processed using the function set by ```setControlChange```_
-
-### inline void setRelativeRPN(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t bank, uint8_t index, int32_t value))
-### inline void setRelativeNRPN(void (\*fptr)(uint8_t umpGroup, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value)
-### inline void setRpnPerNote(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
-### inline void setNrpnPerNote(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value))
-###  inline void setPerNoteManage(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, bool detach, bool reset))
-### inline void setPerNotePB(void (\*fptr)(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber,  uint32_t value))
-
-## Common System Message Handlers
-
-### inline void setTimingCode(void (\*fptr)(uint8_t umpGroup,uint8_t timeCode))
-### inline void setSongSelect(void (\*fptr)(uint8_t umpGroup,uint8_t song))
-### inline void setSongPositionPointer(void (*fptr)(uint8_t umpGroup,uint16_t position))
-### inline void setTuneRequest(void (\*fptr)(uint8_t umpGroup))
-### inline void setTimingClock(void (\*fptr)(uint8_t umpGroup))
-### inline void setSeqStart(void (\*fptr)(uint8_t umpGroup))
-### inline void setSeqCont(void (\*fptr)(uint8_t umpGroup))
-### inline void setSeqStop(void (\*fptr)(uint8_t umpGroup))
-### inline void setActiveSense(void (\*fptr)(uint8_t umpGroup))
-### inline void setSystemReset(void (\*fptr)(uint8_t umpGroup))
+| status      | value     |
+|-------------|-----------|
+| TIMING_CODE | time code |
+| SPP         | position  |
+| SONG_SELECT | song      |
+| TUNEREQUEST |           |
+| TIMINGCLOCK |           |
+| SEQSTART    |           |
+| SEQCONT     |           |
+| SEQSTOP     |           |
+| ACTIVESENSE |           |
+| SYSTEMRESET |           |
 
 
-
-## Common SysEx Handlers
+## Common SysEx Handler
 
 ###  inline void setRawSysEx(processUMPSysex)
 ```c++ 
 midiCIProcessor midiciMain1;
 bool isProcMIDICI = false;
 
-void processUMPSysex(uint8_t umpGroup, uint8_t *sysex ,uint8_t length, uint8_t state){
+void processUMPSysex(struct umpData mess){
     //Example of Processing UMP into MIDI-CI processor
-    if(state==1 && sysex[0] == S7UNIVERSAL_NRT && sysex[2] == S7MIDICI){
-        if(umpGroup==0) {
-            midiciMain1.startSysex7(umpGroup, sysex[1]);
+    if(mess.form==1 && mess.data[0] == S7UNIVERSAL_NRT && mess.data[2] == S7MIDICI){
+        if(mess.umpGroup==0) {
+            midiciMain1.startSysex7(mess.umpGroup, mess.data[1]);
             isProcMIDICI = true;
         }
     }
-    for (int i = 0; i < length; i++) {
-        if(umpGroup==0 && isProcMIDICI){
-            midiciMain1.processMIDICI(sysex[i]);
+    for (int i = 0; i < mess.dataLength; i++) {
+        if(mess.umpGroup==0 && isProcMIDICI){
+            midiciMain1.processMIDICI(mess.data[i]);
         }else{
             //Process other SysEx
         }
     }
-    if(state==3 && umpGroup==0 && isProcMIDICI){
+    if((mess.form==3 || mess.form==0) && isProcMIDICI){
         midiciMain1.endSysex7();
         isProcMIDICI = false;
     }
@@ -158,7 +187,13 @@ void processUMPSysex(uint8_t umpGroup, uint8_t *sysex ,uint8_t length, uint8_t s
 ```
 
 ## Flex Data Handlers
-_WIP_
+### inline void setFlexTempo(void (*fptr)(uint8_t group, uint32_t num10nsPQN))
+### inline void setFlexTimeSig(void (*fptr)(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes))
+### inline void setFlexMetronome(void (*fptr)(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3, uint8_t numSubDivCli1, uint8_t numSubDivCli2))
+### inline void setFlexKeySig(void (*fptr)(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic))
+### inline void setFlexChord(void (*fptr)(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic, uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg, uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic, uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg))
+### inline void setFlexPerformance(void (*fptr)(uint8_t group, uint8_t form, uint8_t addrs, uint8_t channel, uint8_t status, uint8_t* text, uint8_t textLength))
+### inline void setFlexLyric(void (*fptr)(uint8_t group, uint8_t form, uint8_t addrs, uint8_t channel, uint8_t status, uint8_t* text, uint8_t textLength))
 
 ## UMP Stream Messages
 
@@ -201,12 +236,15 @@ void midiEndpointCallback(uint8_t majVer, uint8_t minVer, uint8_t filter){
     }
 } 
 ```
-### inline void setMidiEndpointNameNotify(void (\*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name))
-### inline void setMidiEndpointProdIdNotify(void (\*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name))
+### inline void setMidiEndpointNameNotify(void (\*fptr)(struct umpData mess))
+### inline void setMidiEndpointProdIdNotify(void (\*fptr)(struct umpData mess))
 ### inline void setMidiEndpointInfoNotify(void (\*fptr)(uint8_t majVer, uint8_t minVer, uint8_t numOfFuncBlocks, bool m2, bool m1, bool rxjr, bool txjr))
 ### inline void setMidiEndpointDeviceInfoNotify(void (\*fptr)(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId, std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version))
-### inline void setJRProtocolReq(void (\*fptr)(uint8_t protocol, bool jrrx, bool jrtx))
+### inline void setJRProtocolRequest(void (\*fptr)(uint8_t protocol, bool jrrx, bool jrtx))
 ### inline void setJRProtocolNotify(void (\*fptr)(uint8_t protocol, bool jrrx, bool jrtx))
 ### inline void setFunctionBlock(void (\*fptr)(uint8_t filter, uint8_t fbIdx))
 ### inline void setFunctionBlockNotify(void (\*fptr)(uint8_t fbIdx, bool active, uint8_t direction, uint8_t firstGroup, uint8_t groupLength, bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams))
-### inline void setFunctionBlockNotify(void (\*fptr)(uint8_t fbIdx, uint8_t form, uint8_t nameLength, uint8_t* name))
+### inline void setFunctionBlockNotify(void (\*fptr)(struct umpData mess, uint8_t fbIdx))
+
+### inline void setStartOfSeq(void (*fptr)()){startOfSeq = fptr; }
+### inline void setEndOfFile(void (*fptr)()){endOfFile = fptr; }

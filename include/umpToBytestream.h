@@ -39,12 +39,9 @@ class umpToBytestream{
         uint8_t group;
 
         umpToBytestream();
-		
-	bool availableBS();
-	
-	uint8_t readBS();
-	
-	void UMPStreamParse(uint32_t UMP);
+        bool availableBS();
+        uint8_t readBS();
+        void UMPStreamParse(uint32_t UMP);
 };
 
 #endif

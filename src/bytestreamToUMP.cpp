@@ -52,12 +52,12 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 		  
 		  if(status==NOTE_ON || status==NOTE_OFF){
 			umpMess[messPos] += (b1 + 0L) <<8;
-			umpMess[messPos+1] = (scaleUp(b2,7,16) << 16);
+                        umpMess[messPos+1] = (M2Utils::scaleUp(b2,7,16) << 16);
 		  } else if (status == KEY_PRESSURE){
 			umpMess[messPos] += (b1 + 0L) <<8;
-			umpMess[messPos+1] = scaleUp(b2,7,32);
+                        umpMess[messPos+1] = M2Utils::scaleUp(b2,7,32);
 		  } else if (status == PITCH_BEND){
-			umpMess[messPos+1] = scaleUp((b1<<7) + b2,14,32); 
+                        umpMess[messPos+1] = M2Utils::scaleUp((b1<<7) + b2,14,32);
 		  } else if (status == PROGRAM_CHANGE){
 			if(bankMSB[channel]!=255 && bankLSB[channel]!=255){
 				umpMess[messPos] += 1;
@@ -65,7 +65,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 			}
 			umpMess[messPos+1] += (b2 + 0L) << 24;
 		  } else if (status == CHANNEL_PRESSURE){
-			umpMess[messPos+1] = scaleUp(b1,7,32);
+                        umpMess[messPos+1] = M2Utils::scaleUp(b1,7,32);
 		  }  else if (status == CC){
 			switch(b1){
 			 case 0:
@@ -86,7 +86,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 					umpMess[messPos] = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
 					umpMess[messPos] += (status + channel + 0L)<<16;
 					umpMess[messPos] += ((int)rpnMsb[channel]<<7) + rpnLsb[channel] + 0L;
-					umpMess[messPos+1] = scaleUp(((int)b2<<7),14,32); 
+                                    umpMess[messPos+1] = M2Utils::scaleUp(((int)b2<<7),14,32);
 
 				}else{
 					rpnMsbValue[channel] = b2;
@@ -102,7 +102,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 				umpMess[messPos] = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
 				umpMess[messPos] += (status  + channel + 0L)<<16;
 				umpMess[messPos] += ((int)rpnMsb[channel]<<7) + rpnLsb[channel] + 0L;
-				umpMess[messPos+1] = scaleUp(((int)rpnMsbValue[channel]<<7) + b2,14,32); 
+                                umpMess[messPos+1] = M2Utils::scaleUp(((int)rpnMsbValue[channel]<<7) + b2,14,32);
 				break;
 			case 99:
 				rpnMode[channel] = false;
@@ -124,7 +124,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 					
 			default:
 				umpMess[messPos] += (b1 + 0L) <<8;
-				umpMess[messPos+1] = scaleUp(b2,7,32);
+                                umpMess[messPos+1] = M2Utils::scaleUp(b2,7,32);
 				break;
 			}					
 		  }

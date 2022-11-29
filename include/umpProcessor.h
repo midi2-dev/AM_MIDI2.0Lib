@@ -27,6 +27,39 @@
 
 #include "utils.h"
 
+struct umpCVM{
+    umpCVM() : umpGroup(255), messageType(255), status(0),channel(255),note(255), value(0),  index(0), bank(0),
+         flag1(false), flag2(false) {}
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint8_t channel;
+    uint8_t note;
+    uint32_t value;
+    uint16_t index;
+    uint8_t bank;
+    bool flag1;
+    bool flag2;
+};
+
+struct umpGeneric{
+    umpGeneric() : umpGroup(255), status(0),  value(0) {}
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint16_t value;
+};
+
+struct umpData{
+    umpData() : umpGroup(255), status(0),  form(0) {}
+    uint8_t umpGroup;
+    uint8_t messageType;
+    uint8_t status;
+    uint8_t form;
+    uint8_t* data;
+    uint8_t dataLength;
+};
+
 class umpProcessor{
     
   private:
@@ -35,44 +68,16 @@ class umpProcessor{
 	uint8_t messPos=0;
 
     // Message type 0x0  callbacks
-    void (*recvNOOP)() = nullptr;
-    void (*recvJRClock)(uint16_t timing) = nullptr;
-    void (*recvJRTimeStamp)(uint16_t timestamp) = nullptr;
-    void (*recvDCTTickPQN)(uint16_t timestamp) = nullptr;
-    void (*recvDCTickLastEv)(uint16_t timestamp) = nullptr;
+    void (*utilityMessage)(struct umpGeneric mess) = nullptr;
 
+	// MIDI 1 and 2 CVM  callbacks
+    void (*channelVoiceMessage)(struct umpCVM mess) = nullptr;
+    
+   //System Messages  callbacks
+    void (*systemMessage)(struct umpGeneric mess) = nullptr;
 
-    // MIDI 1 and 2 CVM  callbacks
-    void (*midiNoteOff)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType,
-            uint16_t attributeData) = nullptr;
-    void (*midiNoteOn)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType,
-            uint16_t attributeData) = nullptr;
-    void (*controlChange)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t index, uint32_t value) = nullptr;
-    void (*rpn)(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, uint32_t value) = nullptr;
-    void (*nrpn)(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, uint32_t value) = nullptr;
-    void (*rnrpn)(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, int32_t value) = nullptr;
-    void (*rrpn)(uint8_t group, uint8_t channel, uint8_t bank, uint8_t index, int32_t value) = nullptr;
-    void (*polyPressure)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t noteNumber, uint32_t pressure) = nullptr;
-    void (*perNotePB)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pitch) = nullptr;
-    void (*nrpnPerNote)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value) = nullptr;
-    void (*rpnPerNote)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index, uint32_t value) = nullptr;
-    void (*perNoteManage)(uint8_t group, uint8_t channel, uint8_t noteNumber, bool detach, bool reset) = nullptr;
-    void (*channelPressure)(uint8_t group, uint8_t mt, uint8_t channel, uint32_t pressure) = nullptr;
-    void (*pitchBend)(uint8_t group, uint8_t mt, uint8_t channel, uint32_t value) = nullptr;
-    void (*programChange)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank,
-            uint8_t index) = nullptr;
-
-    //System Messages  callbacks
-    void (*timingCode)(uint8_t group, uint8_t timeCode) = nullptr;
-    void (*songSelect)(uint8_t group, uint8_t song) = nullptr;
-    void (*songPositionPointer)(uint8_t group, uint16_t position) = nullptr;
-    void (*tuneRequest)(uint8_t group) = nullptr;
-    void (*timingClock)(uint8_t group) = nullptr;
-    void (*seqStart)(uint8_t group) = nullptr;
-    void (*seqCont)(uint8_t group) = nullptr;
-    void (*seqStop)(uint8_t group) = nullptr;
-    void (*activeSense)(uint8_t group) = nullptr;
-    void (*systemReset)(uint8_t group) = nullptr;
+    //Sysex
+    void (*sendOutSysex)(struct umpData mess) = nullptr;
 
     // Message Type 0xD  callbacks
     void (*flexTempo)(uint8_t group, uint32_t num10nsPQN) = nullptr;
@@ -84,10 +89,8 @@ class umpProcessor{
             uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
             uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
             uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg) = nullptr;
-    void (*flexPerformance)(uint8_t group, uint8_t form, uint8_t addrs, uint8_t channel, uint8_t status, uint8_t* text,
-            uint8_t textLength) = nullptr;
-    void (*flexLyric)(uint8_t group, uint8_t form, uint8_t addrs, uint8_t channel, uint8_t status, uint8_t* text,
-                            uint8_t textLength) = nullptr;
+    void (*flexPerformance)(struct umpData mess, uint8_t addrs, uint8_t channel) = nullptr;
+    void (*flexLyric)(struct umpData mess, uint8_t addrs, uint8_t channel) = nullptr;
 
     // Message Type 0xF  callbacks
     void (*midiEndpoint)(uint8_t majVer, uint8_t minVer, uint8_t filter) = nullptr;
@@ -96,104 +99,75 @@ class umpProcessor{
             = nullptr;
     void (*midiEndpointDeviceInfo)(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                              std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version) = nullptr;
-    void (*midiEndpointName)(uint8_t form, uint8_t nameLength, uint8_t* name) = nullptr;
-    void (*midiEndpointProdId)(uint8_t form, uint8_t prodIdLength, uint8_t* prodId) = nullptr;
+    void (*midiEndpointName)(struct umpData mess) = nullptr;
+    void (*midiEndpointProdId)(struct umpData mess) = nullptr;
+
     void (*midiEndpointJRProtocolReq)(uint8_t protocol, bool jrrx, bool jrtx) = nullptr;
     void (*midiEndpointJRProtocolNotify)(uint8_t protocol, bool jrrx, bool jrtx) = nullptr;
+
     void (*functionBlockInfo)(uint8_t fbIdx, bool active,
             uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
             bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams) = nullptr;
-    void (*functionBlockName)(uint8_t fbIdx, uint8_t form, uint8_t nameLength, uint8_t* name) = nullptr;
+    void (*functionBlockName)(struct umpData mess, uint8_t fbIdx) = nullptr;
     void (*startOfSeq)() = nullptr;
     void (*endOfFile)() = nullptr;
-
-    void (*sendOutSysex)(uint8_t group, uint8_t *sysex ,uint8_t length, uint8_t state) = nullptr;
     
   public:
 
 	void clearUMP();
     void processUMP(uint32_t UMP);
 
-	//-----------------------Handlers ---------------------------
-    inline void setJRClock(void (*fptr)(uint16_t timing)){ recvJRClock = fptr;}
-    inline void setJRTimeStamp(void (*fptr)(uint16_t timestamp)){ recvJRTimeStamp = fptr;}
-    inline void setDCTickPQN(void (*fptr)( uint16_t timing)){ recvDCTTickPQN = fptr;}
-    inline void setJDCSinceLastEvent(void (*fptr)(uint16_t timestamp)){ recvDCTickLastEv = fptr;}
+		//-----------------------Handlers ---------------------------
+    inline void setUtility(void (*fptr)(struct umpGeneric mess)){ utilityMessage = fptr; }
+    inline void setCVM(void (*fptr)(struct umpCVM mess)){ channelVoiceMessage = fptr; }
+    inline void setSystem(void (*fptr)(struct umpGeneric mess)){ systemMessage = fptr; }
+    inline void setSysEx(void (*fptr)(struct umpData mess)){sendOutSysex = fptr; }
 
-	inline void setNoteOff(void (*fptr)(uint8_t group, uint8_t mt ,uint8_t channel, uint8_t noteNumber, uint16_t velocity,
-            uint8_t attributeType, uint16_t attributeData)){ midiNoteOff = fptr; }
-	inline void setNoteOn(void (*fptr)(uint8_t group, uint8_t mt ,uint8_t channel, uint8_t noteNumber, uint16_t velocity,
-            uint8_t attributeType, uint16_t attributeData)){ midiNoteOn = fptr; }
-	inline void setControlChange(void (*fptr)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t index, uint32_t value)){
-        controlChange = fptr; }
-	inline void setRPN(void (*fptr)(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value)){
-        rpn = fptr; }
-	inline void setNRPN(void (*fptr)(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value)){
-        nrpn = fptr; }
-	inline void setRelativeNRPN(void (*fptr)(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index,
-            int32_t value/*twoscomplement*/)){ rnrpn = fptr; }
-	inline void setRelativeRPN(void (*fptr)(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index,
-            int32_t value/*twoscomplement*/)){ rrpn = fptr; }
-	inline void setPolyPressure(void (*fptr)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t noteNumber, uint32_t pressure)){
-        polyPressure = fptr; }
+    //---------- Flex Data
+    inline void setFlexTempo(void (*fptr)(uint8_t group, uint32_t num10nsPQN)){ flexTempo = fptr; }
+    inline void setFlexTimeSig(void (*fptr)(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)){
+        flexTimeSig = fptr; }
+    inline void setFlexMetronome(void (*fptr)(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
+                          uint8_t numSubDivCli1, uint8_t numSubDivCli2)){ flexMetronome = fptr; }
+    inline void setFlexKeySig(void (*fptr)(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic)){
+        flexKeySig = fptr; }
+    inline void setFlexChord(void (*fptr)(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
+                      uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
+                      uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
+                      uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)){
+        flexChord = fptr; }
+    inline void setFlexPerformance(void (*fptr)(struct umpData mess, uint8_t addrs, uint8_t channel)){ flexPerformance = fptr; }
+    inline void setFlexLyric(void (*fptr)(struct umpData mess, uint8_t addrs, uint8_t channel)){ flexLyric = fptr; }
 
-    inline void setRpnPerNote(void (*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index,
-            uint32_t value)){rpnPerNote = fptr; }
-    inline void setNrpnPerNote(void (*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t index,
-            uint32_t value)){nrpnPerNote = fptr; }
-
-    inline void setPerNoteManage(void (*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber,
-            bool detach, bool reset)){perNoteManage = fptr; }
-    inline void setPerNotePB(void (*fptr)(uint8_t group, uint8_t channel, uint8_t noteNumber,
-                                              uint32_t value)){perNotePB = fptr; }
-
-	inline void setChannelPressure(void (*fptr)(uint8_t group, uint8_t mt, uint8_t channel, uint32_t pressure)){
-        channelPressure = fptr; }
-	inline void setPitchBend(void (*fptr)(uint8_t group, uint8_t mt, uint8_t channel, uint32_t value)){ pitchBend = fptr; }
-	inline void setProgramChange(void (*fptr)(uint8_t group, uint8_t mt, uint8_t channel, uint8_t program, bool bankValid,
-            uint8_t bank, uint8_t index)){ programChange = fptr; }
-	//TODO per note etc
-
-	inline void setTimingCode(void (*fptr)(uint8_t group, uint8_t timeCode)){ timingCode = fptr; }
-	inline void setSongSelect(void (*fptr)(uint8_t group,uint8_t song)){ songSelect = fptr; }
-	inline void setSongPositionPointer(void (*fptr)(uint8_t group,uint16_t position)){
-        songPositionPointer = fptr; }
-	inline void setTuneRequest(void (*fptr)(uint8_t group)){ tuneRequest = fptr; }
-	inline void setTimingClock(void (*fptr)(uint8_t group)){ timingClock = fptr; }
-	inline void setSeqStart(void (*fptr)(uint8_t group)){ seqStart = fptr; }
-	inline void setSeqCont(void (*fptr)(uint8_t group)){ seqCont = fptr; }
-	inline void setSeqStop(void (*fptr)(uint8_t group)){ seqStop = fptr; }
-	inline void setActiveSense(void (*fptr)(uint8_t group)){ activeSense = fptr; }
-	inline void setSystemReset(void (*fptr)(uint8_t group)){ systemReset = fptr; }
-
+    //---------- UMP Stream
 
 	inline void setMidiEndpoint(void (*fptr)(uint8_t majVer, uint8_t minVer, uint8_t filter)){
         midiEndpoint = fptr; }
-	inline void setMidiEndpointNameNotify(void (*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name)){
+	inline void setMidiEndpointNameNotify(void (*fptr)(struct umpData mess)){
         midiEndpointName = fptr; }
-    inline void setMidiEndpointProdIdNotify(void (*fptr)(uint8_t form, uint8_t nameLength, uint8_t* name)){
+    inline void setMidiEndpointProdIdNotify(void (*fptr)(struct umpData mess)){
         midiEndpointProdId = fptr; }
-	inline void setMidiEndpointInfoNotify(void (*fptr)(uint8_t majVer, uint8_t minVer, uint8_t numOfFuncBlocks, bool m2, bool m1, bool rxjr,
-            bool txjr)){
+	inline void setMidiEndpointInfoNotify(void (*fptr)(uint8_t majVer, uint8_t minVer, uint8_t numOfFuncBlocks, bool m2,
+            bool m1, bool rxjr, bool txjr)){
         midiEndpointInfo = fptr; }
     inline void setMidiEndpointDeviceInfoNotify(void (*fptr)(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
             std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)){
         midiEndpointDeviceInfo = fptr; }
-    inline void setJRProtocolReq(void (*fptr)(uint8_t protocol, bool jrrx, bool jrtx)){ midiEndpointJRProtocolReq = fptr;}
+    inline void setJRProtocolRequest(void (*fptr)(uint8_t protocol, bool jrrx, bool jrtx)){ midiEndpointJRProtocolReq = fptr;}
     inline void setJRProtocolNotify(void (*fptr)(uint8_t protocol, bool jrrx, bool jrtx)){
         midiEndpointJRProtocolNotify = fptr;}
 
     inline void setFunctionBlock(void (*fptr)(uint8_t filter, uint8_t fbIdx)){ functionBlock = fptr; }
     inline void setFunctionBlockNotify(void (*fptr)(uint8_t fbIdx, bool active,
                             uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
-                            bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)){ functionBlockInfo = fptr; }
-    inline void setFunctionBlockNotify(void (*fptr)(uint8_t fbIdx, uint8_t form, uint8_t nameLength, uint8_t* name)){
-        functionBlockName = fptr; }
+                            bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)){
+        functionBlockInfo = fptr; }
+    inline void setFunctionBlockNameNotify(void (*fptr)(struct umpData mess, uint8_t fbIdx)){functionBlockName = fptr; }
+    inline void setStartOfSeq(void (*fptr)()){startOfSeq = fptr; }
+    inline void setEndOfFile(void (*fptr)()){endOfFile = fptr; }
 
 
 
-	inline void setRawSysEx(void (*fptr)(uint8_t group, uint8_t *sysex ,uint8_t numbytes, uint8_t state)){
-        sendOutSysex = fptr; }
 };
 
 #endif //UMP_PROCESSOR_H

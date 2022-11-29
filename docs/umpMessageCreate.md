@@ -10,7 +10,6 @@ MIDI messages.
 #### uint32_t mt0DeltaTicksSinceLast( uint16_t noTicksSince);
 
 
-
 ## System Messages (Message Type 0x1)
 #### uint32_t mt1MTC(uint8_t umpGroup, uint8_t timeCode);
 #### uint32_t mt1SPP(uint8_t umpGroup, uint16_t position);
@@ -64,7 +63,7 @@ void sendOutSysex(uint8_t umpGroup, uint8_t *sysex ,uint16_t length ){
 
 
 ## MIDI 2.0 Channel voice messages (Message Type 0x4)
-MIDI 2.0 Channel voice messages return ```std::array<uint32_t, 2>```.
+All MIDI 2.0 Channel voice messages return ```std::array<uint32_t, 2>```.
 
 #### std::array<uint32_t, 2> mt4NoteOn(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);
 #### std::array<uint32_t, 2> mt4NoteOff(uint8_t umpGroup, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData);

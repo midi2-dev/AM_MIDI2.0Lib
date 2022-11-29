@@ -88,7 +88,6 @@
 #endif
 #define S7UNIVERSAL_NRT 0x7E
 #define S7UNIVERSAL_RT 0x7F
-#define S7IDREQUEST 0x06
 #define S7MIDICI 0x0D
 
 #define MIDICI_DISCOVERY 0x70
@@ -149,7 +148,7 @@
 #define MIDICI_PE_MCODED7 2
 #define MIDICI_PE_MCODED7ZLIB 3
 
-#define MIDI_PORT 0x7F
+#define FUNCTION_BLOCK 0x7F
 #define M2_CI_BROADCAST 0xFFFFFFF
 
 #define PE_HEAD_STATE_IN_OBJECT          2
@@ -177,33 +176,15 @@
 #define UMP_FLEX_DATA 0xD
 #define UMP_MIDI_ENDPOINT 0xF
 
-#ifdef MIDI1BYTESTREAMONLY
-    #define UMPGROUPS 1
-#else
-    #define UMPGROUPS 16
-#endif
 
 
 
-typedef std::tuple<uint32_t, uint8_t> reqId;  //muid-requestId
-
-struct MIDICI{
-    MIDICI() : umpGroup(255), deviceId(MIDI_PORT),ciType(255),ciVer(1), remoteMUID(0), localMUID(0), _reqTupleSet(false){}
-    uint8_t umpGroup;
-    uint8_t deviceId;
-    uint8_t ciType;
-    uint8_t ciVer;
-    uint32_t remoteMUID;
-    uint32_t localMUID;
-    bool _reqTupleSet;
-    reqId _peReqIdx;
-};
 
 
-
+namespace M2Utils {
 uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits);
 
 uint32_t scaleDown(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits);
 
-
+}
 #endif

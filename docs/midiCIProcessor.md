@@ -81,16 +81,19 @@ The ```umpGroup``` variable is set by startSysex7 method.
 ```c++
 struct peHeader {
     uint8_t requestId;
-    char resource[PE_HEAD_BUFFERLEN];
-    char resId[PE_HEAD_BUFFERLEN];
+    char resource[36];
+    char resId[36];
     uint8_t command; //MIDICI_PE_COMMAND_START MIDICI_PE_COMMAND_END MIDICI_PE_COMMAND_PARTIAL MIDICI_PE_COMMAND_FULL MIDICI_PE_COMMAND_NOTIFY 
     uint8_t action; //MIDICI_PE_ACTION_COPY MIDICI_PE_ACTION_MOVE MIDICI_PE_ACTION_DELETE MIDICI_PE_ACTION_CREATE_DIR 4
-    char subscribeId[PE_HEAD_BUFFERLEN];
+    char subscribeId[8];
     char path[EXP_MIDICI_PE_EXPERIMENTAL_PATH];
     int  offset;
     int  limit;
     int  status;
     bool partial;
+    int  totalChunks;
+    int  numChunk;
+    int  partialChunkCount;
     int mutualEncoding; // MIDICI_PE_ASCII MIDICI_PE_MCODED7 MIDICI_PE_MCODED7ZLIB 
     char mediaType[PE_HEAD_BUFFERLEN];
 };
@@ -109,7 +112,7 @@ void recvDiscoveryCallback(struct MIDICI ciDetails, std::array<uint8_t, 3> manuI
     //All MIDI-CI Devices shall reply to a Discovery message
     printf("Received Discover on Group %d remote MUID: %d\n", ciDetails.umpGroup, ciDetails.remoteMUID);
     unint8_t sysexBuffer[64];
-    int len = sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID,
+    int len = CIMessage::sendDiscoveryReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID,
                              {DEVICE_MFRID}, {DEVICE_FAMID}, {DEVICE_MODELID},
                              {DEVICE_VERSIONID},0,
                              512, outputPathId,
@@ -183,14 +186,14 @@ void profileInquiryCallback(struct MIDICI ciDetails){
   if(ciDetails.deviceId == 0 || ciDetails.deviceId == 0x7F){
     uint8_t profileDrawBar[5] = {0x7E, 0x40, 0x01, 0x01};
     //return 1 enabled profile
-    len = sendProfileListResponse(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, 
+    len = CIMessage::sendProfileListResponse(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, 
                                   0, 1, profileDrawBar, 0, profileNone);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
   }
 
   if(ciDetails.deviceId == 0x7F){
    //return no profiles   
-   len = sendProfileListResponse(sysexBuffer, 0x02, localMUID, ciDetails.remoteMUID, 
+   len = CIMessage::sendProfileListResponse(sysexBuffer, 0x02, localMUID, ciDetails.remoteMUID, 
                                  0x7F, 0, profileNone, 0, profileNone);
    sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
   }
@@ -272,10 +275,10 @@ that this is feasible, so it is kept as a uin16_t value._
 Upon receiving an Inquiry: Property Exchange Capabilities message the application should send back a Reply to Property 
 Exchange Capabilities message.
 ```c++
-void PECapabilityCallback(uint8_t group,  struct MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer){
+void PECapabilityCallback(struct MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer){
 	printf("->PE Capability: remoteMuid %d", ciDetails.remoteMUID);
     uint8_t sysexBuffer[64];
-	int len = sendPECapabilityReply(group, m2procMUID, ciDetails.remoteMUID, 4, 0, 0);
+	int len = CIMessage::sendPECapabilityReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, 4, 0, 0);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
 }
 ```
@@ -283,18 +286,18 @@ void PECapabilityCallback(uint8_t group,  struct MIDICI ciDetails, uint8_t numSi
 #### inline void setPECapabilitiesReply(PECapabilityReplyCallback)
 See setPECapabilities for the structure of PECapabilityReplyCallback
 
-#### inline void setRecvPEGetInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
+#### inline void setRecvPEGetInquiry(PEGetInquiryCallback)
 This callback is triggered upon receiving an Inquiry: Get Property Data message.
 ```c++
-void PEGetInquiry(uint8_t group, struct MIDICI ciDetails, struct peHeader requestDetails){
+void PEGetInquiryCallback( struct MIDICI ciDetails, struct peHeader requestDetails){
   printf("->PE GET Inquiry: remoteMuid %d requestId %s Resource %s resId %s", ciDetails.remoteMUID, 
-         requestDetails.requestId, requestDetails.resource, requestDetails.resId);
+         ciDetails.requestId, requestDetails.resource.c_str(), requestDetails.resId.c_str());
   
-  if (!strcmp(requestDetails.resource,"LocalOn")){
-	char header[14] = "{\"status\":200}";
+  if (!strcmp(requestDetails.resource.c_str(),"LocalOn")){
+	string header = "{\"status\":200}";
     uint8_t sysexBuffer[128];
-	int len = sendPEGetReply(sysexBuffer, m2procMUID, ciDetails.remoteMUID, requestDetails.requestId,
-                         14, (uint8_t*)header, 1, 1, 4, (uint8_t*)"true");
+	int len = CIMessage::sendPEGetReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID,\
+        ciDetails.requestId, header.length(), (uint8_t*)header.c_str(), 1, 1, 4, (uint8_t*)"true");
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
   }
 }
@@ -332,21 +335,27 @@ void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t b
       if(lastByteOfSet){
           file.write(m7d.dump,m7d.currentPos());
           file.close();
-          char header[14] = "{\"status\":200}";
+          string header = "{\"status\":200}";
           uint8_t sysexBuffer[128];
-          int len = sendPESetReply(sysexBuffer, m2procMUID, ciDetails.remoteMUID, requestDetails.requestId,
-                       14, (uint8_t*)header);
+          int len = CIMessage::sendPESetReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, requestDetails.requestId,
+                       header.length, (uint8_t*)header.c_str());
           sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
       }
     }
 }
 ```
 
-#### inline void setRecvPESetReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
+#### inline void setRecvPESetReply(PESetReplyCallback)
+See _setRecvPEGetInquiry_ for the callback structure
 
-#### inline void setRecvPESubInquiry(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t\*  body, bool lastByteOfChunk, bool lastByteOfSet))
-#### inline void setRecvPESubReply(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
-#### inline void setRecvPENotify(void (\*fptr)(MIDICI ciDetails,  peHeader requestDetails))
+#### inline void setRecvPESubInquiry(PESubInquiryCallback)
+See _setRecvPESetInquiry_ for the callback structure
+
+#### inline void setRecvPESubReply(PESubReplyCallback)
+See _setRecvPEGetInquiry_ for the callback structure
+
+#### inline void setRecvPENotify(PENotifyCallback)
+See _setRecvPEGetInquiry_ for the callback structure
 
 ### Process Inquiry (MIDI-CI 1.2 onwards)
 
@@ -356,12 +365,13 @@ void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t b
 void PICapabilitiesCallback(struct MIDICI ciDetails){
     printf("MIDI Process Inquiry Capabilities");
     uint8_t sysexBuffer[128];
-    int len = sendPICapabilityReply(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID,  1);
+    int len = CIMessage::sendPICapabilityReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, ciDetails.localMUID, ciDetails.remoteMUID,  1);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
 }
 ```
 
-#### inline void setRecvPICapabilitiesReply(void (\*fptr)(MIDICI ciDetails, uint8_t supportedFeatures))
+#### inline void setRecvPICapabilitiesReply(PICapabilitiesReplyCallback)
+See _setRecvPICapabilities_ for the callback structure
 
 #### inline void setRecvPIMMReport(PIMMReportCallback)
 
@@ -370,7 +380,7 @@ void PIMMReportCallback(struct MIDICI ciDetails, uint8_t MDC, uint8_t systemBitm
                                                     uint8_t chanContBitmap, uint8_t chanNoteBitmap){
     uint8_t sysexBuffer[128];
     int len;
-    len = sendPIMMReportReply(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId,
+    len = CIMessage::sendPIMMReportReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId,
                               0, 0b10010 &  chanContBitmap, 0);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
 
@@ -396,10 +406,13 @@ void PIMMReportCallback(struct MIDICI ciDetails, uint8_t MDC, uint8_t systemBitm
         ){
         sendProgramChange((uint8_t)patchLoaded,midiChannel);
     }
-    len = sendPIMMReportEnd(sysexBuffer, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId);
+    len = CIMessage::sendPIMMReportEnd(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, ciDetails.localMUID, ciDetails.remoteMUID, ciDetails.deviceId);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
 }
 
 ```
-#### inline void setRecvPIMMReportReply(void (\*fptr)(MIDICI ciDetails, uint8_t systemBitmap, uint8_t chanContBitmap, uint8_t chanNoteBitmap))
+
+#### inline void setRecvPIMMReportReply(PIMMReportReplyCallback)
+See _setRecvPIMMReport_ for the callback structure
+
 #### inline void setRecvPIMMEnd(void (\*fptr)(MIDICI ciDetails))

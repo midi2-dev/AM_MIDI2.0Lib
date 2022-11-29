@@ -22,7 +22,7 @@
 #include "../include/utils.h"
 
 
-uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
+uint32_t M2Utils::scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
    // simple bit shift
     if(srcVal==0){
         return 0L;
@@ -55,7 +55,7 @@ uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
   
 }
 
-uint32_t scaleDown(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits) {
+uint32_t M2Utils::scaleDown(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits) {
 	// simple bit shift
 	uint8_t scaleBits = (srcBits - dstBits);
 	return srcVal >> scaleBits;

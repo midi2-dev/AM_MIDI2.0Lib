@@ -34,107 +34,72 @@ void umpProcessor::processUMP(uint32_t UMP){
 	uint8_t mt = (umpMess[0] >> 28)  & 0xF;
 	uint8_t group = (umpMess[0] >> 24) & 0xF;
 
-	
 	if(messPos == 0
         && (mt <= UMP_M1CVM || mt==0x6 || mt==0x7)
             ){ //32bit Messages
 
-		if(mt == UMP_UTILITY){ //32 bits Utility Messages
-			uint8_t status = (umpMess[0] >> 20) & 0xF;
-			uint16_t timing = (umpMess[0] >> 16) & 0xFFFF;
-			
-			switch(status){
-				case UTILITY_NOOP: // NOOP
-				if(recvNOOP != nullptr) recvNOOP();
-				break;
-				case UTILITY_JRCLOCK: // JR Clock Message
-					if(recvJRClock != nullptr) recvJRClock(timing);
-					break;
-				case UTILITY_JRTS: //JR Timestamp Message
-					if(recvJRTimeStamp != nullptr) recvJRTimeStamp(timing);
-					break;
-                case UTILITY_DELTACLOCKTICK: //
-                    if(recvDCTTickPQN != nullptr) recvDCTTickPQN(timing);
-                    break;
-                case UTILITY_DELTACLOCKSINCE: //
-                    if(recvDCTickLastEv != nullptr) recvDCTickLastEv(timing);
-                    break;
-			}
-			
+            if(mt == UMP_UTILITY && utilityMessage!= nullptr){ //32 bits Utility Messages
+                umpGeneric mess = umpGeneric();
+                mess.messageType = mt;
+                mess.status = (umpMess[0] >> 20) & 0xF;
+                mess.value = (umpMess[0] >> 16) & 0xFFFF;
+                utilityMessage(mess);
 		} else 
-		if(mt == UMP_SYSTEM){ //32 bits System Real Time and System Common Messages (except System Exclusive)
-			//Send notice
-			uint8_t status = umpMess[0] >> 16 & 0xFF;
-			switch(status){
-				case TIMING_CODE:
-				{
-					uint8_t timing = (umpMess[0] >> 8) & 0x7F;
-					if(timingCode != nullptr) timingCode(group, timing);
-				}
-				break;
-				case SPP:
-				{
-					uint16_t position = ((umpMess[0] >> 8) & 0x7F)  + ((umpMess[0] & 0x7F) << 7);
-					if(songPositionPointer != nullptr) songPositionPointer(group, position);
-				}
-				break;
-				case SONG_SELECT:
-				{
-					uint8_t song = (umpMess[0] >> 8) & 0x7F;
-					if(songSelect != nullptr) songSelect(group, song);
-				}
-				break;
-				case TUNEREQUEST:
-				    if(tuneRequest != nullptr) tuneRequest(group);
-				break;
-				case TIMINGCLOCK:
-				    if(timingClock != nullptr) timingClock(group);
-				break;
-				case SEQSTART:
-				    if(seqStart != nullptr) seqStart(group);
-				break;
-				case SEQCONT:
-				    if(seqCont != nullptr) seqCont(group);
-				break;
-				case SEQSTOP:
-				    if(seqStop != nullptr) seqStop(group);
-				break;
-				case ACTIVESENSE:
-				    if(activeSense != nullptr) activeSense(group);
-				break;
-				case SYSTEMRESET:
-				    if(systemReset != nullptr) systemReset(group);
-				break;
-			}
+            if(mt == UMP_SYSTEM && systemMessage!= nullptr){ //32 bits System Real Time and System Common Messages (except System Exclusive)
+                umpGeneric mess = umpGeneric();
+                mess.messageType = mt;
+                mess.umpGroup = group;
+                mess.status =  umpMess[0] >> 16 & 0xFF;
+                switch(mess.status){
+		    case TIMING_CODE:
+                    case SONG_SELECT:
+                        mess.value = (umpMess[0] >> 8) & 0x7F;
+                        systemMessage(mess);
+			break;
+		    case SPP:
+                        mess.value = ((umpMess[0] >> 8) & 0x7F)  + ((umpMess[0] & 0x7F) << 7);
+                        systemMessage(mess);
+			break;
+                    default:
+                        systemMessage(mess);
+			break;
+		}
 		
-		} else 
-		if(mt == UMP_M1CVM){ //32 Bits MIDI 1.0 Channel Voice Messages
-			uint8_t status = umpMess[0] >> 16 & 0xF0;
-			uint8_t channel = (umpMess[0] >> 16) & 0xF;
+	    } else 
+            if(mt == UMP_M1CVM && channelVoiceMessage != nullptr){ //32 Bits MIDI 1.0 Channel Voice Messages
+                umpCVM mess = umpCVM();
+                mess.umpGroup = group;
+                mess.messageType = mt;
+                mess.status = umpMess[0] >> 16 & 0xF0;
+                mess.channel = (umpMess[0] >> 16) & 0xF;
 			uint8_t val1 = (umpMess[0] >> 8) & 0x7F;
 			uint8_t val2 = umpMess[0] & 0x7F;
 
-			switch(status){
+                switch(mess.status){
 				case NOTE_OFF: //Note Off
-					if(midiNoteOff != nullptr) midiNoteOff(group, (uint8_t)UMP_M1CVM, channel, val1, scaleUp(val2,7,16), 0, 0);
-					break;
 				case NOTE_ON: //Note On
-					if(midiNoteOn != nullptr) midiNoteOn(group, (uint8_t)UMP_M1CVM, channel, val1, scaleUp(val2,7,16), 0, 0);
+                        mess.note = val1;
+                        mess.value = M2Utils::scaleUp(val2,7,16);
+                        channelVoiceMessage(mess);
 					break;
 				case KEY_PRESSURE: //Poly Pressure
-					if(polyPressure != nullptr) polyPressure(group, (uint8_t)UMP_M1CVM, channel, val1, scaleUp(val2,7,32));
+                        mess.note = val1;
+                    case CHANNEL_PRESSURE: //Channel Pressure
+                        mess.value = M2Utils::scaleUp(val2,7,32);
+                        channelVoiceMessage(mess);
 					break;	
 				case CC: //CC
-					if(controlChange != nullptr) controlChange(group, (uint8_t)UMP_M1CVM, channel, val1, scaleUp(val2,7,32));
+                        mess.index = val1;
+                        mess.value = M2Utils::scaleUp(val2,7,32);
+                        channelVoiceMessage(mess);
 					break;
 				case PROGRAM_CHANGE: //Program Change Message
-					if(programChange != nullptr) programChange(group, (uint8_t)UMP_M1CVM, channel, val1, false, 0, 0);
-					break;
-				case CHANNEL_PRESSURE: //Channel Pressure
-					if(channelPressure != nullptr) channelPressure(group, (uint8_t)UMP_M1CVM, channel, scaleUp(val1,7,32));
+                        mess.value = val1;
+                        channelVoiceMessage(mess);
 					break;
 				case PITCH_BEND: //PitchBend
-					if(pitchBend != nullptr) pitchBend(group, (uint8_t)UMP_M1CVM, channel, scaleUp((val2 << 7) + val1,14,32));
+                        mess.value = M2Utils::scaleUp((val2 << 7) + val1,14,32);
+                        channelVoiceMessage(mess);
 					break;		
 			}				
 		}
@@ -144,87 +109,93 @@ void umpProcessor::processUMP(uint32_t UMP){
 	if(messPos == 1
        && (mt == UMP_SYSEX7 || mt == UMP_M2CVM || mt==0x8 || mt==0x9  || mt==0xA)
         ){ //64bit Messages
-		if(mt == UMP_SYSEX7){ //64 bits Data Messages (including System Exclusive)
-			uint8_t numBytes  = (umpMess[0] >> 16) & 0xF;
-			uint8_t status = (umpMess[0] >> 20) & 0xF;
-            uint8_t sysex[6];
+            if(mt == UMP_SYSEX7 && sendOutSysex != nullptr){ //64 bits Data Messages (including System Exclusive)
+                umpData mess = umpData();
+                mess.umpGroup = group;
+                mess.messageType = mt;
+                mess.form = (umpMess[0] >> 20) & 0xF;
+                mess.dataLength  = (umpMess[0] >> 16) & 0xF;
+                uint8_t sysex[6];
 
-			if(numBytes > 0)sysex[0] =  (umpMess[0] >> 8) & 0x7F;
-			if(numBytes > 1)sysex[1] =  umpMess[0] & 0x7F;
-			if(numBytes > 2)sysex[2] =  (umpMess[1] >> 24) & 0x7F;
-			if(numBytes > 3)sysex[3] =  (umpMess[1] >> 16) & 0x7F;
-			if(numBytes > 4)sysex[4] =  (umpMess[1] >> 8) & 0x7F;
-			if(numBytes > 5)sysex[5] =  umpMess[1] & 0x7F;
+                if(mess.dataLength > 0)sysex[0] =  (umpMess[0] >> 8) & 0x7F;
+                if(mess.dataLength > 1)sysex[1] =  umpMess[0] & 0x7F;
+                if(mess.dataLength > 2)sysex[2] =  (umpMess[1] >> 24) & 0x7F;
+                if(mess.dataLength > 3)sysex[3] =  (umpMess[1] >> 16) & 0x7F;
+                if(mess.dataLength > 4)sysex[4] =  (umpMess[1] >> 8) & 0x7F;
+                if(mess.dataLength > 5)sysex[5] =  umpMess[1] & 0x7F;
 
-            if(sendOutSysex)sendOutSysex(group,sysex,numBytes,status);
+                mess.data = sysex;
+                sendOutSysex(mess);
 
 		} else 
-		if(mt == UMP_M2CVM){//64 bits MIDI 2.0 Channel Voice Messages
-		
-			uint8_t status = (umpMess[0] >> 16) & 0xF0;
-			uint8_t channel = (umpMess[0] >> 16) & 0xF;
+            if(mt == UMP_M2CVM && channelVoiceMessage != nullptr){//64 bits MIDI 2.0 Channel Voice Messages
+                umpCVM mess = umpCVM();
+                mess.umpGroup = group;
+                mess.messageType = mt;
+                mess.status = (umpMess[0] >> 16) & 0xF0;
+                mess.channel = (umpMess[0] >> 16) & 0xF;
 			uint8_t val1 = (umpMess[0] >> 8) & 0xFF;
 			uint8_t val2 = umpMess[0] & 0xFF;
 			
-			switch(status){
+                switch(mess.status){
 				case NOTE_OFF: //Note Off
-					if(midiNoteOff != nullptr) midiNoteOff(group, (uint8_t)UMP_M2CVM, channel, val1, umpMess[1] >> 16, val2, umpMess[1] & 65535);
-					break;
-				
 				case NOTE_ON: //Note On
-					if(midiNoteOn != nullptr) midiNoteOn(group, (uint8_t)UMP_M2CVM, channel, val1, umpMess[1] >> 16, val2, umpMess[1] & 65535);
+                        mess.note = val1;
+                        mess.value = umpMess[1] >> 16;
+                        mess.bank = val2;
+                        mess.index = umpMess[1] & 65535;
+                        channelVoiceMessage(mess);
 					break;
-					
+                    case PITCH_BEND_PERNOTE:
 				case KEY_PRESSURE: //Poly Pressure
-					if(polyPressure != nullptr) polyPressure(group, (uint8_t)UMP_M2CVM, channel, val1, umpMess[1]);
+                        mess.note = val1;
+                    case CHANNEL_PRESSURE: //Channel Pressure
+                        mess.value = umpMess[1];
+                        channelVoiceMessage(mess);
 					break;	
-				
 				case CC: //CC
-					if(controlChange != nullptr) controlChange(group, (uint8_t)UMP_M2CVM, channel, val1, umpMess[1]);
+                        mess.index = val1;
+                        mess.value = umpMess[1];
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;	
 				
 				case RPN: //RPN
-					if(rpn != nullptr) rpn(group, channel, val1, val2, umpMess[1]);
-					break;	
-				
 				case NRPN: //NRPN
-					if(nrpn != nullptr) nrpn(group, channel, val1, val2, umpMess[1]);
-					break;	
-				
 				case RPN_RELATIVE: //Relative RPN
-					if(rrpn != nullptr) rrpn(group, channel, val1, val2, (int32_t)umpMess[1]/*twoscomplement*/);
-					break;	
-
 				case NRPN_RELATIVE: //Relative NRPN
-					if(rnrpn != nullptr) rnrpn(group, channel, val1, val2, (int32_t)umpMess[1]/*twoscomplement*/);
+                        mess.bank = val1;
+                        mess.index = val2;
+                        mess.value = umpMess[1];
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;
 				
 				case PROGRAM_CHANGE: //Program Change Message
-					if(programChange != nullptr) programChange(group, (uint8_t)UMP_M2CVM, channel, umpMess[1] >> 24, umpMess[0] & 1 , (umpMess[1] >> 8) & 0x7f , umpMess[1] & 0x7f);
-					break;
-
-				case CHANNEL_PRESSURE: //Channel Pressure
-					if(channelPressure != nullptr) channelPressure(group, (uint8_t)UMP_M2CVM, channel, umpMess[1]);
+                        mess.value = umpMess[1] >> 24;
+                        mess.flag1 = umpMess[0] & 1;
+                        mess.bank = (umpMess[1] >> 8) & 0x7f;
+                        mess.index = umpMess[1] & 0x7f;
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;
 
 				case PITCH_BEND: //PitchBend
-					if(pitchBend != nullptr) pitchBend(group, (uint8_t)UMP_M2CVM, channel, umpMess[1]);
-					break;	
-					
-				case PITCH_BEND_PERNOTE: //Per Note PitchBend 6
-					if(perNotePB != 0) perNotePB(group, channel, val1, umpMess[1]);
+                        mess.value = umpMess[1];
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;
 
 				case NRPN_PERNOTE: //Assignable Per-Note Controller 1
-                    if(nrpnPerNote != nullptr) nrpnPerNote(group, channel, val1, val2, umpMess[1]);
-					break;	
+                    case RPN_PERNOTE: //Registered Per-Note Controller 0
 					
-				case RPN_PERNOTE: //Registered Per-Note Controller 0 
-                    if(rpnPerNote != nullptr) rpnPerNote(group, channel, val1, val2, umpMess[1]);
+                        mess.note = val1;
+                        mess.index = val2;
+                        mess.value = umpMess[1];
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;	
+                    case PERNOTE_MANAGE: //Per-Note Management Message
 					
-				case PERNOTE_MANAGE: //Per-Note Management Message
-                    if(perNoteManage != nullptr) perNoteManage(group, channel, val1, (bool)(val2 & 2), (bool)(val2 & 1));
+                        mess.note = val1;
+                        mess.flag1 =(bool)(val2 & 2);
+                        mess.flag2 = (bool)(val2 & 1);
+                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
 					break;	
 					
 			}
@@ -242,8 +213,6 @@ void umpProcessor::processUMP(uint32_t UMP){
 
         if(mt == UMP_MIDI_ENDPOINT) { //128 bits UMP Stream Messages
             uint16_t status = (umpMess[0] >> 16) & 0x3FF;
-            //uint8_t form = umpMess[0] >> 24 & 0x3;
-
 
             switch(status) {
                 case MIDIENDPOINT: {
@@ -279,22 +248,26 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
                 case MIDIENDPOINT_NAME_NOTIFICATION:
                 case MIDIENDPOINT_PRODID_NOTIFICATION: {
-                    uint8_t form = umpMess[0] >> 24 & 0x3;
+                        umpData mess = umpData();
+                        mess.messageType = mt;
+                        mess.status = status;
+                        mess.form = umpMess[0] >> 24 & 0x3;
+                        mess.dataLength  = 0;
                     uint8_t text[14];
-                    uint8_t textLength =0 ;
 
-                    if ((umpMess[0] >> 8) & 0xFF) text[textLength++] = (umpMess[0] >> 8) & 0xFF;
-                    if (umpMess[0] & 0xFF) text[textLength++] = umpMess[0]  & 0xFF;
+                        if ((umpMess[0] >> 8) & 0xFF) text[mess.dataLength++] = (umpMess[0] >> 8) & 0xFF;
+                        if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
                     for(uint8_t i = 1; i<=3; i++){
                         for(uint8_t j = 24; j>=0; j-=8){
                             uint8_t c = (umpMess[i] >> j) & 0xFF;
                             if(c){
-                                text[textLength++]=c;
+                                    text[mess.dataLength++]=c;
                     }
                         }
                     }
-                    if(status == MIDIENDPOINT_NAME_NOTIFICATION && midiEndpointName != nullptr) midiEndpointName(form,textLength,text);
-                    if(status == MIDIENDPOINT_PRODID_NOTIFICATION && midiEndpointProdId != nullptr) midiEndpointProdId(form,textLength,text);
+                        mess.data = text;
+                        if(status == MIDIENDPOINT_NAME_NOTIFICATION && midiEndpointName != nullptr) midiEndpointName(mess);
+                        if(status == MIDIENDPOINT_PRODID_NOTIFICATION && midiEndpointProdId != nullptr) midiEndpointProdId(mess);
                     break;
                 }
 
@@ -338,21 +311,25 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
                 case FUNCTIONBLOCK_NAME_NOTIFICATION:{
                     uint8_t fbIdx = (umpMess[0] >> 8) & 0x7F;
-                    uint8_t form = umpMess[0] >> 24 & 0x3;
+                        umpData mess = umpData();
+                        mess.messageType = mt;
+                        mess.status = status;
+                        mess.form = umpMess[0] >> 24 & 0x3;
+                        mess.dataLength  = 0;
                     uint8_t text[13];
-                    uint8_t textLength =0 ;
 
-                    if (umpMess[0] & 0xFF) text[textLength++] = umpMess[0]  & 0xFF;
+                        if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
                     for(uint8_t i = 1; i<=3; i++){
                         for(uint8_t j = 24; j>=0; j-=8){
                             uint8_t c = (umpMess[i] >> j) & 0xFF;
                             if(c){
-                                text[textLength++]=c;
+                                    text[mess.dataLength++]=c;
                     }
                         }
                     }
+                        mess.data = text;
 
-                    if(functionBlockName != nullptr) functionBlockName(fbIdx, form,textLength,text);
+                        if(functionBlockName != nullptr) functionBlockName(mess,fbIdx);
                     break;
                  }
                 case STARTOFSEQ: {
@@ -486,29 +463,34 @@ void umpProcessor::processUMP(uint32_t UMP){
                 }
                 case FLEXDATA_PERFORMANCE: //Performance Events
                 case FLEXDATA_LYRIC:{ //Lyric Events
-                    uint8_t textLength = 0;
-                    uint8_t text[12];
-                    for(uint8_t i = 1; i<=3; i++){
-                        for(uint8_t j = 24; j>=0; j-=8){
-                            uint8_t c = (umpMess[i] >> j) & 0xFF;
-                            if(c){
-                                text[textLength++]=c;
+                        umpData mess = umpData();
+                        mess.umpGroup = group;
+                        mess.messageType = mt;
+                        mess.status = status;
+                        mess.form = form;
+                        mess.dataLength  = 0;
+                        uint8_t text[12];
+
+                        for(uint8_t i = 1; i<=3; i++){
+                            for(uint8_t j = 24; j>=0; j-=8){
+                                uint8_t c = (umpMess[i] >> j) & 0xFF;
+                                if(c){
+                                    text[mess.dataLength++]=c;
+                                }
                             }
                         }
-                    }
-                    if(statusBank== FLEXDATA_LYRIC && flexLyric != nullptr) flexLyric(group, form, addrs, channel, status, text, textLength);
-                    if(statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(group, form, addrs, channel, status, text, textLength);
+                        mess.data = text;
+                        if(statusBank== FLEXDATA_LYRIC && flexLyric != nullptr) flexLyric(mess, addrs, channel);
+                        if(statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(mess, addrs, channel);
                     break;
 
                 }
             }
-
         }
 		messPos =0;
 	} else {
 		messPos++;
 	}
-	
 }
 
 
