@@ -263,7 +263,7 @@ callback is triggered.
 
 ```c++
 void profileSpecificDataCallback(struct MIDICI ciDetails, std::array<uint8_t, 5> profile, uint16_t datalen, uint8_t\*  data, uint16_t part, bool lastByteOfSet){
-  printf("->profile Off: remoteMuid %d Destination: %d",ciDetails.remoteMUID, destination);
+  printf("->profile Off: remote MUID %d Destination: %d",ciDetails.remoteMUID, destination);
 }
 ```
 
@@ -276,7 +276,7 @@ Upon receiving an Inquiry: Property Exchange Capabilities message the applicatio
 Exchange Capabilities message.
 ```c++
 void PECapabilityCallback(struct MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer){
-	printf("->PE Capability: remoteMuid %d", ciDetails.remoteMUID);
+	printf("->PE Capability: remote MUID %d", ciDetails.remoteMUID);
     uint8_t sysexBuffer[64];
 	int len = CIMessage::sendPECapabilityReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID, 4, 0, 0);
     sendOutSysex(ciDetails.umpGroup, sysexBuffer, len);
@@ -290,7 +290,7 @@ See setPECapabilities for the structure of PECapabilityReplyCallback
 This callback is triggered upon receiving an Inquiry: Get Property Data message.
 ```c++
 void PEGetInquiryCallback( struct MIDICI ciDetails, struct peHeader requestDetails){
-  printf("->PE GET Inquiry: remoteMuid %d requestId %s Resource %s resId %s", ciDetails.remoteMUID, 
+  printf("->PE GET Inquiry: remote MUID %d request Id %s Resource %s resId %s", ciDetails.remoteMUID, 
          ciDetails.requestId, requestDetails.resource.c_str(), requestDetails.resId.c_str());
   
   if (!strcmp(requestDetails.resource.c_str(),"LocalOn")){
