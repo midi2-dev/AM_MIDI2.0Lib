@@ -124,8 +124,7 @@ private:
     std::function<void(MIDICI ciDetails,
                                  std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                  std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport,
-                                 uint16_t maxSysex, uint8_t outputPathId/*, uint8_t productInstanceIdLength,
-                                 uint8_t* productInstanceId*/)> recvDiscoveryRequest = nullptr;
+                                 uint16_t maxSysex, uint8_t outputPathId)> recvDiscoveryRequest = nullptr;
     std::function<void(MIDICI ciDetails, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint16_t maxSysex,
                                uint8_t outputPathId,
