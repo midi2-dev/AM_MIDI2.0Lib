@@ -165,17 +165,22 @@ private:
     void processProfileSysex(uint8_t s7Byte);
 
 //Property Exchange
+    //std::map<reqId ,std::string> peHeaderStr;
     std::map<reqId ,peHeader> peRequestDetails;
+    std::map<reqId ,peHeaderReply> peReplyDetails;
+    std::map<reqId ,peHeaderSubscribe> peSubscribeDetails;
 
     std::function<void(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)>  recvPECapabilities = nullptr;
     std::function<void(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)> recvPECapabilitiesReplies = nullptr;
     std::function<void(MIDICI ciDetails, peHeader requestDetails)> recvPEGetInquiry = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails)> recvPESetReply = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails)> recvPESubReply = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails)> recvPENotify = nullptr;
+    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails)> recvPESetReply = nullptr;
+    std::function<void(MIDICI ciDetails, peHeaderSubscribeReply requestDetails)> recvPESubReply = nullptr;
+    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails)> recvPENotify = nullptr;
+    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails, uint16_t bodyLen, uint8_t*  body,
+                             bool lastByteOfChunk, bool lastByteOfSet)> recvPEGetReply = nullptr;
     std::function<void(MIDICI ciDetails, peHeader requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet)> recvPESetInquiry = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails, uint16_t bodyLen, uint8_t*  body,
+    std::function<void(MIDICI ciDetails, peHeaderSubscribe requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet)> recvPESubInquiry = nullptr;
 
     void cleanupRequest(reqId peReqIdx);
@@ -288,16 +293,19 @@ public:
         recvPECapabilitiesReplies = fptr;}
     inline void setRecvPEGetInquiry(std::function<void(MIDICI ciDetails,  peHeader requestDetails)> fptr){
         recvPEGetInquiry = fptr;}
-    inline void setRecvPESetReply(std::function<void(MIDICI ciDetails,  peHeader requestDetails)> fptr){
+    inline void setRecvPESetReply(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails)> fptr){
         recvPESetReply = fptr;}
-    inline void setRecvPESubReply(std::function<void(MIDICI ciDetails,  peHeader requestDetails)> fptr){
+    inline void setRecvPESubReply(std::function<void(MIDICI ciDetails,  peHeaderSubscribeReply requestDetails)> fptr){
         recvPESubReply = fptr;}
-    inline void setRecvPENotify(std::function<void(MIDICI ciDetails,  peHeader requestDetails)> fptr){
+    inline void setRecvPENotify(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails)> fptr){
         recvPENotify = fptr;}
+    inline void setRecvPEGetReply(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails, uint16_t bodyLen, uint8_t* body,
+                                                       bool lastByteOfChunk, bool lastByteOfSet)> fptr){
+        recvPEGetReply = fptr;}
     inline void setRecvPESetInquiry(std::function<void(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t* body,
                                                     bool lastByteOfChunk, bool lastByteOfSet)> fptr){
         recvPESetInquiry = fptr;}
-    inline void setRecvPESubInquiry(std::function<void(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t* body,
+    inline void setRecvPESubInquiry(std::function<void(MIDICI ciDetails,  peHeaderSubscribe requestDetails, uint16_t bodyLen, uint8_t* body,
                                                     bool lastByteOfChunk, bool lastByteOfSet)> fptr){
         recvPESubInquiry = fptr;}
 

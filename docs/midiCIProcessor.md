@@ -318,7 +318,7 @@ mcoded7Decode m7d;
 
 void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t*  body, 
         bool lastByteOfChunk, bool lastByteOfSet){
-  if (!strcmp(requestDetails.resource,"State")){
+  if (!strcmp(requestDetails.resource.c_str(),"State")){
       //This code assumes the data is using Mcoded7
       if (requestDetails.numChunk == 1 && requestDetails.partialChunkCount == 1){
           file.open(fullPath,  O_RDWR | O_TRUNC | O_CREAT);
@@ -349,7 +349,10 @@ void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t b
 See _setRecvPEGetInquiry_ for the callback structure
 
 #### inline void setRecvPESubInquiry(PESubInquiryCallback)
-See _setRecvPESetInquiry_ for the callback structure
+```c++
+void PESubInquiryCallback(struct MIDICI ciDetails,  peHeaderSubscribe requestDetails, uint16_t bodyLen, uint8_t*  body,
+                   bool lastByteOfChunk, bool lastByteOfSet);
+```
 
 #### inline void setRecvPESubReply(PESubReplyCallback)
 See _setRecvPEGetInquiry_ for the callback structure
