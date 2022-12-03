@@ -77,30 +77,6 @@ struct MIDICI{
 Most of the callbacks will include a MIDI-CI struct that contain core information from MIDI-CI SysEx.
 The ```umpGroup``` variable is set by startSysex7 method.
 
-#### peHeader
-```c++
-struct peHeader {
-    uint8_t requestId;
-    char resource[36];
-    char resId[36];
-    uint8_t command; //MIDICI_PE_COMMAND_START MIDICI_PE_COMMAND_END MIDICI_PE_COMMAND_PARTIAL MIDICI_PE_COMMAND_FULL MIDICI_PE_COMMAND_NOTIFY 
-    uint8_t action; //MIDICI_PE_ACTION_COPY MIDICI_PE_ACTION_MOVE MIDICI_PE_ACTION_DELETE MIDICI_PE_ACTION_CREATE_DIR 4
-    char subscribeId[8];
-    char path[EXP_MIDICI_PE_EXPERIMENTAL_PATH];
-    int  offset;
-    int  limit;
-    int  status;
-    bool partial;
-    int  totalChunks;
-    int  numChunk;
-    int  partialChunkCount;
-    int mutualEncoding; // MIDICI_PE_ASCII MIDICI_PE_MCODED7 MIDICI_PE_MCODED7ZLIB 
-    char mediaType[PE_HEAD_BUFFERLEN];
-};
-```
-Property Exchange MIDI-CI messages also have a struct to contain data that is needed for processing Property Exchange
-messages.
-
 ## Common MIDI-CI SysEx Methods
 
 #### inline void setRecvDiscovery(recvDiscoveryCallback)
@@ -268,9 +244,13 @@ void profileSpecificDataCallback(struct MIDICI ciDetails, std::array<uint8_t, 5>
 ```
 
 _Note: While data length field in the SysEx can declare a potential length of 268435455 bytes, it is extremely unlikely
-that this is feasible, so it is kept as a uin16_t value._
+that this is feasible, so it is kept as an uin16_t value._
 
 ### Property Exchange
+
+This library provides the Header received on each Property Exchange message as a std::string. This is to allow the 
+developer to choose their own JSON parser that best suits the environment. 
+
 #### inline void setPECapabilities(PECapabilityCallback)
 Upon receiving an Inquiry: Property Exchange Capabilities message the application should send back a Reply to Property 
 Exchange Capabilities message.
@@ -289,11 +269,11 @@ See setPECapabilities for the structure of PECapabilityReplyCallback
 #### inline void setRecvPEGetInquiry(PEGetInquiryCallback)
 This callback is triggered upon receiving an Inquiry: Get Property Data message.
 ```c++
-void PEGetInquiryCallback( struct MIDICI ciDetails, struct peHeader requestDetails){
-  printf("->PE GET Inquiry: remote MUID %d request Id %s Resource %s resId %s", ciDetails.remoteMUID, 
-         ciDetails.requestId, requestDetails.resource.c_str(), requestDetails.resId.c_str());
+void PEGetInquiryCallback( struct MIDICI ciDetails, std::string header){
+  printf("->PE GET Inquiry: remote MUID %d header %s", ciDetails.remoteMUID, 
+         ciDetails.requestId, header.c_str());
   
-  if (!strcmp(requestDetails.resource.c_str(),"LocalOn")){
+  if (header.contains("LocalOn")){
 	string header = "{\"status\":200}";
     uint8_t sysexBuffer[128];
 	int len = CIMessage::sendPEGetReply(sysexBuffer, MIDICI_MESSAGEFORMATVERSION, localMUID, ciDetails.remoteMUID,\
@@ -316,9 +296,9 @@ The ```lastByteOfSet``` bool is set to true if this is the last time this callba
 ```c++
 mcoded7Decode m7d;
 
-void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t*  body, 
+void PESetCallback(struct MIDICI ciDetails,  std::string header, uint16_t bodyLen, uint8_t*  body, 
         bool lastByteOfChunk, bool lastByteOfSet){
-  if (!strcmp(requestDetails.resource,"State")){
+  if (header.contains("State")){
       //This code assumes the data is using Mcoded7
       if (requestDetails.numChunk == 1 && requestDetails.partialChunkCount == 1){
           file.open(fullPath,  O_RDWR | O_TRUNC | O_CREAT);
@@ -349,7 +329,10 @@ void PESetCallback(struct MIDICI ciDetails,  peHeader requestDetails, uint16_t b
 See _setRecvPEGetInquiry_ for the callback structure
 
 #### inline void setRecvPESubInquiry(PESubInquiryCallback)
-See _setRecvPESetInquiry_ for the callback structure
+```c++
+void PESubInquiryCallback(struct MIDICI ciDetails,  std::string header, uint16_t bodyLen, uint8_t*  body,
+                   bool lastByteOfChunk, bool lastByteOfSet);
+```
 
 #### inline void setRecvPESubReply(PESubReplyCallback)
 See _setRecvPEGetInquiry_ for the callback structure

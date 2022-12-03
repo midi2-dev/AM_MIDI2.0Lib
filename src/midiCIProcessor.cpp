@@ -36,7 +36,7 @@ void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
 }
 
 void midiCIProcessor::cleanupRequest(reqId peReqIdx){
-    peRequestDetails.erase(peReqIdx);
+    peHeaderStr.erase(peReqIdx);
 }
 
 void midiCIProcessor::processMIDICI(uint8_t s7Byte){
@@ -639,42 +639,45 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
 
             uint16_t headerLength = intTemp[0];
 
+            if (sysexPos == 16 && midici.numChunk == 1){
+                peHeaderStr[midici._peReqIdx] = "";
+            }
+
             if (sysexPos >= 16 && sysexPos <= 15 + headerLength) {
                 uint16_t charOffset = (sysexPos - 16);
                 buffer[charOffset] = s7Byte;
+                peHeaderStr[midici._peReqIdx].push_back(s7Byte);
 
-                //processPEHeader(midici._peReqIdx, s7Byte);
-                peRequestDetails[midici._peReqIdx] = peHeader();
-                if (sysexPos == 15 + headerLength){
-                    JS::ParseContext context((char *)buffer);
-                    if (context.parseTo(peRequestDetails[midici._peReqIdx]) != JS::Error::NoError) {
-                        //we haz error
-                    }
 
+                if (sysexPos == 15 + headerLength) {
+
+                    switch (midici.ciType) {
+                        case MIDICI_PE_GET:
+                            if (recvPEGetInquiry != nullptr) {
+                                recvPEGetInquiry(midici, peHeaderStr[midici._peReqIdx]);
+                                cleanupRequest(midici._peReqIdx);
+                            }
+                            break;
+                        case MIDICI_PE_SETREPLY:
+                            if (recvPESetReply != nullptr) {
+                                recvPESetReply(midici, peHeaderStr[midici._peReqIdx]);
+                                cleanupRequest(midici._peReqIdx);
+                            }
+                            break;
+                        case MIDICI_PE_SUBREPLY:
+                            if (recvPESubReply != nullptr) {
+                                recvPESubReply(midici, peHeaderStr[midici._peReqIdx]);
+                                cleanupRequest(midici._peReqIdx);
+                            }
+                            break;
+                        case MIDICI_PE_NOTIFY:
+                            if (recvPENotify != nullptr) {
+                                recvPENotify(midici, peHeaderStr[midici._peReqIdx]);
+                                cleanupRequest(midici._peReqIdx);
+                            }
+                            break;
+                    }
                 }
-                if (sysexPos == 15 + headerLength
-                    && (
-                            midici.ciType == MIDICI_PE_GET
-                            || midici.ciType == MIDICI_PE_SETREPLY
-                            || midici.ciType == MIDICI_PE_SUBREPLY
-                            || midici.ciType == MIDICI_PE_NOTIFY
-                    )
-                        ) {
-                    if (midici.ciType == MIDICI_PE_GET && recvPEGetInquiry != nullptr) {
-                        recvPEGetInquiry(midici, peRequestDetails[midici._peReqIdx]);
-                    }
-                    if (midici.ciType == MIDICI_PE_SETREPLY && recvPESetReply != nullptr) {
-                        recvPESetReply(midici, peRequestDetails[midici._peReqIdx]);
-                    }
-                    if (midici.ciType == MIDICI_PE_SUBREPLY && recvPESubReply != nullptr) {
-                        recvPESubReply(midici, peRequestDetails[midici._peReqIdx]);
-                    }
-                    if (midici.ciType == MIDICI_PE_NOTIFY && recvPENotify != nullptr) {
-                        recvPENotify(midici, peRequestDetails[midici._peReqIdx]);
-                    }
-                    cleanupRequest(midici._peReqIdx);
-                }
-                return;
             }
 
             if (sysexPos == 16 + headerLength || sysexPos == 17 + headerLength) {
@@ -713,13 +716,18 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
 
 
                 if (charOffset == S7_BUFFERLEN - 1 || lastByteOfChunk) {
+                    if (midici.ciType == MIDICI_PE_GETREPLY && recvPEGetReply != nullptr) {
+                        recvPEGetReply(midici, peHeaderStr[midici._peReqIdx],
+                                         charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
+                    }
+
                     if (midici.ciType == MIDICI_PE_SUB && recvPESubInquiry != nullptr) {
-                        recvPESubInquiry(midici, peRequestDetails[midici._peReqIdx],
+                        recvPESubInquiry(midici, peHeaderStr[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
 
                     if (midici.ciType == MIDICI_PE_SET && recvPESetInquiry != nullptr) {
-                        recvPESetInquiry(midici, peRequestDetails[midici._peReqIdx],
+                        recvPESetInquiry(midici, peHeaderStr[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
                     midici.partialChunkCount++;
