@@ -24,12 +24,12 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <map>
 #include <array> // this was missing and causing build errors
+#include <functional>
+#include <string>
 
 #include "utils.h"
-#include "json_struct.h"
 
 typedef std::tuple<uint32_t, uint8_t> reqId;  //muid-requestId
 
@@ -51,48 +51,6 @@ struct MIDICI{
     uint8_t requestId;
 };
 
-struct peHeader {
-    std::string resId;
-    std::string resource;
-    uint16_t  offset;
-    uint16_t  limit;
-    std::string mutualEncoding;
-    std::string path;
-    std::string action;
-    bool setPartial;
-
-    JS_OBJ(resId, resource, offset, limit, mutualEncoding, path, action, setPartial);
-};
-
-struct peHeaderReply {
-    uint16_t  status;
-    uint16_t  totalCount;
-    uint16_t  cacheTime;
-    std::string mutualEncoding;
-    std::string mediaType;
-    std::string message;
-    std::string stateRev;
-
-    JS_OBJ(status, totalCount, cacheTime, mutualEncoding, mediaType, message, stateRev);
-};
-
-struct peHeaderSubscribe {
-    std::string resId;
-    std::string resource;
-    std::string subscribeId;
-    std::string command;
-
-    JS_OBJ(resId, resource, command, subscribeId);
-};
-
-struct peHeaderSubscribeReply {
-    uint16_t  status;
-    std::string subscribeId;
-    std::string command;
-    std::string message;
-
-    JS_OBJ(status, command, subscribeId, message);
-};
 
 
 
@@ -165,22 +123,19 @@ private:
     void processProfileSysex(uint8_t s7Byte);
 
 //Property Exchange
-    //std::map<reqId ,std::string> peHeaderStr;
-    std::map<reqId ,peHeader> peRequestDetails;
-    std::map<reqId ,peHeaderReply> peReplyDetails;
-    std::map<reqId ,peHeaderSubscribe> peSubscribeDetails;
+    std::map<reqId ,std::string> peHeaderStr;
 
     std::function<void(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)>  recvPECapabilities = nullptr;
     std::function<void(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)> recvPECapabilitiesReplies = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails)> recvPEGetInquiry = nullptr;
-    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails)> recvPESetReply = nullptr;
-    std::function<void(MIDICI ciDetails, peHeaderSubscribeReply requestDetails)> recvPESubReply = nullptr;
-    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails)> recvPENotify = nullptr;
-    std::function<void(MIDICI ciDetails, peHeaderReply requestDetails, uint16_t bodyLen, uint8_t*  body,
+    std::function<void(MIDICI ciDetails, std::string requestDetails)> recvPEGetInquiry = nullptr;
+    std::function<void(MIDICI ciDetails, std::string requestDetails)> recvPESetReply = nullptr;
+    std::function<void(MIDICI ciDetails, std::string requestDetails)> recvPESubReply = nullptr;
+    std::function<void(MIDICI ciDetails, std::string requestDetails)> recvPENotify = nullptr;
+    std::function<void(MIDICI ciDetails, std::string requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet)> recvPEGetReply = nullptr;
-    std::function<void(MIDICI ciDetails, peHeader requestDetails, uint16_t bodyLen, uint8_t*  body,
+    std::function<void(MIDICI ciDetails, std::string requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet)> recvPESetInquiry = nullptr;
-    std::function<void(MIDICI ciDetails, peHeaderSubscribe requestDetails, uint16_t bodyLen, uint8_t*  body,
+    std::function<void(MIDICI ciDetails, std::string requestDetails, uint16_t bodyLen, uint8_t*  body,
                              bool lastByteOfChunk, bool lastByteOfSet)> recvPESubInquiry = nullptr;
 
     void cleanupRequest(reqId peReqIdx);
@@ -291,21 +246,21 @@ public:
         recvPECapabilities = fptr;}
     inline void setPECapabilitiesReply(std::function<void(MIDICI ciDetails, uint8_t numSimulRequests, uint8_t majVer, uint8_t minVer)> fptr){
         recvPECapabilitiesReplies = fptr;}
-    inline void setRecvPEGetInquiry(std::function<void(MIDICI ciDetails,  peHeader requestDetails)> fptr){
+    inline void setRecvPEGetInquiry(std::function<void(MIDICI ciDetails,  std::string requestDetails)> fptr){
         recvPEGetInquiry = fptr;}
-    inline void setRecvPESetReply(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails)> fptr){
+    inline void setRecvPESetReply(std::function<void(MIDICI ciDetails,  std::string requestDetails)> fptr){
         recvPESetReply = fptr;}
-    inline void setRecvPESubReply(std::function<void(MIDICI ciDetails,  peHeaderSubscribeReply requestDetails)> fptr){
+    inline void setRecvPESubReply(std::function<void(MIDICI ciDetails,  std::string requestDetails)> fptr){
         recvPESubReply = fptr;}
-    inline void setRecvPENotify(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails)> fptr){
+    inline void setRecvPENotify(std::function<void(MIDICI ciDetails,  std::string requestDetails)> fptr){
         recvPENotify = fptr;}
-    inline void setRecvPEGetReply(std::function<void(MIDICI ciDetails,  peHeaderReply requestDetails, uint16_t bodyLen, uint8_t* body,
+    inline void setRecvPEGetReply(std::function<void(MIDICI ciDetails,  std::string requestDetails, uint16_t bodyLen, uint8_t* body,
                                                        bool lastByteOfChunk, bool lastByteOfSet)> fptr){
         recvPEGetReply = fptr;}
-    inline void setRecvPESetInquiry(std::function<void(MIDICI ciDetails,  peHeader requestDetails, uint16_t bodyLen, uint8_t* body,
+    inline void setRecvPESetInquiry(std::function<void(MIDICI ciDetails,  std::string requestDetails, uint16_t bodyLen, uint8_t* body,
                                                     bool lastByteOfChunk, bool lastByteOfSet)> fptr){
         recvPESetInquiry = fptr;}
-    inline void setRecvPESubInquiry(std::function<void(MIDICI ciDetails,  peHeaderSubscribe requestDetails, uint16_t bodyLen, uint8_t* body,
+    inline void setRecvPESubInquiry(std::function<void(MIDICI ciDetails,  std::string requestDetails, uint16_t bodyLen, uint8_t* body,
                                                     bool lastByteOfChunk, bool lastByteOfSet)> fptr){
         recvPESubInquiry = fptr;}
 

@@ -48,7 +48,7 @@ void sendOutSysex(uint8_t umpGroup, uint8_t *sysex ,uint16_t length ){
     for (int i = 0; i < length; i++) {
         sx[sxPos++]=sysex[i] & 0x7F;
         if(sxPos == 6){
-            std::array<uint32_t, 2> ump = mt3Sysex7(umpGroup, i < 6 ? 1 : i==length ? 3 : 2, 6, sx);
+            std::array<uint32_t, 2> ump = mt3Sysex7(umpGroup, i < 6 ? 1 : i==length-1 ? 3 : 2, 6, sx);
             sendUMP(ump.data(),2);
             sxPos=0;
         }

@@ -36,9 +36,7 @@ void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
 }
 
 void midiCIProcessor::cleanupRequest(reqId peReqIdx){
-    peRequestDetails.erase(peReqIdx);
-    peReplyDetails.erase(peReqIdx);
-    peSubscribeDetails.erase(peReqIdx);
+    peHeaderStr.erase(peReqIdx);
 }
 
 void midiCIProcessor::processMIDICI(uint8_t s7Byte){
@@ -641,73 +639,41 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
 
             uint16_t headerLength = intTemp[0];
 
-//            if (sysexPos == 16 && midici.numChunk == 1){
-//                peHeaderStr[midici._peReqIdx] = "";
-//            }
+            if (sysexPos == 16 && midici.numChunk == 1){
+                peHeaderStr[midici._peReqIdx] = "";
+            }
 
             if (sysexPos >= 16 && sysexPos <= 15 + headerLength) {
                 uint16_t charOffset = (sysexPos - 16);
                 buffer[charOffset] = s7Byte;
-               // peHeaderStr[midici._peReqIdx].push_back(s7Byte);
+                peHeaderStr[midici._peReqIdx].push_back(s7Byte);
 
 
                 if (sysexPos == 15 + headerLength) {
-                    JS::ParseContext context((char *) buffer);
+
                     switch (midici.ciType) {
                         case MIDICI_PE_GET:
                             if (recvPEGetInquiry != nullptr) {
-                                peHeader peHeaderGet;
-                                if (context.parseTo(peHeaderGet) != JS::Error::NoError) {
-                                    //we haz error
-                                }
-                                //recvPEGetInquiry(midici, peHeaderGet);
-
+                                recvPEGetInquiry(midici, peHeaderStr[midici._peReqIdx]);
                                 cleanupRequest(midici._peReqIdx);
                             }
                             break;
                         case MIDICI_PE_SETREPLY:
                             if (recvPESetReply != nullptr) {
-                                peHeaderReply peHeaderSetReply;
-                                if (context.parseTo(peHeaderSetReply) != JS::Error::NoError) {
-                                    //we haz error
-                                }
-                                recvPESetReply(midici, peHeaderSetReply);
+                                recvPESetReply(midici, peHeaderStr[midici._peReqIdx]);
                                 cleanupRequest(midici._peReqIdx);
                             }
                             break;
                         case MIDICI_PE_SUBREPLY:
                             if (recvPESubReply != nullptr) {
-                                peHeaderSubscribeReply peHeaderSubReply;
-                                if (context.parseTo(peHeaderSubReply) != JS::Error::NoError) {
-                                    //we haz error
-                                }
-                                recvPESubReply(midici, peHeaderSubReply);
+                                recvPESubReply(midici, peHeaderStr[midici._peReqIdx]);
                                 cleanupRequest(midici._peReqIdx);
                             }
                             break;
                         case MIDICI_PE_NOTIFY:
                             if (recvPENotify != nullptr) {
-                                peHeaderReply peHeaderSubReply;
-                                if (context.parseTo(peHeaderSubReply) != JS::Error::NoError) {
-                                    //we haz error
-                                }
-                                recvPENotify(midici, peHeaderSubReply);
+                                recvPENotify(midici, peHeaderStr[midici._peReqIdx]);
                                 cleanupRequest(midici._peReqIdx);
-                            }
-                            break;
-                        case MIDICI_PE_GETREPLY:
-                            if (midici.numChunk == 1 && recvPEGetReply) {
-                                peReplyDetails[midici._peReqIdx] = peHeaderReply();
-                            }
-                            break;
-                        case MIDICI_PE_SET:
-                            if (midici.numChunk == 1 && recvPESetInquiry) {
-                                peRequestDetails[midici._peReqIdx] = peHeader();
-                            }
-                            break;
-                        case MIDICI_PE_SUB:
-                            if (midici.numChunk == 1 && recvPESubInquiry) {
-                                peSubscribeDetails[midici._peReqIdx] = peHeaderSubscribe();
                             }
                             break;
                     }
@@ -751,17 +717,17 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
 
                 if (charOffset == S7_BUFFERLEN - 1 || lastByteOfChunk) {
                     if (midici.ciType == MIDICI_PE_GETREPLY && recvPEGetReply != nullptr) {
-                        recvPEGetReply(midici, peReplyDetails[midici._peReqIdx],
+                        recvPEGetReply(midici, peHeaderStr[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
 
                     if (midici.ciType == MIDICI_PE_SUB && recvPESubInquiry != nullptr) {
-                        recvPESubInquiry(midici, peSubscribeDetails[midici._peReqIdx],
+                        recvPESubInquiry(midici, peHeaderStr[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
 
                     if (midici.ciType == MIDICI_PE_SET && recvPESetInquiry != nullptr) {
-                        recvPESetInquiry(midici, peRequestDetails[midici._peReqIdx],
+                        recvPESetInquiry(midici, peHeaderStr[midici._peReqIdx],
                                          charOffset + 1, buffer, lastByteOfChunk, lastByteOfSet);
                     }
                     midici.partialChunkCount++;
