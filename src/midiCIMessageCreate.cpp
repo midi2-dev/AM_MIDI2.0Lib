@@ -27,8 +27,8 @@ void setBytesFromNumbers(uint8_t *message, uint32_t number, uint16_t *start, uin
     }
 }
 
-void concatSysexArray(uint8_t *sysex, uint16_t *start, uint8_t *add, uint8_t len) {
-    uint8_t i;
+void concatSysexArray(uint8_t *sysex, uint16_t *start, uint8_t *add, uint16_t len) {
+    uint16_t i;
     for (i = 0; i < len; i++) {
         sysex[(*start)++] = add[i];
     }
@@ -420,8 +420,7 @@ uint16_t CIMessage::sendPESet(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUI
                           bodyLength, body, (uint8_t) MIDICI_PE_SET);
 }
 
-uint16_t
-CIMessage::sendPEGetReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMUID, uint8_t requestId,
+uint16_t CIMessage::sendPEGetReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMUID, uint8_t requestId,
                           uint16_t headerLen, uint8_t *header, uint16_t numberOfChunks,
                           uint16_t numberOfThisChunk, uint16_t bodyLength, uint8_t *body) {
     return sendPEWithBody(sysex, midiCIVer, srcMUID, destMUID, requestId, headerLen, header, numberOfChunks,
