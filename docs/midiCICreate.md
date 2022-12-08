@@ -95,7 +95,7 @@ messages. Here is an examples of how this can be done.
 __Example Sending a JSON string in 512 byte Sysex message chunks__
 ```c++
 void returnPE(uint8_t umpGroup, uint32_t remoteMUID, uint8_t requestId, char *propertyData, 
-                    unint32_t propertyDataLength){
+                    uint32_t propertyDataLength){
   uint8_t sysexBuffer[512];
   std::string header = "{\"status\":200}";
   int totalChunks = ceil((double)(strL + header.length())/480); //480 is 512 minus the bytes used for heading etc.
