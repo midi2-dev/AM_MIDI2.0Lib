@@ -72,6 +72,9 @@ struct MIDICI{
     uint8_t ciVer; //0x1 - v1.1, 0x2 - v1.2
     uint32_t remoteMUID;
     uint32_t localMUID;
+    uint8_t totalChunks; //Total Chunks reported on this Message (PE Only)
+    uint8_t numChunk; //Current Chunk reported on this Message (PE Only)
+    uint8_t requestId; //Current Request Id (PE Only)
 };
 ```
 Most of the callbacks will include a MIDI-CI struct that contain core information from MIDI-CI SysEx.
