@@ -151,15 +151,6 @@
 #define FUNCTION_BLOCK 0x7F
 #define M2_CI_BROADCAST 0xFFFFFFF
 
-#define PE_HEAD_STATE_IN_OBJECT          2
-#define PE_HEAD_STATE_IN_STRING          4
-#define PE_HEAD_STATE_IN_NUMBER          8
-#define PE_HEAD_STATE_IN_BOOL            1
-
-#define PE_HEAD_KEY		16
-#define PE_HEAD_VALUE	32
-#define PE_HEAD_BUFFERLEN	36
-
 #define UMP_VER_MAJOR	1
 #define UMP_VER_MINOR	1
 
@@ -175,11 +166,6 @@
 #define UMP_DATA 0x5
 #define UMP_FLEX_DATA 0xD
 #define UMP_MIDI_ENDPOINT 0xF
-
-
-
-
-
 
 namespace M2Utils {
 uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits);
