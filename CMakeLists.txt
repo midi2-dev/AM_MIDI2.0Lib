@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(midi2
         src/utils.cpp
         src/bytestreamToUMP.cpp
+        src/umpToBytestream.cpp
         src/umpMessageCreate.cpp
         src/midiCIMessageCreate.cpp
         src/midiCIProcessor.cpp
