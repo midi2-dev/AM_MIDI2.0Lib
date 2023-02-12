@@ -41,7 +41,7 @@ It is up to the application to convert Sysex and generate the correct status in 
 output UMP Sysex from a complete array of SysEx bytes.
 
 ```c++
-void sendOutSysex(uint8_t umpGroup, uint8_t *sysex ,uint16_t length ){
+void sendOutSysex(uint8_t umpGroup, uint8_t *sysex, uint32_t length ){
     std::array<uint8_t, 6> sx = {0,0,0,0,0,0};
     uint8_t sxPos=0;
 

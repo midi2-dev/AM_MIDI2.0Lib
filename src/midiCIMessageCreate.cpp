@@ -49,7 +49,7 @@ void createCIHeader(uint8_t *sysexHeader, uint8_t deviceId, uint8_t ciType, uint
 uint16_t sendDiscovery(uint8_t *sysex, uint8_t midiCIVer, uint8_t ciType, uint32_t srcMUID, uint32_t destMUID,
                        std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                        std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version,
-                       uint8_t ciSupport, uint16_t sysExMax,
+                       uint8_t ciSupport, uint32_t sysExMax,
                        uint8_t outputPathId,
                        uint8_t fbIdx
 ) {
@@ -80,7 +80,7 @@ uint16_t sendDiscovery(uint8_t *sysex, uint8_t midiCIVer, uint8_t ciType, uint32
 uint16_t CIMessage::sendDiscoveryRequest(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID,
                                          std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                          std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version,
-                                         uint8_t ciSupport, uint16_t sysExMax,
+                                         uint8_t ciSupport, uint32_t sysExMax,
                                          uint8_t outputPathId
 ) {
     return sendDiscovery(sysex, midiCIVer, MIDICI_DISCOVERY, srcMUID, M2_CI_BROADCAST,
@@ -95,7 +95,7 @@ uint16_t CIMessage::sendDiscoveryRequest(uint8_t *sysex, uint8_t midiCIVer, uint
 uint16_t CIMessage::sendDiscoveryReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMUID,
                                        std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                        std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version,
-                                       uint8_t ciSupport, uint16_t sysExMax,
+                                       uint8_t ciSupport, uint32_t sysExMax,
                                        uint8_t outputPathId,
                                        uint8_t fbIdx
 ) {

@@ -29,14 +29,14 @@ namespace CIMessage {
     uint16_t sendDiscoveryRequest(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID,
                                   std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                   std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version,
-                                  uint8_t ciSupport, uint16_t sysExMax,
+                                  uint8_t ciSupport, uint32_t sysExMax,
                                   uint8_t outputPathId
     );
 
     uint16_t sendDiscoveryReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid,
                                 std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                 std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version,
-                                uint8_t ciSupport, uint16_t sysExMax,
+                                uint8_t ciSupport, uint32_t sysExMax,
                                 uint8_t outputPathId,
                                 uint8_t fbIdx
     );

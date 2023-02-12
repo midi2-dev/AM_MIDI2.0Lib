@@ -20,8 +20,8 @@ the value is set to __1__, then the message created will not have Output Path Id
 
 MIDI-CI Messages that are only available from certain version will return a length of 0 if the ```midiCIVer``` is too low.
 
-#### uint16_t CIMessage::sendDiscoveryRequest(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId, std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint16_t sysExMax, uint8_t outputPathId)
-#### uint16_t CIMessage::sendDiscoveryReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId, std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint16_t sysExMax, uint8_t outputPathId, uint8_t fbIdx)
+#### uint16_t CIMessage::sendDiscoveryRequest(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId, std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint32_t sysExMax, uint8_t outputPathId)
+#### uint16_t CIMessage::sendDiscoveryReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId, std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version, uint8_t ciSupport, uint32_t sysExMax, uint8_t outputPathId, uint8_t fbIdx)
 #### uint16_t CIMessage::sendEndpointInfoRequest(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t status);
 #### uint16_t CIMessage::sendEndpointInfoReply(uint8_t* sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMuid, uint8_t status, uint16_t infoLength, uint8_t* infoData)
 
