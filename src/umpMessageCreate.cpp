@@ -283,17 +283,19 @@ std::array<uint32_t, 4> UMPMessage::mtFFunctionBlock(uint8_t fbIdx, uint8_t filt
     return umpMess;
 }
 
-std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
-                                                   bool validCI,  uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams){
+std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction,
+                                                 bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
+                                                 uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK_INFO_NOTFICATION << 16)
             + ((active?1:0) << 15)
             + (fbIdx << 8)
+              + (sender << 7)
+              + (recv << 6)
             + (isMIDI1 << 2)
             + direction;
     umpMess[1] = (firstGroup  << 24)
                  + (groupLength << 16)
-                 + ((validCI?1:0) << 15)
                  + (midiCISupport << 8)
                  + maxS8Streams;
     return umpMess;

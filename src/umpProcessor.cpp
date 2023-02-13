@@ -300,9 +300,10 @@ void umpProcessor::processUMP(uint32_t UMP){
                                 fbIdx, //fbIdx
                                 (umpMess[0] >> 15) & 0x1, // active
                                 umpMess[0] & 0x3, //dir
+                                (umpMess[0] >> 7) & 0x1, // Sender
+                                (umpMess[0] >> 6) & 0x1, // Receiver
                                 ((umpMess[1] >> 24) & 0x1F), //first group
                                 ((umpMess[1] >> 16) & 0x1F), // group length
-                                (umpMess[1] >> 15) & 0x1, // midiCIValid
                                 ((umpMess[1] >> 8) & 0x7F), //midiCIVersion
                                 ((umpMess[0]>>2)  & 0x3), //isMIDI 1
                                 (umpMess[1]  & 0xFF) // max Streams

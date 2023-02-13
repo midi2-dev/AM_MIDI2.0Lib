@@ -114,8 +114,9 @@ namespace UMPMessage {
     std::array<uint32_t, 4> mtFFunctionBlock(uint8_t fbIdx, uint8_t filter);
 
     std::array<uint32_t, 4>
-    mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
-                               bool validCI, uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams);
+    mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool active, uint8_t direction, bool sender, bool recv,
+                               uint8_t firstGroup, uint8_t groupLength,
+                               uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams);
 
     std::array<uint32_t, 4> mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t offset, uint8_t *text, uint8_t textLen);
 

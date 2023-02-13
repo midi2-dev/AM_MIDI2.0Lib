@@ -106,8 +106,8 @@ class umpProcessor{
     void (*midiEndpointJRProtocolNotify)(uint8_t protocol, bool jrrx, bool jrtx) = nullptr;
 
     void (*functionBlockInfo)(uint8_t fbIdx, bool active,
-            uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
-            bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams) = nullptr;
+            uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
+            uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams) = nullptr;
     void (*functionBlockName)(struct umpData mess, uint8_t fbIdx) = nullptr;
     void (*startOfSeq)() = nullptr;
     void (*endOfFile)() = nullptr;
@@ -159,8 +159,8 @@ class umpProcessor{
 
     inline void setFunctionBlock(void (*fptr)(uint8_t filter, uint8_t fbIdx)){ functionBlock = fptr; }
     inline void setFunctionBlockNotify(void (*fptr)(uint8_t fbIdx, bool active,
-                            uint8_t direction, uint8_t firstGroup, uint8_t groupLength,
-                            bool midiCIValid, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)){
+                            uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
+                            uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)){
         functionBlockInfo = fptr; }
     inline void setFunctionBlockNameNotify(void (*fptr)(struct umpData mess, uint8_t fbIdx)){functionBlockName = fptr; }
     inline void setStartOfSeq(void (*fptr)()){startOfSeq = fptr; }
