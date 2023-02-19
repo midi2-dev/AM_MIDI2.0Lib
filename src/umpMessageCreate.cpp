@@ -288,12 +288,12 @@ std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockInfoNotify(uint8_t fbIdx, bo
                                                  uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
     umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK_INFO_NOTFICATION << 16)
-            + ((active?1:0) << 15)
-            + (fbIdx << 8)
-              + (sender << 7)
-              + (recv << 6)
-            + (isMIDI1 << 2)
-            + direction;
+                + ((active?1:0) << 15)
+                + (fbIdx << 8)
+                + (recv << 5)
+                + (sender << 4)
+                + (isMIDI1 << 2)
+                + direction;
     umpMess[1] = (firstGroup  << 24)
                  + (groupLength << 16)
                  + (midiCISupport << 8)
