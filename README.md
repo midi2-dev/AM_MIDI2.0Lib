@@ -51,7 +51,7 @@ This means the overheads for a simple MIDI 2.0 device is down to a compiled size
 memory footprint of around 1k.
 
 ## Documentation
-Can be found on the [WIKI](https://github.com/starfishmod/MIDI2_CPP/wiki)
+Can be found on the [docs folder](https://github.com/midi-mma/midi_cpp2/tree/main/docs)
 
 ### Example: Translate MIDI 1.0 Byte stream to UMP
 
