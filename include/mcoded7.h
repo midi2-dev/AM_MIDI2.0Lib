@@ -22,7 +22,6 @@
 #define MC7_H
 
 #include <cstdint>
-#include <cstring>
 
 class mcoded7Decode{
 	private:

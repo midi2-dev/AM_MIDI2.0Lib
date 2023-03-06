@@ -21,8 +21,7 @@
 #ifndef BSUMP_H
 #define BSUMP_H
 
-#include <cstring>
-#include <cstdio>
+
 #include <cstdint>
 
 class bytestreamToUMP{

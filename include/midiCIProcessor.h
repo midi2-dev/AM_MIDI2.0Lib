@@ -21,9 +21,7 @@
 #ifndef MIDI2CPP_MIDICIPROCESSOR_H
 #define MIDI2CPP_MIDICIPROCESSOR_H
 
-#include <cstdio>
 #include <cstdint>
-#include <cstdlib>
 #include <map>
 #include <array> // this was missing and causing build errors
 #include <functional>

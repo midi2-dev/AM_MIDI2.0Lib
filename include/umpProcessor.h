@@ -20,9 +20,7 @@
 #ifndef UMP_PROCESSOR_H
 #define UMP_PROCESSOR_H
 
-#include <cstdio>
 #include <cstdint>
-#include <cstdlib>
 #include <array>
 #include <functional>
 

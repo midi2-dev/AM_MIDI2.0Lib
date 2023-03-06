@@ -21,7 +21,6 @@
 #ifndef MESSAGE_CREATE_H
 #define MESSAGE_CREATE_H
 #include <array>
-#include <vector>
 #include <cstdint>
 
 namespace UMPMessage {

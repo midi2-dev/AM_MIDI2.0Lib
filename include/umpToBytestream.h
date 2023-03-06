@@ -21,8 +21,7 @@
 #ifndef UMPBS_H
 #define UMPBS_H
 
-#include <cstring>
-#include <cstdio>
+
 #include <cstdint>
 
 class umpToBytestream{

@@ -22,12 +22,16 @@
 #include "../include/utils.h"
 #include "../include/bytestreamToUMP.h"
 
+void clear(uint8_t * dest, int c, uint16_t n){
+    for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
+}
+
 bytestreamToUMP::bytestreamToUMP(){
-	memset(bankMSB, 255, sizeof(bankMSB));
-	memset(bankLSB, 255, sizeof(bankLSB));
-	memset(rpnMsbValue, 255, sizeof(rpnMsbValue));
-	memset(rpnMsb, 255, sizeof(rpnMsb));
-	memset(rpnLsb, 255, sizeof(rpnLsb));
+    clear(bankMSB, 255, sizeof(bankMSB));
+    clear(bankLSB, 255, sizeof(bankLSB));
+    clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
+    clear(rpnMsb, 255, sizeof(rpnMsb));
+    clear(rpnLsb, 255, sizeof(rpnLsb));
 }
 	 
 void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
@@ -182,7 +186,7 @@ void bytestreamToUMP::bytestreamParse(uint8_t midi1Byte){
 		umpMess[messPos++] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5];
 
 		sysex7State = 0;
-		memset(sysex, 0, sizeof(sysex));
+        clear(sysex, 0, sizeof(sysex));
 	}
   } else 
   if(sysex7State >= 1){
@@ -193,7 +197,7 @@ void bytestreamToUMP::bytestreamParse(uint8_t midi1Byte){
 		 umpMess[messPos] +=  6L << 16;
 		 umpMess[messPos++] += (sysex[0] << 8) + sysex[1];
 		 umpMess[messPos++] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5] + 0L;
-		 memset(sysex, 0, sizeof(sysex));
+         clear(sysex, 0, sizeof(sysex));
 		 sysex7State=2;
 		 sysex7Pos=0;
 	  }
