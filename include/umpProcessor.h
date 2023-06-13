@@ -110,6 +110,9 @@ class umpProcessor{
     std::function<void(struct umpData mess, uint8_t fbIdx)> functionBlockName = nullptr;
     std::function<void()> startOfSeq = nullptr;
     std::function<void()> endOfFile = nullptr;
+
+    //Handle new Messages
+    std::function<void(uint32_t * ump, uint8_t length)> unknownUMPMessage = nullptr;
     
   public:
 
@@ -165,7 +168,8 @@ class umpProcessor{
     inline void setStartOfSeq(std::function<void()> fptr){startOfSeq = fptr; }
     inline void setEndOfFile(std::function<void()> fptr){endOfFile = fptr; }
 
-
+    //Unknown UMP
+    inline void setUnknownUMP(std::function<void(uint32_t * ump, uint8_t length)> fptr){unknownUMPMessage = fptr; }
 
 };
 

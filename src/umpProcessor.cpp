@@ -51,19 +51,19 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.umpGroup = group;
                 mess.status =  umpMess[0] >> 16 & 0xFF;
                 switch(mess.status){
-		    case TIMING_CODE:
+                    case TIMING_CODE:
                     case SONG_SELECT:
                         mess.value = (umpMess[0] >> 8) & 0x7F;
                         systemMessage(mess);
-			break;
-		    case SPP:
+                        break;
+                    case SPP:
                         mess.value = ((umpMess[0] >> 8) & 0x7F)  + ((umpMess[0] & 0x7F) << 7);
                         systemMessage(mess);
-			break;
+                        break;
                     default:
                         systemMessage(mess);
-			break;
-		}
+                        break;
+                }
 		
 	    } else 
             if(mt == UMP_M1CVM && channelVoiceMessage != nullptr){ //32 Bits MIDI 1.0 Channel Voice Messages
@@ -72,35 +72,38 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.messageType = mt;
                 mess.status = umpMess[0] >> 16 & 0xF0;
                 mess.channel = (umpMess[0] >> 16) & 0xF;
-			uint8_t val1 = (umpMess[0] >> 8) & 0x7F;
-			uint8_t val2 = umpMess[0] & 0x7F;
+                uint8_t val1 = (umpMess[0] >> 8) & 0x7F;
+                uint8_t val2 = umpMess[0] & 0x7F;
 
                 switch(mess.status){
-				case NOTE_OFF: //Note Off
-				case NOTE_ON: //Note On
+                    case NOTE_OFF: //Note Off
+                    case NOTE_ON: //Note On
                         mess.note = val1;
                         mess.value = M2Utils::scaleUp(val2,7,16);
                         channelVoiceMessage(mess);
-					break;
-				case KEY_PRESSURE: //Poly Pressure
+                        break;
+                    case KEY_PRESSURE: //Poly Pressure
                         mess.note = val1;
                     case CHANNEL_PRESSURE: //Channel Pressure
                         mess.value = M2Utils::scaleUp(val2,7,32);
                         channelVoiceMessage(mess);
-					break;	
-				case CC: //CC
+                        break;
+                    case CC: //CC
                         mess.index = val1;
                         mess.value = M2Utils::scaleUp(val2,7,32);
                         channelVoiceMessage(mess);
-					break;
-				case PROGRAM_CHANGE: //Program Change Message
+                        break;
+                    case PROGRAM_CHANGE: //Program Change Message
                         mess.value = val1;
                         channelVoiceMessage(mess);
-					break;
-				case PITCH_BEND: //PitchBend
+                        break;
+                    case PITCH_BEND: //PitchBend
                         mess.value = M2Utils::scaleUp((val2 << 7) + val1,14,32);
                         channelVoiceMessage(mess);
-					break;		
+                        break;
+                    default:
+                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
+                        break;
 			}				
 		}
         return;
@@ -134,70 +137,72 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.messageType = mt;
                 mess.status = (umpMess[0] >> 16) & 0xF0;
                 mess.channel = (umpMess[0] >> 16) & 0xF;
-			uint8_t val1 = (umpMess[0] >> 8) & 0xFF;
-			uint8_t val2 = umpMess[0] & 0xFF;
+                uint8_t val1 = (umpMess[0] >> 8) & 0xFF;
+                uint8_t val2 = umpMess[0] & 0xFF;
 			
                 switch(mess.status){
-				case NOTE_OFF: //Note Off
-				case NOTE_ON: //Note On
+                    case NOTE_OFF: //Note Off
+                    case NOTE_ON: //Note On
                         mess.note = val1;
                         mess.value = umpMess[1] >> 16;
                         mess.bank = val2;
                         mess.index = umpMess[1] & 65535;
                         channelVoiceMessage(mess);
-					break;
+                        break;
                     case PITCH_BEND_PERNOTE:
-				case KEY_PRESSURE: //Poly Pressure
+                    case KEY_PRESSURE: //Poly Pressure
                         mess.note = val1;
                     case CHANNEL_PRESSURE: //Channel Pressure
                         mess.value = umpMess[1];
                         channelVoiceMessage(mess);
-					break;	
-				case CC: //CC
+                        break;
+                    case CC: //CC
                         mess.index = val1;
                         mess.value = umpMess[1];
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;	
-				
-				case RPN: //RPN
-				case NRPN: //NRPN
-				case RPN_RELATIVE: //Relative RPN
-				case NRPN_RELATIVE: //Relative NRPN
+                        break;
+
+                    case RPN: //RPN
+                    case NRPN: //NRPN
+                    case RPN_RELATIVE: //Relative RPN
+                    case NRPN_RELATIVE: //Relative NRPN
                         mess.bank = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;
-				
-				case PROGRAM_CHANGE: //Program Change Message
+                        break;
+
+                    case PROGRAM_CHANGE: //Program Change Message
                         mess.value = umpMess[1] >> 24;
                         mess.flag1 = umpMess[0] & 1;
                         mess.bank = (umpMess[1] >> 8) & 0x7f;
                         mess.index = umpMess[1] & 0x7f;
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;
+                        break;
 
-				case PITCH_BEND: //PitchBend
+                    case PITCH_BEND: //PitchBend
                         mess.value = umpMess[1];
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;
+                        break;
 
-				case NRPN_PERNOTE: //Assignable Per-Note Controller 1
+                    case NRPN_PERNOTE: //Assignable Per-Note Controller 1
                     case RPN_PERNOTE: //Registered Per-Note Controller 0
-					
+
                         mess.note = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;	
+                        break;
                     case PERNOTE_MANAGE: //Per-Note Management Message
-					
+
                         mess.note = val1;
                         mess.flag1 =(bool)(val2 & 2);
                         mess.flag2 = (bool)(val2 & 1);
                         if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
-					break;	
-					
+                        break;
+                    default:
+                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
+                        break;
 			}
 		}
         messPos =0;
@@ -206,6 +211,8 @@ void umpProcessor::processUMP(uint32_t UMP){
        && (mt == 0xB || mt == 0xC)
             ){ //96bit Messages
         messPos =0;
+        if(unknownUMPMessage)unknownUMPMessage(umpMess, 3);
+
     }else
     if(messPos == 3
              && (mt == UMP_DATA || mt >= 0xD)
@@ -341,58 +348,18 @@ void umpProcessor::processUMP(uint32_t UMP){
                     if(endOfFile != nullptr) endOfFile();
                     break;
                 }
+                default:
+                    if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+                    break;
 
             }
 
         }else
         if(mt == UMP_DATA){ //128 bits Data Messages (including System Exclusive 8)
-            uint8_t status = (umpMess[0] >> 20) & 0xF;
+            //uint8_t status = (umpMess[0] >> 20) & 0xF;
             //SysEx 8
-            if(status <= 3){
-                //SysEx 8
-                /*uint8_t numbytes  = (umpMess[0] >> 16) & 0xF;
-                uint8_t streamId  = (umpMess[0] >> 8) & 0xFF;
-                if(status == 0 || status == 1){
-                    startSysex7(group); //streamId
-                }
+            if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
 
-                if(numbytes > 0)processSysEx(group, umpMess[0] & 0xFF);
-                if(numbytes > 1)processSysEx(group, (umpMess[1] >> 24) & 0xFF);
-                if(numbytes > 2)processSysEx(group, (umpMess[1] >> 16) & 0xFF);
-                if(numbytes > 3)processSysEx(group, (umpMess[1] >> 8) & 0xFF);
-                if(numbytes > 4)processSysEx(group, umpMess[1] & 0xFF);
-
-                if(numbytes > 5)processSysEx(group, (umpMess[2] >> 24) & 0xFF);
-                if(numbytes > 6)processSysEx(group, (umpMess[2] >> 16) & 0xFF);
-                if(numbytes > 7)processSysEx(group, (umpMess[2] >> 8) & 0xFF);
-                if(numbytes > 8)processSysEx(group, umpMess[2] & 0xFF);
-
-                if(numbytes > 9)processSysEx(group, (umpMess[3] >> 24) & 0xFF);
-                if(numbytes > 10)processSysEx(group, (umpMess[3] >> 16) & 0xFF);
-                if(numbytes > 11)processSysEx(group, (umpMess[3] >> 8) & 0xFF);
-                if(numbytes > 12)processSysEx(group, umpMess[3] & 0xFF);
-
-                if(status == 0 || status == 3){
-                    endSysex7(group);
-                }*/
-
-            }else if(status == 8 || status ==9){
-                //Beginning of Mixed Data Set
-                //uint8_t mdsId  = (umpMess[0] >> 16) & 0xF;
-
-                if(status == 8){
-                    /*uint16_t numValidBytes  = umpMess[0] & 0xFFFF;
-                    uint16_t numChunk  = (umpMess[1] >> 16) & 0xFFFF;
-                    uint16_t numOfChunk  = umpMess[1] & 0xFFFF;
-                    uint16_t manuId  = (umpMess[2] >> 16) & 0xFFFF;
-                    uint16_t deviceId  = umpMess[2] & 0xFFFF;
-                    uint16_t subId1  = (umpMess[3] >> 16) & 0xFFFF;
-                    uint16_t subId2  = umpMess[3] & 0xFFFF;*/
-                }else{
-                    // MDS bytes?
-                }
-
-            }
 
         }
         else
@@ -459,6 +426,9 @@ void umpProcessor::processUMP(uint32_t UMP){
                                 );
                             break;
                         }
+                        default:
+                            if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+                            break;
                     }
                     break;
                 }
@@ -486,7 +456,12 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
 
                 }
+                default:
+                    if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+                    break;
             }
+        }else{
+            if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
         }
 		messPos =0;
 	} else {
