@@ -31,7 +31,7 @@ class umpToBytestream{
         uint32_t ump64word1;
 
         uint8_t UMPPos=0;
-        uint8_t bsOutLength;
+        uint8_t bsOutLength=0;
         uint8_t bsOut[12];
 
 	public:
