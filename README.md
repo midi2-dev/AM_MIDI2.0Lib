@@ -1,4 +1,4 @@
-# MIDI2.0 C++
+# MIDI 2.0 Tiny Lib 
 A MIDI 2.0 Library
 
 This is a general purposes Library for building MIDI 2.0 Devices and Applications. This library aims to work on 
@@ -8,7 +8,7 @@ translations needed for most MIDI 2.0 Devices and Applications
 ## IMPORTANT! Please read first
 I hope that this library is useful to everyone making MIDI 2.0 Devices.
 If you do use this library please let me know! I am keen to see all the MIDI 2.0 Projects. This code is also available 
-for DIY and commercial use (MIT Licence)
+for DIY and commercial use (MIT Licence). Please note that use of this library is at your own risk.
 
 THIS LIBRARY IS CURRENTLY UNDER DEVELOPMENT - 
 The code is still being adjusted as it is being prototyped and changes do occur, however the WIKI attempts to reflect 
@@ -23,8 +23,6 @@ If you see code here that :
 * has spelling mistakes and grammatical errors
 
 then please submit PR's and/or issues - but PR's preferred. 
-
-Please note that use of this library is at your own risk!
 
 ## What does this do?
 Please read the MIDI 2.0 specification on https://midi.org/specifications to understand the following.
@@ -51,7 +49,7 @@ This means the overheads for a simple MIDI 2.0 device is down to a compiled size
 memory footprint of around 1k.
 
 ## Documentation
-Can be found on the [docs folder](https://github.com/midi-mma/midi_cpp2/tree/main/docs)
+Can be found on the [docs folder](https://github.com/midi2-dev/MIDI2.0TinyLib/tree/main/docs)
 
 ### Example: Translate MIDI 1.0 Byte stream to UMP
 
