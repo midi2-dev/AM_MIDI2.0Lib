@@ -1,4 +1,4 @@
-# MIDI 2.0 Tiny Lib 
+# AM MIDI 2.0 Lib 
 A MIDI 2.0 Library
 
 This is a general purposes Library for building MIDI 2.0 Devices and Applications. This library aims to work on 
