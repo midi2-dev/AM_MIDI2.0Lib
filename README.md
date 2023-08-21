@@ -49,7 +49,7 @@ This means the overheads for a simple MIDI 2.0 device is down to a compiled size
 memory footprint of around 1k.
 
 ## Documentation
-Can be found on the [docs folder](https://github.com/midi2-dev/MIDI2.0TinyLib/tree/main/docs)
+Can be found on the [docs folder](https://github.com/midi2-dev/AM_MIDI2.0Lib/tree/main/docs)
 
 ### Example: Translate MIDI 1.0 Byte stream to UMP
 

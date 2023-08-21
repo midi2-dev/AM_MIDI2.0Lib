@@ -49,6 +49,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 		  
 		  if(status==NOTE_ON && b2==0){
 			 status=NOTE_OFF;
+             b2 = 0x40;
 		  }
 		  
 		  umpMess[messPos] = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
