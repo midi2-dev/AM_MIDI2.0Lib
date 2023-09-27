@@ -20,9 +20,10 @@
 
 #include "../include/mcoded7.h"
 
-void clear(uint8_t * dest, int c, uint16_t n){
-    for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
-}
+#ifndef clear
+#define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
+#endif
+
 
 uint16_t mcoded7Decode::currentPos(){ return dumpPos;}
 

@@ -265,6 +265,8 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
             case MIDICI_PROFILE_ENABLED: //Set Profile Enabled Message
             case MIDICI_PROFILE_DISABLED: //Set Profile Disabled Message
             case MIDICI_PROFILE_SPECIFIC_DATA: //ProfileSpecific Data
+            case MIDICI_PROFILE_DETAILS_INQUIRY:
+            case MIDICI_PROFILE_DETAILS_REPLY:
                 processProfileSysex(s7Byte);
                 break;
 #endif
@@ -497,7 +499,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
             if (sysexPos >= 13 && sysexPos <= 17) {
                 buffer[sysexPos - 13] = s7Byte;
             }
-            if (sysexPos == 19 && recvSetProfileDetailsInquiry != nullptr){ //Inquiry Target
+            if (sysexPos == 18 && recvSetProfileDetailsInquiry != nullptr){ //Inquiry Target
                 recvSetProfileDetailsInquiry(midici, {buffer[0], buffer[1],
                                                       buffer[2], buffer[3],
                                                       buffer[4]}, s7Byte);

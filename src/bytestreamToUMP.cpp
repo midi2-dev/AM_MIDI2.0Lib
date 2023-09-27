@@ -22,9 +22,9 @@
 #include "../include/utils.h"
 #include "../include/bytestreamToUMP.h"
 
-void clear(uint8_t * dest, int c, uint16_t n){
-    for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
-}
+#ifndef clear
+#define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
+#endif
 
 bytestreamToUMP::bytestreamToUMP(){
     clear(bankMSB, 255, sizeof(bankMSB));
