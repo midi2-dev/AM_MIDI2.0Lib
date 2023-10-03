@@ -319,27 +319,27 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
                 case FUNCTIONBLOCK_NAME_NOTIFICATION:{
                     uint8_t fbIdx = (umpMess[0] >> 8) & 0x7F;
-                        umpData mess = umpData();
-                        mess.messageType = mt;
-                        mess.status = status;
-                        mess.form = umpMess[0] >> 24 & 0x3;
-                        mess.dataLength  = 0;
+                    umpData mess = umpData();
+                    mess.messageType = mt;
+                    mess.status = status;
+                    mess.form = umpMess[0] >> 24 & 0x3;
+                    mess.dataLength  = 0;
                     uint8_t text[13];
 
-                        if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
+                    if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
                     for(uint8_t i = 1; i<=3; i++){
                         for(uint8_t j = 24; j>=0; j-=8){
                             uint8_t c = (umpMess[i] >> j) & 0xFF;
                             if(c){
-                                    text[mess.dataLength++]=c;
-                    }
+                                text[mess.dataLength++]=c;
+                            }
                         }
                     }
-                        mess.data = text;
+                    mess.data = text;
 
-                        if(functionBlockName != nullptr) functionBlockName(mess,fbIdx);
+                    if(functionBlockName != nullptr) functionBlockName(mess,fbIdx);
                     break;
-                 }
+                }
                 case STARTOFSEQ: {
                     if(startOfSeq != nullptr) startOfSeq();
                     break;
@@ -356,10 +356,54 @@ void umpProcessor::processUMP(uint32_t UMP){
 
         }else
         if(mt == UMP_DATA){ //128 bits Data Messages (including System Exclusive 8)
-            //uint8_t status = (umpMess[0] >> 20) & 0xF;
-            //SysEx 8
-            if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+            uint8_t status = (umpMess[0] >> 20) & 0xF;
 
+            if(status <= 3){
+                umpData mess = umpData();
+                mess.umpGroup = group;
+                mess.messageType = mt;
+                mess.streamId  = (umpMess[0] >> 8) & 0xFF;
+                mess.form = status;
+                mess.dataLength  = (umpMess[0] >> 16) & 0xF;
+
+                uint8_t sysex[13];
+
+                if(mess.dataLength > 1)sysex[0] =  umpMess[0] & 0x7F;
+                if(mess.dataLength > 2)sysex[1] =  (umpMess[1] >> 24) & 0x7F;
+                if(mess.dataLength > 3)sysex[2] =  (umpMess[1] >> 16) & 0x7F;
+                if(mess.dataLength > 4)sysex[3] =  (umpMess[1] >> 8) & 0x7F;
+                if(mess.dataLength > 5)sysex[4] =  umpMess[1] & 0x7F;
+                if(mess.dataLength > 6)sysex[5] =  (umpMess[2] >> 24) & 0x7F;
+                if(mess.dataLength > 7)sysex[6] =  (umpMess[2] >> 16) & 0x7F;
+                if(mess.dataLength > 8)sysex[7] =  (umpMess[2] >> 8) & 0x7F;
+                if(mess.dataLength > 9)sysex[8] =  umpMess[2] & 0x7F;
+                if(mess.dataLength > 10)sysex[9] =  (umpMess[3] >> 24) & 0x7F;
+                if(mess.dataLength > 11)sysex[10] =  (umpMess[3] >> 16) & 0x7F;
+                if(mess.dataLength > 12)sysex[11] =  (umpMess[3] >> 8) & 0x7F;
+                if(mess.dataLength > 13)sysex[12] =  umpMess[3] & 0x7F;
+
+                mess.data = sysex;
+                sendOutSysex(mess);
+
+            }else if(status == 8 || status ==9){
+                //Beginning of Mixed Data Set
+                //uint8_t mdsId  = (umpMess[0] >> 16) & 0xF;
+
+                if(status == 8){
+                    /*uint16_t numValidBytes  = umpMess[0] & 0xFFFF;
+                    uint16_t numChunk  = (umpMess[1] >> 16) & 0xFFFF;
+                    uint16_t numOfChunk  = umpMess[1] & 0xFFFF;
+                    uint16_t manuId  = (umpMess[2] >> 16) & 0xFFFF;
+                    uint16_t deviceId  = umpMess[2] & 0xFFFF;
+                    uint16_t subId1  = (umpMess[3] >> 16) & 0xFFFF;
+                    uint16_t subId2  = umpMess[3] & 0xFFFF;*/
+                }else{
+                    // MDS bytes?
+                }
+                if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+
+
+            }
 
         }
         else

@@ -50,9 +50,10 @@ struct umpGeneric{
 };
 
 struct umpData{
-    umpData() : umpGroup(255), status(0),  form(0) {}
+    umpData() : umpGroup(255), streamId(0), status(0),  form(0) {}
     uint8_t umpGroup;
     uint8_t messageType;
+    uint8_t streamId;
     uint8_t status;
     uint8_t form;
     uint8_t* data;
