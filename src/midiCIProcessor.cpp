@@ -512,19 +512,19 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
             if (sysexPos >= 13 && sysexPos <= 17) {
                 buffer[sysexPos - 13] = s7Byte;
             }
-            if (sysexPos == 19){//Inquiry Target
+            if (sysexPos == 18){//Inquiry Target
                 buffer[5] = s7Byte;
             }
 
-            if(sysexPos == 20 || sysexPos == 21){ //Inquiry Target Data length (dl)
-                intTemp[0] += s7Byte << (7 * (sysexPos - 20 ));
+            if(sysexPos == 19 || sysexPos == 20){ //Inquiry Target Data length (dl)
+                intTemp[0] += s7Byte << (7 * (sysexPos - 19 ));
             }
 
-            if (sysexPos >= 22 && sysexPos <= 22 + intTemp[0]){
-                buffer[sysexPos - 23 + 6] = s7Byte; //product ID
+            if (sysexPos >= 21 && sysexPos <= 21 + intTemp[0]){
+                buffer[sysexPos - 22 + 6] = s7Byte; //product ID
             }
 
-            if (sysexPos == 22 + intTemp[0] && recvSetProfileDetailsInquiry != nullptr){
+            if (sysexPos == 21 + intTemp[0] && recvSetProfileDetailsInquiry != nullptr){
                 recvSetProfileDetailsReply(midici, {buffer[0], buffer[1],
                                                     buffer[2], buffer[3],
                                                     buffer[4]},
