@@ -420,8 +420,7 @@ uint16_t CIMessage::sendPESet(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUI
                           bodyLength, body, (uint8_t) MIDICI_PE_SET);
 }
 
-uint16_t
-CIMessage::sendPEGetReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMUID, uint8_t requestId,
+uint16_t CIMessage::sendPEGetReply(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t destMUID, uint8_t requestId,
                           uint16_t headerLen, uint8_t *header, uint16_t numberOfChunks,
                           uint16_t numberOfThisChunk, uint16_t bodyLength, uint8_t *body) {
     return sendPEWithBody(sysex, midiCIVer, srcMUID, destMUID, requestId, headerLen, header, numberOfChunks,
