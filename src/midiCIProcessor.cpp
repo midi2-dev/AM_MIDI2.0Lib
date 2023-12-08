@@ -107,9 +107,9 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                                 {buffer[5], buffer[6]},
                                 {buffer[7], buffer[8],
                                  buffer[9], buffer[10]},
-                                intTemp[0],
+                                (uint8_t) intTemp[0],
                                 intTemp[1],
-                                intTemp[2]
+                                (uint8_t) intTemp[2]
                                 //intTemp[3],
                                // &(buffer[11])
                         );
@@ -122,10 +122,10 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                                 {buffer[5], buffer[6]},
                                 {buffer[7], buffer[8],
                                  buffer[9], buffer[10]},
-                                intTemp[0],
+                                (uint8_t) intTemp[0],
                                 intTemp[1],
-                                intTemp[2],
-                                intTemp[3]
+                                (uint8_t) intTemp[2],
+                                (uint8_t) intTemp[3]
                                 //&(buffer[11])
                         );
                     }
@@ -172,7 +172,7 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 
                 if (complete) {
                     recvEndPointInfoReply(midici,
-                                     intTemp[0],
+                                     (uint8_t) intTemp[0],
                                      intTemp[1],
                                      buffer
                                      );
@@ -223,9 +223,9 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                         recvNAK(
 
                             midici,
-                            intTemp[0],
-                            intTemp[1],
-                            intTemp[2],
+                            (uint8_t) intTemp[0],
+                            (uint8_t) intTemp[1],
+                            (uint8_t) intTemp[2],
                             ackNakDetails,
                             intTemp[3],
                             buffer
@@ -235,9 +235,9 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                         recvACK(
 
                             midici,
-                            intTemp[0],
-                            intTemp[1],
-                            intTemp[2],
+                            (uint8_t) intTemp[0],
+                            (uint8_t) intTemp[1],
+                            (uint8_t) intTemp[2],
                             ackNakDetails,
                             intTemp[3],
                             buffer
@@ -329,7 +329,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
                     uint8_t protocol[5] = {buffer[0], buffer[1],
                                            buffer[2], buffer[3],
                                            buffer[4]};
-                    recvProtocolAvailable(midici, intTemp[0], protocol);
+                    recvProtocolAvailable(midici, (uint8_t) intTemp[0], protocol);
                 }
             }
             if(midici.ciVer > 1){
@@ -340,7 +340,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
 //                    uint8_t protocol[5] = {buffer[0], buffer[1],
 //                                           buffer[2], buffer[3],
 //                                           buffer[4]};
-                    if (recvSetProtocolConfirm != nullptr)recvSetProtocolConfirm(midici, intTemp[0]);
+                    if (recvSetProtocolConfirm != nullptr)recvSetProtocolConfirm(midici, (uint8_t) intTemp[0]);
                 }
             }
             break;
@@ -356,7 +356,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
             }
             if (sysexPos == 18 && recvSetProtocol != nullptr){
                 uint8_t protocol[5] = {buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]};
-                recvSetProtocol(midici, intTemp[0], protocol);
+                recvSetProtocol(midici, (uint8_t) intTemp[0], protocol);
             }
             break;
 
@@ -373,7 +373,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
                 }
             }
             if (sysexPos == 61 && recvProtocolTest != nullptr){
-                recvProtocolTest(midici, intTemp[0], !!(intTemp[1]));
+                recvProtocolTest(midici, (uint8_t) intTemp[0], !!(intTemp[1]));
             }
 
 
@@ -384,7 +384,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
             if (sysexPos == 13 ) {
                 intTemp[0] = s7Byte;
                 if (recvSetProtocolConfirm != nullptr){
-                    recvSetProtocolConfirm(midici, intTemp[0]);
+                    recvSetProtocolConfirm(midici, (uint8_t) intTemp[0]);
                 }
             }
             break;

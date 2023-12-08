@@ -257,7 +257,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case MIDIENDPOINT_PRODID_NOTIFICATION: {
                         umpData mess = umpData();
                         mess.messageType = mt;
-                        mess.status = status;
+                        mess.status = (uint8_t) status;
                         mess.form = umpMess[0] >> 24 & 0x3;
                         mess.dataLength  = 0;
                     uint8_t text[14];
@@ -265,7 +265,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         if ((umpMess[0] >> 8) & 0xFF) text[mess.dataLength++] = (umpMess[0] >> 8) & 0xFF;
                         if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
                     for(uint8_t i = 1; i<=3; i++){
-                        for(uint8_t j = 24; j>=0; j-=8){
+                        for(int j = 24; j>=0; j-=8){
                             uint8_t c = (umpMess[i] >> j) & 0xFF;
                             if(c){
                                     text[mess.dataLength++]=c;
@@ -280,14 +280,14 @@ void umpProcessor::processUMP(uint32_t UMP){
 
                 case MIDIENDPOINT_PROTOCOL_REQUEST: //JR Protocol Req
                     if(midiEndpointJRProtocolReq != nullptr)
-                        midiEndpointJRProtocolReq((umpMess[0] >> 8),
+                        midiEndpointJRProtocolReq((uint8_t) (umpMess[0] >> 8),
                                                    (umpMess[0] >> 1) & 1,
                                                    umpMess[0] & 1
                                                    );
                     break;
                 case MIDIENDPOINT_PROTOCOL_NOTIFICATION: //JR Protocol Req
                     if(midiEndpointJRProtocolNotify != nullptr)
-                        midiEndpointJRProtocolNotify((umpMess[0] >> 8),
+                        midiEndpointJRProtocolNotify((uint8_t) (umpMess[0] >> 8),
                                                      (umpMess[0] >> 1) & 1,
                                                      umpMess[0] & 1
                                                     );
@@ -321,14 +321,14 @@ void umpProcessor::processUMP(uint32_t UMP){
                     uint8_t fbIdx = (umpMess[0] >> 8) & 0x7F;
                     umpData mess = umpData();
                     mess.messageType = mt;
-                    mess.status = status;
+                    mess.status = (uint8_t) status;
                     mess.form = umpMess[0] >> 24 & 0x3;
                     mess.dataLength  = 0;
                     uint8_t text[13];
 
                     if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
                     for(uint8_t i = 1; i<=3; i++){
-                        for(uint8_t j = 24; j>=0; j-=8){
+                        for(int j = 24; j>=0; j-=8){
                             uint8_t c = (umpMess[i] >> j) & 0xFF;
                             if(c){
                                 text[mess.dataLength++]=c;
@@ -487,7 +487,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         uint8_t text[12];
 
                         for(uint8_t i = 1; i<=3; i++){
-                            for(uint8_t j = 24; j>=0; j-=8){
+                            for(int j = 24; j>=0; j-=8){
                                 uint8_t c = (umpMess[i] >> j) & 0xFF;
                                 if(c){
                                     text[mess.dataLength++]=c;
