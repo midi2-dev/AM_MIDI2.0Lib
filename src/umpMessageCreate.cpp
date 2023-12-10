@@ -218,14 +218,14 @@ std::array<uint32_t, 2> UMPMessage::mt4ProgramChange(uint8_t group, uint8_t chan
 
 std::array<uint32_t, 4> UMPMessage::mtFMidiEndpoint(uint8_t filter){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-	umpMess[0] = (0xF << 28) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR;
+	umpMess[0] = (uint32_t) ((0xF << 28) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR);
     umpMess[1] = filter;
 	return umpMess;
 }
 
 std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock, bool m2, bool m1, bool rxjr, bool txjr){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (MIDIENDPOINT_INFO_NOTIFICATION << 16) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR;
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDIENDPOINT_INFO_NOTIFICATION << 16) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR);
     umpMess[1] = (numOfFuncBlock << 24)
             + (m2 << 9)
             + (m1 << 8)
@@ -237,7 +237,7 @@ std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointInfoNotify(uint8_t numOfFuncB
 std::array<uint32_t, 4> UMPMessage::mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                                   std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (MIDIENDPOINT_DEVICEINFO_NOTIFICATION << 16) /*+  numOfFuncBlock*/;
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDIENDPOINT_DEVICEINFO_NOTIFICATION << 16)) /*+  numOfFuncBlock*/;
 
     umpMess[1] = (manuId[0] << 16)
                   + (manuId[1] << 8)
@@ -326,14 +326,14 @@ std::array<uint32_t, 4> UMPMessage::mtFFunctionBlockNameNotify(uint8_t fbIdx, ui
 
 std::array<uint32_t, 4> UMPMessage::mtFStartOfSeq(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (STARTOFSEQ << 16);
+    umpMess[0] = (uint32_t) ((0xF << 28) + (STARTOFSEQ << 16));
     return umpMess;
 
 }
 
 std::array<uint32_t, 4> UMPMessage::mtFEndOfFile(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (ENDOFFILE << 16);
+    umpMess[0] = (uint32_t) ((0xF << 28) + (ENDOFFILE << 16));
     return umpMess;
 }
 
