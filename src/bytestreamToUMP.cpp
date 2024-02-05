@@ -70,7 +70,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 			}
 			umpMess[messPos+1] += (b1 + 0L) << 24;
 		  } else if (status == CHANNEL_PRESSURE){
-                        umpMess[messPos+1] = M2Utils::scaleUp(b1,7,32);
+              umpMess[messPos+1] = M2Utils::scaleUp(b1,7,32);
 		  }  else if (status == CC){
 			switch(b1){
 			 case 0:
