@@ -35,7 +35,7 @@ class bytestreamToUMP{
 		
 		uint8_t sysex[6] = {0,0,0,0,0,0};
 	    uint8_t messPos=0;
-	    uint32_t umpMess[4];
+	    uint32_t umpMess[4] = {0,0,0,0};
 	    
 	    //Channel Based Data
 		uint8_t bankMSB[16];

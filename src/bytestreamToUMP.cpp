@@ -68,7 +68,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 				umpMess[messPos] += 1;
 				umpMess[messPos+1] += (bankMSB[channel] <<8) + bankLSB[channel ];
 			}
-			umpMess[messPos+1] += (b2 + 0L) << 24;
+			umpMess[messPos+1] += (b1 + 0L) << 24;
 		  } else if (status == CHANNEL_PRESSURE){
                         umpMess[messPos+1] = M2Utils::scaleUp(b1,7,32);
 		  }  else if (status == CC){
@@ -211,9 +211,9 @@ void bytestreamToUMP::bytestreamParse(uint8_t midi1Byte){
 		d1 = 255;
   } else if (d0){ // status byte set
 	  if (
-		d0 == PROGRAM_CHANGE
+		(d0 & 0xF0) == PROGRAM_CHANGE
+		|| (d0 & 0xF0) == CHANNEL_PRESSURE
 		|| d0 == TIMING_CODE
-		|| d0 == CHANNEL_PRESSURE
 		|| d0 == SONG_SELECT
 	  ) { 
           bsToUMP(d0, midi1Byte, 0);
