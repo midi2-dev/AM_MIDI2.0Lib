@@ -18,7 +18,7 @@
  * 
  * ********************************************************/
 
-#include "../include/midiCIProcessor.h"
+#include "midiCIProcessor.h"
 
 void midiCIProcessor::endSysex7(){
     if(midici._reqTupleSet){

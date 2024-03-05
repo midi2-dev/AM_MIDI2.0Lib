@@ -18,7 +18,7 @@
  *
  * ********************************************************/
 
-#include "../include/mcoded7.h"
+#include "mcoded7.h"
 
 #ifndef clear
 #define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;

@@ -19,8 +19,8 @@
  * ********************************************************/
 
 
-#include "../include/utils.h"
-#include "../include/umpToBytestream.h"
+#include "utils.h"
+#include "umpToBytestream.h"
 
 umpToBytestream::umpToBytestream(){}
 
