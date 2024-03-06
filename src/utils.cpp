@@ -18,7 +18,7 @@
  * 
  * ********************************************************/
 
-#include "../include/utils.h"
+#include "utils.h"
 
 // power of 2, pow(exp)
 uint32_t power_of_2(uint8_t exp)

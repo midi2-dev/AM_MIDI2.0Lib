@@ -19,8 +19,8 @@
  * ********************************************************/
 
 
-#include "../include/utils.h"
-#include "../include/bytestreamToUMP.h"
+#include "utils.h"
+#include "bytestreamToUMP.h"
 
 #ifndef clear
 #define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;

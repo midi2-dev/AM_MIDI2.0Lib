@@ -18,7 +18,7 @@
  *
  * ********************************************************/
 
-#include "../include/midiCIMessageCreate.h"
+#include "midiCIMessageCreate.h"
 
 void setBytesFromNumbers(uint8_t *message, uint32_t number, uint16_t *start, uint8_t amount) {
     for (int amountC = amount; amountC > 0; amountC--) {
