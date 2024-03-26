@@ -43,7 +43,7 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 	  umpMess[messPos] +=  b1  << 8;
 	  umpMess[messPos] +=  b2;
 	  messPos++;
-  }else if(status>=NOTE_OFF && status<=PITCH_BEND){
+   }else if(status>=NOTE_OFF && status<=PITCH_BEND){
 	  if(outputMIDI2){
 		  uint8_t channel = b0 & 0xF;
 		  
@@ -140,11 +140,9 @@ void bytestreamToUMP::bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 		  umpMess[messPos] +=  (b0 + 0L) << 16;
 		  umpMess[messPos] +=  b1  << 8;
 		  umpMess[messPos] +=  b2;
-		  
 		  messPos++;
-	  }
+   }
   }
-  
 }
 
 

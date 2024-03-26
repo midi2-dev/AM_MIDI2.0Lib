@@ -7,6 +7,7 @@ add_library(libmidi2
         src/utils.cpp
         src/bytestreamToUMP.cpp
         src/umpToBytestream.cpp
+        src/umpToMIDI1Protocol.cpp
         src/umpMessageCreate.cpp
         src/midiCIMessageCreate.cpp
         src/midiCIProcessor.cpp
