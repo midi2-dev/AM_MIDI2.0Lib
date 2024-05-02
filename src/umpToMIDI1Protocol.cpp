@@ -92,7 +92,7 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                     switch (status) {
                         case NOTE_OFF: {//note off
                             uint8_t velocity = (uint8_t) M2Utils::scaleDown((UMP >> 16), 16, 7);
-                            umpMess[messPos++] = UMPMessage::mt2NoteOn(group, channel, val1, velocity);
+                            umpMess[messPos++] = UMPMessage::mt2NoteOff(group, channel, val1, velocity);
                             break;
                         }
                         case NOTE_ON: { //note on
