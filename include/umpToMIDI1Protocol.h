@@ -24,14 +24,21 @@
 
 #include <cstdint>
 
+#define UMPTOPROTO1_BUFFER 4
+
 class umpToMIDI1Protocol{
 
 	private:
         uint8_t mType;
         uint32_t ump64word1;
         uint8_t UMPPos=0;
-        uint8_t messPos=0;
-        uint32_t umpMess[4] = {0,0,0,0};
+        uint32_t umpMess[UMPTOPROTO1_BUFFER] = {0,0,0,0};
+
+		void increaseWrite();
+
+		int readIndex = 0;
+		int writeIndex = 0;
+		int bufferLength = 0;
 
 	public:
         uint8_t group;

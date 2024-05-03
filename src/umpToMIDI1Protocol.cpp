@@ -26,15 +26,17 @@
 umpToMIDI1Protocol::umpToMIDI1Protocol(){}
 
 bool umpToMIDI1Protocol::availableUMP(){
-    return messPos;
+    return bufferLength;
 }
 
 uint32_t umpToMIDI1Protocol::readUMP(){
-    uint32_t mess = umpMess[0];
-    for(uint8_t i=0;i<messPos;i++){
-        umpMess[i]=umpMess[i+1];
+    uint32_t mess = umpMess[readIndex];
+    bufferLength--;	 //	Decrease buffer size after reading
+    readIndex++;
+    if (readIndex == UMPTOPROTO1_BUFFER) {
+        readIndex = 0;
     }
-    messPos--;
+
     return mess;
 }
 
@@ -52,7 +54,7 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                     break;
                 case UMP_M1CVM: //32 Bits MIDI 1.0 Channel Voice Messages
                 case UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
-                    umpMess[messPos++] = UMP;
+                    umpMess[writeIndex] = UMP;increaseWrite();
                     return;
                     break;
                 }
@@ -76,8 +78,8 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                     break;
                 case UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
                     UMPPos = 0;
-                    umpMess[messPos++] = ump64word1;
-                    umpMess[messPos++] = UMP;
+                    umpMess[writeIndex] = ump64word1;increaseWrite();
+                    umpMess[writeIndex] = UMP;increaseWrite();
                     break;
                 }
                 case UMP_M2CVM:{
@@ -92,7 +94,8 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                     switch (status) {
                         case NOTE_OFF: {//note off
                             uint8_t velocity = (uint8_t) M2Utils::scaleDown((UMP >> 16), 16, 7);
-                            umpMess[messPos++] = UMPMessage::mt2NoteOff(group, channel, val1, velocity);
+                            umpMess[writeIndex] = UMPMessage::mt2NoteOff(group, channel, val1, velocity);
+                                increaseWrite();
                             break;
                         }
                         case NOTE_ON: { //note on
@@ -100,50 +103,54 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                             if (velocity == 0) {
                                 velocity = 1;
                             }
-                            umpMess[messPos++] = UMPMessage::mt2NoteOn(group, channel, val1, velocity);
+                            umpMess[writeIndex] = UMPMessage::mt2NoteOn(group, channel, val1, velocity);
+                                increaseWrite();
                             break;
                         }
                         case KEY_PRESSURE:{//poly aftertouch
                             uint8_t value = (uint8_t)M2Utils::scaleDown(UMP , 32, 7);
-                            umpMess[messPos++] = UMPMessage::mt2PolyPressure(group, channel, val1, value);
+                            umpMess[writeIndex] = UMPMessage::mt2PolyPressure(group, channel, val1, value);
+                                increaseWrite();
                             break;
                         }
                         case CC: {//CC
                             uint8_t value = (uint8_t)M2Utils::scaleDown(UMP , 32, 7);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, val1, value);
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, val1, value);
+                                increaseWrite();
                             break;
                         }
                         case CHANNEL_PRESSURE: { //Channel Pressure
                             uint8_t value = (uint8_t) M2Utils::scaleDown(UMP, 32, 7);
-                            umpMess[messPos++] = UMPMessage::mt2ChannelPressure(group, channel, value);
+                            umpMess[writeIndex] = UMPMessage::mt2ChannelPressure(group, channel, value);
+                                increaseWrite();
                             break;
                         }
                         case NRPN:{
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 99, val1);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 98, val2);
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 99, val1);increaseWrite();
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 98, val2);increaseWrite();
                             uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 6,  (val14bit >> 7) & 0x7F);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 38, val14bit & 0x7F);
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 6,  (val14bit >> 7) & 0x7F);increaseWrite();
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 38, val14bit & 0x7F);increaseWrite();
                         }
                         case RPN: {//rpn
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 101, val1);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 100, val2);
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 101, val1);increaseWrite();
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 100, val2);increaseWrite();
                             uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 6,  (val14bit >> 7) & 0x7F);
-                            umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 38, val14bit & 0x7F);
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 6,  (val14bit >> 7) & 0x7F);increaseWrite();
+                            umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 38, val14bit & 0x7F);increaseWrite();
                             break;
                         }
                         case PROGRAM_CHANGE: { //Program change
                             if (ump64word1 & 0x1) {
-                                umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 0, (UMP >> 8) & 0x7F);
-                                umpMess[messPos++] = UMPMessage::mt2CC(group, channel, 32, UMP & 0x7F);
+                                umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 0, (UMP >> 8) & 0x7F);increaseWrite();
+                                umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 32, UMP & 0x7F);increaseWrite();
                             }
 
-                            umpMess[messPos++] = UMPMessage::mt2ProgramChange(group, channel, (UMP >> 24) & 0x7F);
+                            umpMess[writeIndex] = UMPMessage::mt2ProgramChange(group, channel, (UMP >> 24) & 0x7F);increaseWrite();
                             break;
                         }
                         case PITCH_BEND: //Pitch bend
-                            umpMess[messPos++] = UMPMessage::mt2PitchBend(group, channel, UMP >> 18);
+                            umpMess[writeIndex] = UMPMessage::mt2PitchBend(group, channel, UMP >> 18);increaseWrite();
                             break;
                     }
                     break;
