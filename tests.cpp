@@ -4,10 +4,12 @@
 
 #include "include/bytestreamToUMP.h"
 #include "include/umpToBytestream.h"
+#include "include/umpToMIDI1Protocol.h"
 #include <cstdio>
 
 bytestreamToUMP BS2UMP;
 umpToBytestream UMP2BS;
+umpToMIDI1Protocol UMP2M1;
 
 int testPassed = 0;
 int testFailed = 0;
@@ -20,7 +22,7 @@ void passFail (uint32_t v1, uint32_t v2)
         testPassed++;
     }else
     {
-        printf(" fail %d != %d ", v1, v2);
+        printf(" fail %#08x != %#08x ", v1, v2);
         testFailed++;
     }
 }
@@ -44,7 +46,6 @@ void testRun_bsToUmp(const char* heading, uint8_t *bytes, int btyelength, uint32
     printf("\n");
 }
 
-
 void testRun_umpToBs(const char* heading, uint8_t *testBytes, uint32_t * umps, int umplength)
 {
     va_list args;
@@ -61,6 +62,26 @@ void testRun_umpToBs(const char* heading, uint8_t *testBytes, uint32_t * umps, i
 
         }
     }
+    printf("\n");
+}
+
+void testRun_umpToM1(const char* heading, uint32_t * in, int inlength, uint32_t * out, int outlength)
+{
+    va_list args;
+    vprintf (heading, args);
+
+    int testCounter = 0;
+
+
+    for(int i=0; i<inlength; i++){
+        UMP2M1.UMPStreamParse(in[i]);
+        while(UMP2M1.availableUMP()){
+            uint32_t newUmp = UMP2M1.readUMP();
+            //ump contains a ump 32 bit value. UMP messages that have 64bit will produce 2 UMP words
+            passFail (newUmp, out[testCounter++]);
+        }
+    }
+    printf(" length :");passFail (outlength, testCounter);
     printf("\n");
 }
 
@@ -119,7 +140,18 @@ int main(){
     };
     testRun_umpToBs("Test 8 Sysex : ", bytes4,  tests4, 10);
 
+    //***** UMP2M1 *************
+    printf(" UMP to MIDI 1 Protocol \n");
+    uint32_t in[] = {0x20816050, 0x20817070};
+    testRun_umpToM1("Test MIDI 1 : ", in,  2, in, 2);
 
+    testRun_umpToM1("Test SysEx : ", tests8,  10, tests8, 10);
+    testRun_umpToM1("Test System Msg : ", tests6,  1, tests6, 1);
+
+
+    uint32_t in2[] = {0x40904000, 0xc1040000};
+    uint32_t out2[] = {0x20904060};
+    testRun_umpToM1("Test System Msg : ", in2,  2, out2, 1);
 
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);

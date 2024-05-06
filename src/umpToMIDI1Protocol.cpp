@@ -25,6 +25,15 @@
 
 umpToMIDI1Protocol::umpToMIDI1Protocol(){}
 
+void umpToMIDI1Protocol::increaseWrite()
+{
+    bufferLength++;
+    writeIndex++;
+    if (writeIndex == UMPTOPROTO1_BUFFER) {
+        writeIndex = 0;
+    }
+}
+
 bool umpToMIDI1Protocol::availableUMP(){
     return bufferLength;
 }
@@ -84,12 +93,11 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                 }
                 case UMP_M2CVM:{
                     UMPPos=0;
-                   uint8_t status = ump64word1 & 0xFF;
+                    uint8_t status = (ump64word1 >> 16) & 0xFF;
                     uint8_t channel = (ump64word1 >> 16) & 0xF;
-                    uint8_t val1 = ump64word1 >> 8 & 0xFF;
+                    uint8_t val1 = (ump64word1 >> 8) & 0xFF;
                     uint8_t val2 = ump64word1 & 0xFF;
-                    uint8_t group = ump64word1 >> 24 & 0xF;
-
+                    uint8_t group = (ump64word1 >> 24) & 0xF;
 
                     switch (status) {
                         case NOTE_OFF: {//note off
@@ -104,7 +112,7 @@ void umpToMIDI1Protocol::UMPStreamParse(uint32_t UMP){
                                 velocity = 1;
                             }
                             umpMess[writeIndex] = UMPMessage::mt2NoteOn(group, channel, val1, velocity);
-                                increaseWrite();
+                            increaseWrite();
                             break;
                         }
                         case KEY_PRESSURE:{//poly aftertouch
