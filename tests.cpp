@@ -5,6 +5,7 @@
 #include "include/bytestreamToUMP.h"
 #include "include/umpToBytestream.h"
 #include "include/umpToMIDI1Protocol.h"
+#include "include/umpMessageCreate.h"
 #include <cstdio>
 
 bytestreamToUMP BS2UMP;
@@ -85,22 +86,39 @@ void testRun_umpToM1(const char* heading, uint32_t * in, int inlength, uint32_t 
     printf("\n");
 }
 
+
+void testRun_umpToump(const char* heading, uint32_t * in, int inlength, uint32_t * out)
+{
+    va_list args;
+    vprintf (heading, args);
+
+    int testCounter = 0;
+
+
+    for(int i=0; i<inlength; i++){
+        //ump contains a ump 32 bit value. UMP messages that have 64bit will produce 2 UMP words
+        passFail (in[inlength], out[testCounter++]);
+    }
+    //printf(" length :");passFail (outlength, testCounter);
+    printf("\n");
+}
+
 int main(){
     printf("Starting Tests...\n");
 
     //******** ByteSteam to UMP ***************
-    printf(" ByteSteam to UMP \n");
+    printf("ByteSteam to UMP \n");
     uint8_t bytes1[] = {0x81, 0x60, 0x50, 0x70, 0x70};
     uint32_t tests1[] = {0x20816050, 0x20817070};
-    testRun_bsToUmp("Test 1 Note On w/running status: ", bytes1, 5, tests1);
+    testRun_bsToUmp(" Test 1 Note On w/running status: ", bytes1, 5, tests1);
 
     uint8_t bytes2[] = {0xF8};
     uint32_t tests2[] = {0x10f80000};
-    testRun_bsToUmp("Test 2 System Message 1 byte: ", bytes2, 1, tests2);
+    testRun_bsToUmp(" Test 2 System Message 1 byte: ", bytes2, 1, tests2);
 
     uint8_t bytes3[] = {0xC6, 0x40};
     uint32_t tests3[] = {0x20c64000};
-    testRun_bsToUmp("Test 3 PC 2 bytes : ", bytes3, 2, tests3);
+    testRun_bsToUmp(" Test 3 PC 2 bytes : ", bytes3, 2, tests3);
 
     uint8_t bytes4[] = {0xF0, 0x7E, 0x7F, 0x0D, 0x70, 0x02, 0x4B, 0x60, 0x7A, 0x73, 0x7F, 0x7F, 0x7F, 0x7F, 0x7D,
         0x00 , 0x00, 0x00 , 0x00, 0x01 , 0x00, 0x00 , 0x00 , 0x03 , 0x00, 0x00, 0x00 , 0x10 , 0x00 , 0x00, 0x00, 0xF7};
@@ -111,47 +129,39 @@ int main(){
         0x30260100,0x00000300,
         0x30360000,0x10000000
     };
-    testRun_bsToUmp("Test 4 Sysex : ", bytes4, 32, tests4);
+    testRun_bsToUmp(" Test 4 Sysex : ", bytes4, 32, tests4);
 
 
     //******** UMP ByteSteam  ***************
-    printf(" UMP to ByteSteam \n");
+    printf("UMP to ByteSteam \n");
     uint8_t bytes5[] = {0x81, 0x60, 0x50, 0x81, 0x70, 0x70};
     uint32_t tests5[] = {0x20816050, 0x20817070};
-    testRun_umpToBs("Test 5 Note On: ", bytes5, tests5, 2);
-
-
-    uint8_t bytes6[] = {0xF8};
-    uint32_t tests6[] = {0x10f80000};
-    testRun_umpToBs("Test 6 System Message 1 byte: ", bytes2,  tests2, 1);
-
-    uint8_t bytes7[] = {0xC6, 0x40};
-    uint32_t tests7[] = {0x20c64000};
-    testRun_umpToBs("Test 7 PC 2 bytes : ", bytes3,  tests3, 1);
-
-    uint8_t bytes8[] = {0xF0, 0x7E, 0x7F, 0x0D, 0x70, 0x02, 0x4B, 0x60, 0x7A, 0x73, 0x7F, 0x7F, 0x7F, 0x7F, 0x7D,
-        0x00 , 0x00, 0x00 , 0x00, 0x01 , 0x00, 0x00 , 0x00 , 0x03 , 0x00, 0x00, 0x00 , 0x10 , 0x00 , 0x00, 0x00, 0xF7};
-    uint32_t tests8[] = {
-        0x30167e7f, 0x0d70024b,
-        0x3026607a, 0x737f7f7f,
-        0x30267f7d, 0x00000000,
-        0x30260100,0x00000300,
-        0x30360000,0x10000000
-    };
-    testRun_umpToBs("Test 8 Sysex : ", bytes4,  tests4, 10);
+    testRun_umpToBs(" Test 5 Note On: ", bytes5, tests5, 2);
+    testRun_umpToBs(" Test 6 System Message 1 byte: ", bytes2,  tests2, 1);
+    testRun_umpToBs(" Test 7 PC 2 bytes : ", bytes3,  tests3, 1);
+    testRun_umpToBs(" Test 8 Sysex : ", bytes4,  tests4, 10);
 
     //***** UMP2M1 *************
-    printf(" UMP to MIDI 1 Protocol \n");
+    printf("UMP to MIDI 1 Protocol \n");
     uint32_t in[] = {0x20816050, 0x20817070};
-    testRun_umpToM1("Test MIDI 1 : ", in,  2, in, 2);
+    testRun_umpToM1(" Test MIDI 1 : ", in,  2, in, 2);
 
-    testRun_umpToM1("Test SysEx : ", tests8,  10, tests8, 10);
-    testRun_umpToM1("Test System Msg : ", tests6,  1, tests6, 1);
-
+    testRun_umpToM1(" Test SysEx : ", tests4,  10, tests4, 10);
+    testRun_umpToM1(" Test System Msg : ", tests2,  1, tests2, 1);
 
     uint32_t in2[] = {0x40904000, 0xc1040000};
     uint32_t out2[] = {0x20904060};
-    testRun_umpToM1("Test System Msg : ", in2,  2, out2, 1);
+    testRun_umpToM1(" Test System Msg : ", in2,  2, out2, 1);
+
+    //***** UMP Meesage Create *************
+    printf("UMP Message Create \n");
+    uint32_t inUmp1[] = {UMPMessage::mt0NOOP()};
+    uint32_t outUmp1[] = {0x00000000};
+    testRun_umpToump(" UMP NOOP : ", inUmp1,  1, outUmp1);
+
+    uint32_t inUmp2[] = {UMPMessage::mt1TimingClock(8)};
+    uint32_t outUmp2[] = {0x18f80000};
+    testRun_umpToump(" UMP Timing Clock : ", inUmp2,  1, outUmp2);
 
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);
