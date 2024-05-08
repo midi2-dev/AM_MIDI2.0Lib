@@ -91,15 +91,9 @@ void testRun_umpToump(const char* heading, uint32_t * in, int inlength, uint32_t
 {
     va_list args;
     vprintf (heading, args);
-
-    int testCounter = 0;
-
-
     for(int i=0; i<inlength; i++){
-        //ump contains a ump 32 bit value. UMP messages that have 64bit will produce 2 UMP words
-        passFail (in[inlength], out[testCounter++]);
+        passFail (in[i], out[i]);
     }
-    //printf(" length :");passFail (outlength, testCounter);
     printf("\n");
 }
 
@@ -151,7 +145,7 @@ int main(){
 
     uint32_t in2[] = {0x40904000, 0xc1040000};
     uint32_t out2[] = {0x20904060};
-    testRun_umpToM1(" Test System Msg : ", in2,  2, out2, 1);
+    testRun_umpToM1(" Test MT4 : ", in2,  2, out2, 1);
 
     //***** UMP Meesage Create *************
     printf("UMP Message Create \n");

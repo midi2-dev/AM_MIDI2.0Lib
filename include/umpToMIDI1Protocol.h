@@ -41,9 +41,8 @@ class umpToMIDI1Protocol{
 		int bufferLength = 0;
 
 	public:
-        uint8_t group;
 
-        umpToMIDI1Protocol();
+
         bool availableUMP();
         uint32_t readUMP();
         void UMPStreamParse(uint32_t UMP);
