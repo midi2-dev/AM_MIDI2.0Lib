@@ -151,6 +151,9 @@ void umpProcessor::processUMP(uint32_t UMP){
                     case PITCH_BEND_PERNOTE:
                     case KEY_PRESSURE: //Poly Pressure
                         mess.note = val1;
+                        mess.value = umpMess[1];
+                        channelVoiceMessage(mess);
+                        break;
                     case CHANNEL_PRESSURE: //Channel Pressure
                         mess.value = umpMess[1];
                         channelVoiceMessage(mess);
@@ -410,8 +413,8 @@ void umpProcessor::processUMP(uint32_t UMP){
             uint8_t statusBank = (umpMess[0] >> 8) & 0xFF;
             uint8_t status = umpMess[0] & 0xFF;
             uint8_t channel = (umpMess[0] >> 16) & 0xF;
-            uint8_t addrs = (umpMess[0] >> 18) & 0b11;
-            uint8_t form = (umpMess[0] >> 20) & 0b11;
+            uint8_t addrs = (umpMess[0] >> 18) & 3;
+            uint8_t form = (umpMess[0] >> 20) & 3;
             //SysEx 8
             switch (statusBank){
                 case FLEXDATA_COMMON:{ //Common/Configuration for MIDI File, Project, and Track
