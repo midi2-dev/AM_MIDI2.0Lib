@@ -168,9 +168,48 @@
 #define UMP_MIDI_ENDPOINT 0xF
 
 namespace M2Utils {
-uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits);
+ inline uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
+  //Handle value of 0 - skip processing
+  if(srcVal == 0){
+   return 0L;
+  }
 
-uint32_t scaleDown(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits);
+  //handle 1-bit (bool) scaling
+  if(srcBits == 1){
+   return (1 << dstBits) - 1L;
+  }
+
+  // simple bit shift
+  uint8_t scaleBits = (dstBits - srcBits);
+  uint32_t bitShiftedValue = (srcVal + 0L) << scaleBits;
+  uint32_t srcCenter = 1 << (srcBits-1);
+  if (srcVal <= srcCenter ) {
+   return bitShiftedValue;
+  }
+
+  // expanded bit repeat scheme
+  uint8_t repeatBits = srcBits - 1;
+  auto repeatMask = (1 << repeatBits) - 1;
+  uint32_t repeatValue = srcVal & repeatMask;
+  if (scaleBits > repeatBits) {
+   repeatValue <<= scaleBits - repeatBits;
+  } else {
+   repeatValue >>= repeatBits - scaleBits;
+  }
+
+  while (repeatValue != 0) {
+   bitShiftedValue |= repeatValue;
+   repeatValue >>= repeatBits;
+  }
+  return bitShiftedValue;
+ }
+
+ inline uint32_t scaleDown(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
+  // simple bit shift
+  uint8_t scaleBits = (srcBits - dstBits);
+  return srcVal >> scaleBits;
+ }
 
 }
+
 #endif
