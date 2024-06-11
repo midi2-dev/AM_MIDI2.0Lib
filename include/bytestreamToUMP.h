@@ -24,10 +24,6 @@
 
 #define BSTOUMP_BUFFER 4
 
-#ifndef clear
-#define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
-#endif
-
 #include "utils.h"
 
 class bytestreamToUMP{
@@ -194,6 +190,7 @@ class bytestreamToUMP{
 		bool outputMIDI2 = false;
 		
 		bytestreamToUMP(){
+			using M2Utils::clear;
 			clear(bankMSB, 255, sizeof(bankMSB));
 			clear(bankLSB, 255, sizeof(bankLSB));
 			clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
@@ -243,7 +240,7 @@ class bytestreamToUMP{
 						increaseWrite();
 
 						sysex7State = 0;
-						clear(sysex, 0, sizeof(sysex));
+						M2Utils::clear(sysex, 0, sizeof(sysex));
 					}
 			} else if(sysex7State >= 1){
 				//Check IF new UMP Message Type 3
@@ -255,7 +252,7 @@ class bytestreamToUMP{
 					increaseWrite();
 					umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5] + 0L;
 					increaseWrite();
-					clear(sysex, 0, sizeof(sysex));
+					M2Utils::clear(sysex, 0, sizeof(sysex));
 					sysex7State=2;
 					sysex7Pos=0;
 				}

@@ -168,6 +168,12 @@
 #define UMP_MIDI_ENDPOINT 0xF
 
 namespace M2Utils {
+ inline void clear(uint8_t * const dest, uint8_t const c, std::size_t const n) {
+  for (auto i = std::size_t{0}; i < n; i++) {
+   dest[i] = c;
+  }
+ }
+
  inline uint32_t scaleUp(uint32_t srcVal, uint8_t srcBits, uint8_t dstBits){
   //Handle value of 0 - skip processing
   if(srcVal == 0){
