@@ -40,17 +40,17 @@ void umpProcessor::processUMP(uint32_t UMP){
 
             if(mt == UMP_UTILITY && utilityMessage!= nullptr){ //32 bits Utility Messages
                 umpGeneric mess = umpGeneric();
-                mess.messageType = mt;
-                mess.status = (umpMess[0] >> 20) & 0xF;
+                mess.common.messageType = mt;
+                mess.common.status = (umpMess[0] >> 20) & 0xF;
                 mess.value = (umpMess[0] >> 16) & 0xFFFF;
                 utilityMessage(mess);
 		} else 
             if(mt == UMP_SYSTEM && systemMessage!= nullptr){ //32 bits System Real Time and System Common Messages (except System Exclusive)
                 umpGeneric mess = umpGeneric();
-                mess.messageType = mt;
-                mess.umpGroup = group;
-                mess.status =  umpMess[0] >> 16 & 0xFF;
-                switch(mess.status){
+                mess.common.messageType = mt;
+                mess.common.umpGroup = group;
+                mess.common.status =  umpMess[0] >> 16 & 0xFF;
+                switch(mess.common.status){
                     case TIMING_CODE:
                     case SONG_SELECT:
                         mess.value = (umpMess[0] >> 8) & 0x7F;
@@ -68,14 +68,14 @@ void umpProcessor::processUMP(uint32_t UMP){
 	    } else 
             if(mt == UMP_M1CVM && channelVoiceMessage != nullptr){ //32 Bits MIDI 1.0 Channel Voice Messages
                 umpCVM mess = umpCVM();
-                mess.umpGroup = group;
-                mess.messageType = mt;
-                mess.status = umpMess[0] >> 16 & 0xF0;
+                mess.common.umpGroup = group;
+                mess.common.messageType = mt;
+                mess.common.status = umpMess[0] >> 16 & 0xF0;
                 mess.channel = (umpMess[0] >> 16) & 0xF;
                 uint8_t val1 = (umpMess[0] >> 8) & 0x7F;
                 uint8_t val2 = umpMess[0] & 0x7F;
 
-                switch(mess.status){
+                switch(mess.common.status){
                     case NOTE_OFF: //Note Off
                     case NOTE_ON: //Note On
                     case KEY_PRESSURE: //Poly Pressure
@@ -113,8 +113,8 @@ void umpProcessor::processUMP(uint32_t UMP){
         ){ //64bit Messages
             if(mt == UMP_SYSEX7 && sendOutSysex != nullptr){ //64 bits Data Messages (including System Exclusive)
                 umpData mess = umpData();
-                mess.umpGroup = group;
-                mess.messageType = mt;
+                mess.common.umpGroup = group;
+                mess.common.messageType = mt;
                 mess.form = (umpMess[0] >> 20) & 0xF;
                 mess.dataLength  = (umpMess[0] >> 16) & 0xF;
                 uint8_t sysex[6];
@@ -132,14 +132,14 @@ void umpProcessor::processUMP(uint32_t UMP){
 		} else 
             if(mt == UMP_M2CVM && channelVoiceMessage != nullptr){//64 bits MIDI 2.0 Channel Voice Messages
                 umpCVM mess = umpCVM();
-                mess.umpGroup = group;
-                mess.messageType = mt;
-                mess.status = (umpMess[0] >> 16) & 0xF0;
+                mess.common.umpGroup = group;
+                mess.common.messageType = mt;
+                mess.common.status = (umpMess[0] >> 16) & 0xF0;
                 mess.channel = (umpMess[0] >> 16) & 0xF;
                 uint8_t val1 = (umpMess[0] >> 8) & 0xFF;
                 uint8_t val2 = umpMess[0] & 0xFF;
 			
-                switch(mess.status){
+                switch(mess.common.status){
                     case NOTE_OFF: //Note Off
                     case NOTE_ON: //Note On
                         mess.note = val1;
@@ -258,8 +258,8 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case MIDIENDPOINT_NAME_NOTIFICATION:
                 case MIDIENDPOINT_PRODID_NOTIFICATION: {
                         umpData mess = umpData();
-                        mess.messageType = mt;
-                        mess.status = (uint8_t) status;
+                        mess.common.messageType = mt;
+                        mess.common.status = (uint8_t) status;
                         mess.form = umpMess[0] >> 24 & 0x3;
                         mess.dataLength  = 0;
                     uint8_t text[14];
@@ -322,8 +322,8 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case FUNCTIONBLOCK_NAME_NOTIFICATION:{
                     uint8_t fbIdx = (umpMess[0] >> 8) & 0x7F;
                     umpData mess = umpData();
-                    mess.messageType = mt;
-                    mess.status = (uint8_t) status;
+                    mess.common.messageType = mt;
+                    mess.common.status = (uint8_t) status;
                     mess.form = umpMess[0] >> 24 & 0x3;
                     mess.dataLength  = 0;
                     uint8_t text[13];
@@ -362,8 +362,8 @@ void umpProcessor::processUMP(uint32_t UMP){
 
             if(status <= 3){
                 umpData mess = umpData();
-                mess.umpGroup = group;
-                mess.messageType = mt;
+                mess.common.umpGroup = group;
+                mess.common.messageType = mt;
                 mess.streamId  = (umpMess[0] >> 8) & 0xFF;
                 mess.form = status;
                 mess.dataLength  = (umpMess[0] >> 16) & 0xF;
@@ -481,9 +481,9 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case FLEXDATA_PERFORMANCE: //Performance Events
                 case FLEXDATA_LYRIC:{ //Lyric Events
                         umpData mess = umpData();
-                        mess.umpGroup = group;
-                        mess.messageType = mt;
-                        mess.status = status;
+                        mess.common.umpGroup = group;
+                        mess.common.messageType = mt;
+                        mess.common.status = status;
                         mess.form = form;
                         mess.dataLength  = 0;
                         uint8_t text[12];
