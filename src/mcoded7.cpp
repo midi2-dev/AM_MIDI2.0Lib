@@ -19,16 +19,12 @@
  * ********************************************************/
 
 #include "mcoded7.h"
-
-#ifndef clear
-#define clear(dest, c,n ) for(uint16_t i = 0 ; i < n ; i ++) dest[i] = c;
-#endif
-
+#include "utils.h"
 
 uint16_t mcoded7Decode::currentPos(){ return dumpPos;}
 
 void mcoded7Decode::reset(){
-    clear(dump,0,7);
+    M2Utils::clear(dump,0,7);
     fBit=0; bits=0;dumpPos=255;
 }
 
@@ -47,7 +43,7 @@ void mcoded7Decode::parseS7Byte(uint8_t s7Byte){
 uint16_t mcoded7Encode::currentPos(){ return dumpPos-1;}
 
 void mcoded7Encode::reset(){
-    clear(dump,0,8);
+    M2Utils::clear(dump,0,8);
     dumpPos=1; cnt = 6;
 }
 
