@@ -28,7 +28,7 @@ void passFail (uint32_t v1, uint32_t v2)
     }
 }
 
-void testRun_bsToUmp(const char* heading, uint8_t *bytes, int btyelength, uint32_t * testCheck)
+void testRun_bsToUmp(const char* heading, uint8_t *bytes, int btyelength, uint32_t * testCheck, int outlength)
 {
     va_list args;
     vprintf (heading, args);
@@ -44,6 +44,7 @@ void testRun_bsToUmp(const char* heading, uint8_t *bytes, int btyelength, uint32
 
         }
     }
+    printf(" length :");passFail (outlength, testCounter);
     printf("\n");
 }
 
@@ -104,15 +105,15 @@ int main(){
     printf("ByteSteam to UMP \n");
     uint8_t bytes1[] = {0x81, 0x60, 0x50, 0x70, 0x70};
     uint32_t tests1[] = {0x20816050, 0x20817070};
-    testRun_bsToUmp(" Test 1 Note On w/running status: ", bytes1, 5, tests1);
+    testRun_bsToUmp(" Test 1 Note On w/running status: ", bytes1, 5, tests1,2);
 
     uint8_t bytes2[] = {0xF8};
     uint32_t tests2[] = {0x10f80000};
-    testRun_bsToUmp(" Test 2 System Message 1 byte: ", bytes2, 1, tests2);
+    testRun_bsToUmp(" Test 2 System Message 1 byte: ", bytes2, 1, tests2,1);
 
     uint8_t bytes3[] = {0xC6, 0x40};
     uint32_t tests3[] = {0x20c64000};
-    testRun_bsToUmp(" Test 3 PC 2 bytes : ", bytes3, 2, tests3);
+    testRun_bsToUmp(" Test 3 PC 2 bytes : ", bytes3, 2, tests3,1);
 
     uint8_t bytes4[] = {0xF0, 0x7E, 0x7F, 0x0D, 0x70, 0x02, 0x4B, 0x60, 0x7A, 0x73, 0x7F, 0x7F, 0x7F, 0x7F, 0x7D,
         0x00 , 0x00, 0x00 , 0x00, 0x01 , 0x00, 0x00 , 0x00 , 0x03 , 0x00, 0x00, 0x00 , 0x10 , 0x00 , 0x00, 0x00, 0xF7};
@@ -123,8 +124,23 @@ int main(){
         0x30260100,0x00000300,
         0x30360000,0x10000000
     };
-    testRun_bsToUmp(" Test 4 Sysex : ", bytes4, 32, tests4);
+    testRun_bsToUmp(" Test 4 Sysex : ", bytes4, 32, tests4,10);
 
+    printf(" Switching to Mt4 \n");
+    BS2UMP.outputMIDI2 = true;
+    uint32_t tests1a[] = {0x40816000, 0xA0820000,0x40817000,0xe1860000};
+    testRun_bsToUmp(" Test 5 MT4 Note On w/running status: ", bytes1, 5, tests1a,4);
+
+    uint32_t tests3a[] = {0x40c60000,0x40000000};
+    testRun_bsToUmp(" Test 6 MT 4 PC 2 bytes : ", bytes3, 2, tests3a,2);
+
+    uint8_t bytes3b[] = {0xB6,0x00,0x01,0x20,0x0A,0xC6,0x41};
+    uint32_t tests3b[] = {0x40c60001,0x4100010A};
+    testRun_bsToUmp(" Test 7 MT 4 PC 2 bytes with Bank MSB LSB : ", bytes3b, 7, tests3b,2);
+
+    uint8_t bytes4b[] = {0xB6,101,0x00,100,0x06,0x06,0x08};
+    uint32_t tests4b[] = {0x40260006,0x10000000};
+    testRun_bsToUmp(" Test 7 MT 4 RPN : ", bytes4b, 7, tests4b,2);
 
     //******** UMP ByteSteam  ***************
     printf("UMP to ByteSteam \n");
