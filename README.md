@@ -2,7 +2,7 @@
 A MIDI 2.0 Library
 
 This is a general purposes Library for building MIDI 2.0 Devices and Applications. This library aims to work on 
-everything from Arduino's through to large scale applications. It provides the building blocks, processing and 
+everything from embedded devices through to large scale applications. It provides the building blocks, processing and 
 translations needed for most MIDI 2.0 Devices and Applications
 
 ## IMPORTANT! Please read first
