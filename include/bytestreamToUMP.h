@@ -105,7 +105,7 @@ class bytestreamToUMP{
 
                                                         uint32_t paramMsg = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
                                                         paramMsg += (status + channel + 0L) << 16;
-                                                        paramMsg += ((int)rpnMsb[channel] << 7) + rpnLsb[channel] + 0L;
+                                                        paramMsg += ((int)rpnMsb[channel] << 8) + rpnLsb[channel] + 0L;
                                                         umpMess.push_back(paramMsg);
                                                         umpMess.push_back(M2Utils::scaleUp(((int)b2 << 7), 14, 32));
                                                 }else{
@@ -121,7 +121,7 @@ class bytestreamToUMP{
 
                                              uint32_t paramMsg = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
                                              paramMsg += (status + channel + 0L) << 16;
-                                             paramMsg += ((int)rpnMsb[channel] << 7) + rpnLsb[channel] + 0L;
+                                             paramMsg += ((int)rpnMsb[channel] << 8) + rpnLsb[channel] + 0L;
                                              umpMess.push_back(paramMsg);
                                              umpMess.push_back(M2Utils::scaleUp(((int)rpnMsbValue[channel] << 7) + b2, 14, 32));
                                          } break;
