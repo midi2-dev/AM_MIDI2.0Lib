@@ -79,14 +79,17 @@ class bytestreamToUMP{
                                   } else if (status == PROGRAM_CHANGE){
                                       if (bankMSB[channel] != 255 && bankLSB[channel] != 255) {
                                           umpMess.push_back(message + 1);
-                                          message += (bankMSB[channel] << 8) + bankLSB[channel];
+                                          message = (bankMSB[channel] << 8) + bankLSB[channel];
+                                      } else {
+                                          umpMess.push_back(message);
+                                          message = 0;
                                       }
                                       message += (b1 + 0L) << 24;
                                       umpMess.push_back(message);
                                   } else if (status == CHANNEL_PRESSURE){
                                       umpMess.push_back(message);
                                       umpMess.push_back(M2Utils::scaleUp(b1, 7, 32));
-                                  }  else if (status == CC){
+				  }  else if (status == CC){
 					switch(b1){
 					 case 0:
 						bankMSB[channel] = b2;
