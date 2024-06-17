@@ -88,7 +88,10 @@ class bytestreamToUMP{
 					if(bankMSB[channel]!=255 && bankLSB[channel]!=255){
 						umpMess[writeIndex] += 1;
 						increaseWrite();
-						umpMess[writeIndex] += (bankMSB[channel] <<8) + bankLSB[channel ];
+						umpMess[writeIndex] = (bankMSB[channel] <<8) + bankLSB[channel];
+					}else{
+						increaseWrite();
+						umpMess[writeIndex] = 0;
 					}
 					umpMess[writeIndex] += (b1 + 0L) << 24;
 		  			increaseWrite();
@@ -115,7 +118,7 @@ class bytestreamToUMP{
 
 							umpMess[writeIndex] = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
 							umpMess[writeIndex] += (status + channel + 0L)<<16;
-							umpMess[writeIndex] += ((int)rpnMsb[channel]<<7) + rpnLsb[channel] + 0L;
+							umpMess[writeIndex] += ((int)rpnMsb[channel]<<8) + rpnLsb[channel] + 0L;
 							increaseWrite();
 							umpMess[writeIndex] = M2Utils::scaleUp(((int)b2<<7),14,32);
 							increaseWrite();
@@ -133,7 +136,7 @@ class bytestreamToUMP{
 
 						umpMess[writeIndex] = ((UMP_M2CVM << 4) + defaultGroup + 0L) << 24;
 						umpMess[writeIndex] += (status  + channel + 0L)<<16;
-						umpMess[writeIndex] += ((int)rpnMsb[channel]<<7) + rpnLsb[channel] + 0L;
+						umpMess[writeIndex] += (rpnMsb[channel]<<8) + rpnLsb[channel] + 0L;
 						increaseWrite();
 						umpMess[writeIndex] = M2Utils::scaleUp(((int)rpnMsbValue[channel]<<7) + b2,14,32);
 						increaseWrite();

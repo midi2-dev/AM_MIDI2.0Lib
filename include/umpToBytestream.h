@@ -146,15 +146,15 @@ class umpToBytestream{
                                 increaseWrite();
                             }
                             if (numSysexbytes > 2) {
-                                bsOut[writeIndex] = UMP >> 24 & 0x7F;
+                                bsOut[writeIndex] = (UMP >> 24) & 0x7F;
                                 increaseWrite();
                             }
                             if (numSysexbytes > 3) {
-                                bsOut[writeIndex] = UMP >> 16 & 0x7F;
+                                bsOut[writeIndex] = (UMP >> 16) & 0x7F;
                                 increaseWrite();
                             }
                             if (numSysexbytes > 4) {
-                                bsOut[writeIndex] = UMP >> 8 & 0x7F;
+                                bsOut[writeIndex] = (UMP >> 8) & 0x7F;
                                 increaseWrite();
                             }
                             if (numSysexbytes > 5) {
@@ -173,8 +173,6 @@ class umpToBytestream{
                             uint8_t channel = ump64word1 >> 16 & 0xF;
                             uint8_t val1 = ump64word1 >> 8 & 0xFF;
                             uint8_t val2 = ump64word1 & 0xFF;
-
-
 
                             switch (status) {
                                 case NOTE_OFF: //note off
