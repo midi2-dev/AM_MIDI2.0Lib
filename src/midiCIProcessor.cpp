@@ -58,7 +58,7 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 	
 	if(sysexPos >= 12
        && midici.localMUID != M2_CI_BROADCAST
-       && checkMUID(midici.umpGroup, midici.localMUID)
+       && checkMUID && !checkMUID(midici.umpGroup, midici.localMUID)
         ){
 		return; //Not for this device
 	}
