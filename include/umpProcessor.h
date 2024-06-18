@@ -61,117 +61,132 @@ struct umpData{
 };
 
 class umpProcessor{
-    
-  private:
-  
-	uint32_t umpMess[4]{};
-	uint8_t messPos=0;
+public:
+    using utilityMessageFn = std::function<void(umpGeneric mess)>;
+    using channelVoiceMessageFn = std::function<void(umpCVM mess)>;
+    using systemMessageFn = std::function<void(umpGeneric mess)>;
+    using sendOutSysexFn = std::function<void(umpData mess)>;
 
-    // Message type 0x0  callbacks
-    std::function<void(struct umpGeneric mess)> utilityMessage = nullptr;
+    using flexTempoFn = std::function<void(uint8_t group, uint32_t num10nsPQN)>;
+    using flexTimeSigFn = std::function<void(uint8_t group, uint8_t numerator, uint8_t denominator,
+                                             uint8_t num32Notes)>;
+    using flexMetronomeFn =
+        std::function<void(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2,
+                           uint8_t bAccP3, uint8_t numSubDivCli1, uint8_t numSubDivCli2)>;
+    using flexKeySigFn = std::function<void(uint8_t group, uint8_t addrs, uint8_t channel,
+                                            uint8_t sharpFlats, uint8_t tonic)>;
+    using flexChordFn = std::function<void(
+        uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
+        uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type,
+        uint8_t chAlt2Deg, uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type,
+        uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic, uint8_t baType, uint8_t baAlt1Type,
+        uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)>;
+    using flexPerformanceFn = std::function<void(umpData mess, uint8_t addrs, uint8_t channel)>;
+    using flexLyricFn = std::function<void(umpData mess, uint8_t addrs, uint8_t channel)>;
 
-	// MIDI 1 and 2 CVM  callbacks
-    std::function<void(struct umpCVM mess)> channelVoiceMessage = nullptr;
-    
-   //System Messages  callbacks
-   std::function<void(struct umpGeneric mess)> systemMessage = nullptr;
+    using midiEndpointFn = std::function<void(uint8_t majVer, uint8_t minVer, uint8_t filter)>;
+    using midiEndpointNameFn = std::function<void(umpData mess)>;
+    using midiEndpointProcIdFn = std::function<void(umpData mess)>;
+    using midiEndpointJRProtocolReqFn = std::function<void(uint8_t protocol, bool jrrx, bool jrtx)>;
+    using midiEndpointInfoFn =
+        std::function<void(uint8_t majVer, uint8_t minVer, uint8_t numOfFuncBlocks, bool m2,
+                           bool m1, bool rxjr, bool txjr)>;
+    using midiEndpointDeviceInfoFn =
+        std::function<void(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
+                           std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)>;
+    using midiEndpointJRProtocolNotifyFn =
+        std::function<void(uint8_t protocol, bool jrrx, bool jrtx)>;
 
-    //Sysex
-    std::function<void(struct umpData mess)> sendOutSysex = nullptr;
+    using functionBlockFn = std::function<void(uint8_t fbIdx, uint8_t filter)>;
+    using functionBlockInfoFn = std::function<void(
+        uint8_t fbIdx, bool active, uint8_t direction, bool sender, bool recv, uint8_t firstGroup,
+        uint8_t groupLength, uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)>;
+    using functionBlockNameFn = std::function<void(umpData mess, uint8_t fbIdx)>;
 
-    // Message Type 0xD  callbacks
-    std::function<void(uint8_t group, uint32_t num10nsPQN)> flexTempo = nullptr;
-    std::function<void(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> flexTimeSig = nullptr;
-    std::function<void(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
-            uint8_t numSubDivCli1, uint8_t numSubDivCli2)> flexMetronome = nullptr;
-    std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic)> flexKeySig = nullptr;
-    std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
-            uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
-            uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
-            uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)> flexChord = nullptr;
-    std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> flexPerformance = nullptr;
-    std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> flexLyric = nullptr;
+    using startOfSeqFn = std::function<void()>;
+    using endOfFileFn = std::function<void()>;
 
-    // Message Type 0xF  callbacks
-    std::function<void(uint8_t majVer, uint8_t minVer, uint8_t filter)> midiEndpoint = nullptr;
-    std::function<void(uint8_t fbIdx, uint8_t filter)> functionBlock = nullptr;
-    std::function<void(uint8_t majVer, uint8_t minVer, uint8_t numFuncBlocks, bool m2, bool m1, bool rxjr, bool txjr)>
-        midiEndpointInfo = nullptr;
-    std::function<void(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
-                             std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)> midiEndpointDeviceInfo = nullptr;
-    std::function<void(struct umpData mess)> midiEndpointName = nullptr;
-    std::function<void(struct umpData mess)> midiEndpointProdId = nullptr;
+    using unknownUMPMessageFn = std::function<void(uint32_t* ump, uint8_t length)>;
 
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolReq = nullptr;
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolNotify = nullptr;
-
-    std::function<void(uint8_t fbIdx, bool active,
-            uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
-            uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)> functionBlockInfo = nullptr;
-    std::function<void(struct umpData mess, uint8_t fbIdx)> functionBlockName = nullptr;
-    std::function<void()> startOfSeq = nullptr;
-    std::function<void()> endOfFile = nullptr;
-
-    //Handle new Messages
-    std::function<void(uint32_t * ump, uint8_t length)> unknownUMPMessage = nullptr;
-    
-  public:
-
-	void clearUMP();
+    void clearUMP();
     void processUMP(uint32_t UMP);
 
-		//-----------------------Handlers ---------------------------
-    inline void setUtility(std::function<void(struct umpGeneric mess)> fptr){ utilityMessage = fptr; }
-    inline void setCVM(std::function<void(struct umpCVM mess)> fptr ){ channelVoiceMessage = fptr; }
-    inline void setSystem(std::function<void(struct umpGeneric mess)> fptr) { systemMessage = fptr; }
-    inline void setSysEx(std::function<void(struct umpData mess)> fptr ){sendOutSysex = fptr; }
+    //-----------------------Handlers ---------------------------
+    void setUtility(utilityMessageFn fptr) { utilityMessage = fptr; }
+    void setCVM(channelVoiceMessageFn fptr) { channelVoiceMessage = fptr; }
+    void setSystem(systemMessageFn fptr) { systemMessage = fptr; }
+    void setSysEx(sendOutSysexFn fptr) { sendOutSysex = fptr; }
 
     //---------- Flex Data
-    inline void setFlexTempo(std::function<void(uint8_t group, uint32_t num10nsPQN)> fptr ){ flexTempo = fptr; }
-    inline void setFlexTimeSig(std::function<void(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> fptr){
-        flexTimeSig = fptr; }
-    inline void setFlexMetronome(std::function<void(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
-                          uint8_t numSubDivCli1, uint8_t numSubDivCli2)> fptr){ flexMetronome = fptr; }
-    inline void setFlexKeySig(std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic)> fptr){
-        flexKeySig = fptr; }
-    inline void setFlexChord(std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
-                      uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
-                      uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
-                      uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)> fptr){
-        flexChord = fptr; }
-    inline void setFlexPerformance(std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> fptr){ flexPerformance = fptr; }
-    inline void setFlexLyric(std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> fptr){ flexLyric = fptr; }
+    void setFlexTempo(flexTempoFn fptr) { flexTempo = fptr; }
+    void setFlexTimeSig(flexTimeSigFn fptr) { flexTimeSig = fptr; }
+    void setFlexMetronome(flexMetronomeFn fptr) { flexMetronome = fptr; }
+    void setFlexKeySig(flexKeySigFn fptr) { flexKeySig = fptr; }
+    void setFlexChord(flexChordFn fptr) { flexChord = fptr; }
+    void setFlexPerformance(flexPerformanceFn fptr) { flexPerformance = fptr; }
+    void setFlexLyric(flexLyricFn fptr) { flexLyric = fptr; }
 
     //---------- UMP Stream
+    void setMidiEndpoint(midiEndpointFn fptr) { midiEndpoint = fptr; }
+    void setMidiEndpointNameNotify(midiEndpointNameFn fptr) { midiEndpointName = fptr; }
+    void setMidiEndpointProdIdNotify(midiEndpointProcIdFn fptr) { midiEndpointProdId = fptr; }
+    void setMidiEndpointInfoNotify(midiEndpointInfoFn fptr) { midiEndpointInfo = fptr; }
+    void setMidiEndpointDeviceInfoNotify(midiEndpointDeviceInfoFn fptr) {
+        midiEndpointDeviceInfo = fptr;
+    }
 
-	inline void setMidiEndpoint(std::function<void(uint8_t majVer, uint8_t minVer, uint8_t filter)> fptr){
-        midiEndpoint = fptr; }
-	inline void setMidiEndpointNameNotify(std::function<void(struct umpData mess)> fptr){
-        midiEndpointName = fptr; }
-    inline void setMidiEndpointProdIdNotify(std::function<void(struct umpData mess)> fptr){
-        midiEndpointProdId = fptr; }
-	inline void setMidiEndpointInfoNotify(std::function<void(uint8_t majVer, uint8_t minVer, uint8_t numOfFuncBlocks, bool m2,
-            bool m1, bool rxjr, bool txjr)> fptr){
-        midiEndpointInfo = fptr; }
-    inline void setMidiEndpointDeviceInfoNotify(std::function<void(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
-            std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)> fptr){
-        midiEndpointDeviceInfo = fptr; }
-    inline void setJRProtocolRequest(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){ midiEndpointJRProtocolReq = fptr;}
-    inline void setJRProtocolNotify(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){
-        midiEndpointJRProtocolNotify = fptr;}
+    void setJRProtocolRequest(midiEndpointJRProtocolReqFn fptr) {
+        midiEndpointJRProtocolReq = fptr;
+    }
+    void setJRProtocolNotify(midiEndpointJRProtocolNotifyFn fptr) {
+        midiEndpointJRProtocolNotify = fptr;
+    }
 
-    inline void setFunctionBlock(std::function<void(uint8_t filter, uint8_t fbIdx)> fptr){ functionBlock = fptr; }
-    inline void setFunctionBlockNotify(std::function<void(uint8_t fbIdx, bool active,
-                            uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
-                            uint8_t midiCIVersion, uint8_t isMIDI1, uint8_t maxS8Streams)> fptr){
-        functionBlockInfo = fptr; }
-    inline void setFunctionBlockNameNotify(std::function<void(struct umpData mess, uint8_t fbIdx)> fptr){functionBlockName = fptr; }
-    inline void setStartOfSeq(std::function<void()> fptr){startOfSeq = fptr; }
-    inline void setEndOfFile(std::function<void()> fptr){endOfFile = fptr; }
+    void setFunctionBlock(functionBlockFn fptr) { functionBlock = fptr; }
+    void setFunctionBlockNotify(functionBlockInfoFn fptr) { functionBlockInfo = fptr; }
+    void setFunctionBlockNameNotify(functionBlockNameFn fptr) { functionBlockName = fptr; }
 
-    //Unknown UMP
-    inline void setUnknownUMP(std::function<void(uint32_t * ump, uint8_t length)> fptr){unknownUMPMessage = fptr; }
+    void setStartOfSeq(startOfSeqFn fptr) { startOfSeq = fptr; }
+    void setEndOfFile(endOfFileFn fptr) { endOfFile = fptr; }
 
+    // Unknown UMP
+    void setUnknownUMP(unknownUMPMessageFn fptr) { unknownUMPMessage = fptr; }
+
+private:
+    uint32_t umpMess[4]{};
+    uint8_t messPos = 0;
+
+    utilityMessageFn utilityMessage;            // Message type 0x0 callbacks
+    channelVoiceMessageFn channelVoiceMessage;  // MIDI 1 and 2 CVM callback
+    systemMessageFn systemMessage;              // System Messages callbacks
+    sendOutSysexFn sendOutSysex;                // Sysex
+
+    // Message Type 0xD callbacks
+    flexTempoFn flexTempo;
+    flexTimeSigFn flexTimeSig;
+    flexMetronomeFn flexMetronome;
+    flexKeySigFn flexKeySig;
+    flexChordFn flexChord;
+    flexPerformanceFn flexPerformance;
+    flexLyricFn flexLyric;
+
+    // Message Type 0xF callbacks
+    midiEndpointFn midiEndpoint;
+    midiEndpointInfoFn midiEndpointInfo;
+    midiEndpointDeviceInfoFn midiEndpointDeviceInfo;
+    midiEndpointNameFn midiEndpointName;
+    midiEndpointProcIdFn midiEndpointProdId;
+    midiEndpointJRProtocolReqFn midiEndpointJRProtocolReq;
+    midiEndpointJRProtocolNotifyFn midiEndpointJRProtocolNotify;
+
+    functionBlockFn functionBlock;
+    functionBlockInfoFn functionBlockInfo;
+    functionBlockNameFn functionBlockName;
+    startOfSeqFn startOfSeq;
+    endOfFileFn endOfFile;
+
+    // Handle new Messages
+    unknownUMPMessageFn unknownUMPMessage;
 };
 
 #endif //UMP_PROCESSOR_H
