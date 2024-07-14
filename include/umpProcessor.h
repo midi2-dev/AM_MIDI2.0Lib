@@ -27,37 +27,33 @@
 #include "utils.h"
 
 struct umpCVM{
-    umpCVM() : umpGroup(255), messageType(255), status(0),channel(255),note(255), value(0),  index(0), bank(0),
-         flag1(false), flag2(false) {}
-    uint8_t umpGroup;
-    uint8_t messageType;
-    uint8_t status;
-    uint8_t channel;
-    uint8_t note;
-    uint32_t value;
-    uint16_t index;
-    uint8_t bank;
-    bool flag1;
-    bool flag2;
+    uint8_t umpGroup = 255;
+    uint8_t messageType = 255;
+    uint8_t status = 0;
+    uint8_t channel = 255;
+    uint8_t note = 255;
+    uint32_t value = 0;
+    uint16_t index = 0;
+    uint8_t bank = 0;
+    bool flag1 = false;
+    bool flag2 = false;
 };
 
 struct umpGeneric{
-    umpGeneric() : umpGroup(255), status(0),  value(0) {}
-    uint8_t umpGroup;
-    uint8_t messageType;
-    uint8_t status;
-    uint16_t value;
+    uint8_t umpGroup = 255;
+    uint8_t messageType = 0;
+    uint8_t status = 0;
+    uint16_t value = 0;
 };
 
 struct umpData{
-    umpData() : umpGroup(255), streamId(0), status(0),  form(0) {}
-    uint8_t umpGroup;
-    uint8_t messageType;
-    uint8_t streamId;
-    uint8_t status;
-    uint8_t form;
-    uint8_t* data;
-    uint8_t dataLength;
+    uint8_t umpGroup = 255;
+    uint8_t messageType = 255;
+    uint8_t streamId = 0;
+    uint8_t status = 0;
+    uint8_t form = 0;
+    uint8_t* data = nullptr;
+    uint8_t dataLength = 0;
 };
 
 class umpProcessor{
