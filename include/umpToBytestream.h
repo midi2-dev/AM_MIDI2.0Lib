@@ -52,7 +52,9 @@ class umpToBytestream{
 	public:
         uint8_t group;
 
-        umpToBytestream(){}
+        umpToBytestream(){
+            M2Utils::clear(bsOut,0,UMPTOBS_BUFFER);
+        }
 
 		bool availableBS(){
 			return bufferLength;

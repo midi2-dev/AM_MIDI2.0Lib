@@ -22,6 +22,8 @@
 #define BSUMP_H
 #include <cstdint>
 
+//#include <cstdio>
+
 #define BSTOUMP_BUFFER 4
 
 #include "utils.h"
@@ -82,7 +84,7 @@ class bytestreamToUMP{
 		  			increaseWrite();
 				  } else if (status == PITCH_BEND){
 		  			increaseWrite();
-		  			umpMess[writeIndex] = M2Utils::scaleUp((b1<<7) + b2,14,32);
+		  			umpMess[writeIndex] = M2Utils::scaleUp((b2<<7) + b1,14,32);
 		  			increaseWrite();
 				  } else if (status == PROGRAM_CHANGE){
 					if(bankMSB[channel]!=255 && bankLSB[channel]!=255){
@@ -204,6 +206,16 @@ class bytestreamToUMP{
 		bool availableUMP(){
 			return bufferLength;
 		}
+        void resetBuffer(){
+            d1 = 255;
+            for (int i = 0; i < BSTOUMP_BUFFER; i++) {
+                umpMess[i] = 0;
+
+            }
+            readIndex = 0;
+            writeIndex = 0;
+            bufferLength = 0;
+        }
 		
 		uint32_t readUMP(){
 			uint32_t mess = umpMess[readIndex];
@@ -218,8 +230,16 @@ class bytestreamToUMP{
 		
 		void bytestreamParse(uint8_t midi1Byte){
 
-			if (midi1Byte == TUNEREQUEST || midi1Byte >=  TIMINGCLOCK) {
-				d0 = midi1Byte;
+           // printf("\n - new byte: %#02x",midi1Byte);
+
+			if (midi1Byte == TUNEREQUEST
+                || midi1Byte ==  TIMINGCLOCK
+                || midi1Byte ==  SEQSTART
+                || midi1Byte ==  SEQCONT
+                || midi1Byte ==  SEQSTOP
+                || midi1Byte ==  ACTIVESENSE
+                || midi1Byte ==  SYSTEMRESET
+                ) {
 				bsToUMP(midi1Byte,0,0);
 				return;
 			}
@@ -231,23 +251,29 @@ class bytestreamToUMP{
 				if (midi1Byte == SYSEX_START){
 					sysex7State = 1;
 					sysex7Pos = 0;
-				}else
-					if (midi1Byte == SYSEX_STOP){
+				}
+                else if (midi1Byte == SYSEX_STOP){
+                    //printf(" \nSysex %#02x %#02x %#02x %#02x %#02x %#02x", sysex[0], sysex[1], sysex[2], sysex[3], sysex[4], sysex[5]);
 
-						umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
-						umpMess[writeIndex] +=  ((sysex7State == 1?0:3) + 0L) << 20;
-						umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16) ;
-						umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
-						increaseWrite();
-						umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5];
-						increaseWrite();
+                    umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
+                    umpMess[writeIndex] +=  ((sysex7State == 1?0:3) + 0L) << 20;
+                    umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16) ;
+                    umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
+                    increaseWrite();
+                    umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5];
+                    increaseWrite();
 
-						sysex7State = 0;
-						M2Utils::clear(sysex, 0, sizeof(sysex));
-					}
+                    sysex7State = 0;
+                    M2Utils::clear(sysex, 0, sizeof(sysex));
+                    //printf(" \nUMP %#08x %#08x\n", umpMess[writeIndex-2], umpMess[writeIndex-1]);
+
+                }
 			} else if(sysex7State >= 1){
 				//Check IF new UMP Message Type 3
+                //printf(" sysex7Pos %d ",sysex7Pos);
+
 				if(sysex7Pos%6 == 0 && sysex7Pos !=0){
+                    //printf(" \nSysex %#02x %#02x %#02x %#02x %#02x %#02x", sysex[0], sysex[1], sysex[2], sysex[3], sysex[4], sysex[5]);
 					umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
 					umpMess[writeIndex] +=  (sysex7State + 0L) << 20;
 					umpMess[writeIndex] +=  6L << 16;
@@ -258,25 +284,34 @@ class bytestreamToUMP{
 					M2Utils::clear(sysex, 0, sizeof(sysex));
 					sysex7State=2;
 					sysex7Pos=0;
+
+                    //printf(" \nUMP %#08x %#08x\n", umpMess[writeIndex-2], umpMess[writeIndex-1]);
 				}
 
-				sysex[sysex7Pos] = midi1Byte;
-				sysex7Pos++;
-			} else if (d1 != 255) { // Second byte
-				bsToUMP(d0, d1, midi1Byte);
-				d1 = 255;
-			} else if (d0){ // status byte set
-				if (
-				  (d0 & 0xF0) == PROGRAM_CHANGE
-				  || (d0 & 0xF0) == CHANNEL_PRESSURE
-				  || d0 == TIMING_CODE
-				  || d0 == SONG_SELECT
-				) {
-					bsToUMP(d0, midi1Byte, 0);
-				} else if (d0 < SYSEX_START || d0 == SPP) { // First data byte
-					d1=midi1Byte;
-				}
+                sysex[sysex7Pos++] = midi1Byte;
+
 			}
+            else if (d1 != 255) { // Second byte
+                    bsToUMP(d0, d1, midi1Byte);
+                    d1 = 255;
+            }
+            else if (d0){ // status byte set
+                if (
+                        (d0 & 0xF0) == PROGRAM_CHANGE
+                        || (d0 & 0xF0) == CHANNEL_PRESSURE
+                        || d0 == TIMING_CODE
+                        || d0 == SONG_SELECT
+                        ) {
+                    bsToUMP(d0, midi1Byte, 0);
+                } else if (d0 == 0xF4 || d0 == 0xF5 || d0 == 0xFD || d0==0xF9) {
+                    resetBuffer();
+
+                } else if (d0 < SYSEX_START || d0 == SPP) { // First data byte
+                    d1=midi1Byte;
+                }
+            }
+
+           // if(debug)printf("\n");
 		}
 };
 
