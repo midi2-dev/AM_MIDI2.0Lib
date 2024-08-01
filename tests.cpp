@@ -203,30 +203,30 @@ int main(){
 
 
     //UMP2BS.debug = true;
-    testRun_umpToBs(" Test 9 Bad Data : ", bytes5_bad,  tests5_bad, 3,1);
+    testRun_umpToBs(" Test 9 Bad Data : ", bytes5_bad,  tests5_bad, 1,0);
     testRun_umpToBs(" ReTest 5 Note On: ", bytes5, tests5, 2,6);
-//
-//    //***** UMP2M1 *************
-//    printf("UMP to MIDI 1 Protocol \n");
-//    uint32_t in[] = {0x20816050, 0x20817070};
-//    testRun_umpToM1(" Test MIDI 1 : ", in,  2, in, 2);
-//
-//    testRun_umpToM1(" Test SysEx : ", tests4,  10, tests4, 10);
-//    testRun_umpToM1(" Test System Msg : ", tests2,  1, tests2, 1);
-//
-//    uint32_t in2[] = {0x40904000, 0xc1040000};
-//    uint32_t out2[] = {0x20904060};
-//    testRun_umpToM1(" Test MT4 : ", in2,  2, out2, 1);
-//
-//    //***** UMP Meesage Create *************
-//    printf("UMP Message Create \n");
-//    uint32_t inUmp1[] = {UMPMessage::mt0NOOP()};
-//    uint32_t outUmp1[] = {0x00000000};
-//    testRun_umpToump(" UMP NOOP : ", inUmp1,  1, outUmp1);
-//
-//    uint32_t inUmp2[] = {UMPMessage::mt1TimingClock(8)};
-//    uint32_t outUmp2[] = {0x18f80000};
-//    testRun_umpToump(" UMP Timing Clock : ", inUmp2,  1, outUmp2);
+
+    //***** UMP2M1 *************
+    printf("UMP to MIDI 1 Protocol \n");
+    uint32_t in[] = {0x20816050, 0x20817070};
+    testRun_umpToM1(" Test MIDI 1 : ", in,  2, in, 2);
+
+    testRun_umpToM1(" Test SysEx : ", tests4,  10, tests4, 10);
+    testRun_umpToM1(" Test System Msg : ", tests2,  1, tests2, 1);
+
+    uint32_t in2[] = {0x40904000, 0xc1040000};
+    uint32_t out2[] = {0x20904060};
+    testRun_umpToM1(" Test MT4 : ", in2,  2, out2, 1);
+
+    //***** UMP Meesage Create *************
+    printf("UMP Message Create \n");
+    uint32_t inUmp1[] = {UMPMessage::mt0NOOP()};
+    uint32_t outUmp1[] = {0x00000000};
+    testRun_umpToump(" UMP NOOP : ", inUmp1,  1, outUmp1);
+
+    uint32_t inUmp2[] = {UMPMessage::mt1TimingClock(8)};
+    uint32_t outUmp2[] = {0x18f80000};
+    testRun_umpToump(" UMP Timing Clock : ", inUmp2,  1, outUmp2);
 
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);

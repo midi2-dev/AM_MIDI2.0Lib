@@ -84,6 +84,10 @@ class umpToBytestream{
                             break;
                         case UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
                             uint8_t sysByte = UMP >> 16 & 0xFF;
+                            if (sysByte== 0xF4 ||sysByte == 0xF5 || sysByte == 0xFD || sysByte == 0xF9) {
+                                return;
+                            }
+
                             bsOut[writeIndex] = sysByte;
                             increaseWrite();
                             if (sysByte== 0xF1 ||sysByte == 0xF2 || sysByte == 0xF3) {
