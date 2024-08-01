@@ -116,7 +116,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.form = (umpMess[0] >> 20) & 0xF;
-                mess.dataLength  = (umpMess[0] >> 16) & 0xF;
+                mess.dataLength  = std::min((umpMess[0] >> 16) & 0xF, 6);
                 uint8_t sysex[6];
 
                 if(mess.dataLength > 0)sysex[0] =  (umpMess[0] >> 8) & 0x7F;
@@ -262,18 +262,18 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.status = (uint8_t) status;
                         mess.form = umpMess[0] >> 24 & 0x3;
                         mess.dataLength  = 0;
-                    uint8_t text[14];
+                        uint8_t text[14];
 
                         if ((umpMess[0] >> 8) & 0xFF) text[mess.dataLength++] = (umpMess[0] >> 8) & 0xFF;
                         if (umpMess[0] & 0xFF) text[mess.dataLength++] = umpMess[0]  & 0xFF;
-                    for(uint8_t i = 1; i<=3; i++){
-                        for(int j = 24; j>=0; j-=8){
-                            uint8_t c = (umpMess[i] >> j) & 0xFF;
-                            if(c){
-                                    text[mess.dataLength++]=c;
-                    }
-                        }
-                    }
+                        for(uint8_t i = 1; i<=3; i++){
+                            for(int j = 24; j>=0; j-=8){
+                                uint8_t c = (umpMess[i] >> j) & 0xFF;
+                                if(c){
+                                        text[mess.dataLength++]=c;
+                                }
+                            }
+                         }
                         mess.data = text;
                         if(status == MIDIENDPOINT_NAME_NOTIFICATION && midiEndpointName != nullptr) midiEndpointName(mess);
                         if(status == MIDIENDPOINT_PRODID_NOTIFICATION && midiEndpointProdId != nullptr) midiEndpointProdId(mess);
@@ -366,23 +366,22 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.messageType = mt;
                 mess.streamId  = (umpMess[0] >> 8) & 0xFF;
                 mess.form = status;
-                mess.dataLength  = (umpMess[0] >> 16) & 0xF;
-
+                mess.dataLength  = std::min((umpMess[0] >> 16) & 0xF, 13);
                 uint8_t sysex[13];
 
-                if(mess.dataLength > 1)sysex[0] =  umpMess[0] & 0x7F;
-                if(mess.dataLength > 2)sysex[1] =  (umpMess[1] >> 24) & 0x7F;
-                if(mess.dataLength > 3)sysex[2] =  (umpMess[1] >> 16) & 0x7F;
-                if(mess.dataLength > 4)sysex[3] =  (umpMess[1] >> 8) & 0x7F;
-                if(mess.dataLength > 5)sysex[4] =  umpMess[1] & 0x7F;
-                if(mess.dataLength > 6)sysex[5] =  (umpMess[2] >> 24) & 0x7F;
-                if(mess.dataLength > 7)sysex[6] =  (umpMess[2] >> 16) & 0x7F;
-                if(mess.dataLength > 8)sysex[7] =  (umpMess[2] >> 8) & 0x7F;
-                if(mess.dataLength > 9)sysex[8] =  umpMess[2] & 0x7F;
-                if(mess.dataLength > 10)sysex[9] =  (umpMess[3] >> 24) & 0x7F;
-                if(mess.dataLength > 11)sysex[10] =  (umpMess[3] >> 16) & 0x7F;
-                if(mess.dataLength > 12)sysex[11] =  (umpMess[3] >> 8) & 0x7F;
-                if(mess.dataLength > 13)sysex[12] =  umpMess[3] & 0x7F;
+                if(mess.dataLength >= 1)sysex[0] =  umpMess[0] & 0xFF;
+                if(mess.dataLength >= 2)sysex[1] =  (umpMess[1] >> 24) & 0xFF;
+                if(mess.dataLength >= 3)sysex[2] =  (umpMess[1] >> 16) & 0xFF;
+                if(mess.dataLength >= 4)sysex[3] =  (umpMess[1] >> 8) & 0xFF;
+                if(mess.dataLength >= 5)sysex[4] =  umpMess[1] & 0xFF;
+                if(mess.dataLength >= 6)sysex[5] =  (umpMess[2] >> 24) & 0xFF;
+                if(mess.dataLength >= 7)sysex[6] =  (umpMess[2] >> 16) & 0xFF;
+                if(mess.dataLength >= 8)sysex[7] =  (umpMess[2] >> 8) & 0xFF;
+                if(mess.dataLength >= 9)sysex[8] =  umpMess[2] & 0xFF;
+                if(mess.dataLength >= 10)sysex[9] =  (umpMess[3] >> 24) & 0xFF;
+                if(mess.dataLength >= 11)sysex[10] =  (umpMess[3] >> 16) & 0xFF;
+                if(mess.dataLength >= 12)sysex[11] =  (umpMess[3] >> 8) & 0xFF;
+                if(mess.dataLength >= 13)sysex[12] =  umpMess[3] & 0xFF;
 
                 mess.data = sysex;
                 sendOutSysex(mess);
