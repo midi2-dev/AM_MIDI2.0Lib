@@ -195,17 +195,22 @@ class bytestreamToUMP{
 		bool outputMIDI2 = false;
 		
 		bytestreamToUMP(){
-			using M2Utils::clear;
-			clear(bankMSB, 255, sizeof(bankMSB));
-			clear(bankLSB, 255, sizeof(bankLSB));
-			clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
-			clear(rpnMsb, 255, sizeof(rpnMsb));
-			clear(rpnLsb, 255, sizeof(rpnLsb));
+			clearAll();
 		}
 		
 		bool availableUMP(){
 			return bufferLength;
 		}
+
+        void clearAll(){
+            using M2Utils::clear;
+            clear(bankMSB, 255, sizeof(bankMSB));
+            clear(bankLSB, 255, sizeof(bankLSB));
+            clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
+            clear(rpnMsb, 255, sizeof(rpnMsb));
+            clear(rpnLsb, 255, sizeof(rpnLsb));
+        }
+
         void resetBuffer(){
             d1 = 255;
             for (int i = 0; i < BSTOUMP_BUFFER; i++) {

@@ -47,13 +47,20 @@ class umpToBytestream{
 			}
 		}
 
-
-
 	public:
         uint8_t group;
 
         umpToBytestream(){
-            M2Utils::clear(bsOut,0,UMPTOBS_BUFFER);
+            resetBuffer();
+        }
+
+        void resetBuffer(){
+            using M2Utils::clear;
+            clear(bsOut,0,UMPTOBS_BUFFER);
+            UMPPos=0;
+            readIndex = 0;
+            writeIndex = 0;
+            bufferLength = 0;
         }
 
 		bool availableBS(){
