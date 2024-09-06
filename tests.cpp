@@ -8,9 +8,12 @@
 #include "include/umpMessageCreate.h"
 #include <cstdio>
 
+#include "umpToMIDI2Protocol.h"
+
 bytestreamToUMP BS2UMP;
 umpToBytestream UMP2BS;
 umpToMIDI1Protocol UMP2M1;
+umpToMIDI2Protocol UMP2M2;
 
 int testPassed = 0;
 int testFailed = 0;
@@ -88,6 +91,26 @@ void testRun_umpToM1(const char* heading, uint32_t * in, int inlength, uint32_t 
     printf("\n");
 }
 
+void testRun_umpToM2(const char* heading, uint32_t * in, int inlength, uint32_t * out, int outlength)
+{
+    va_list args;
+    vprintf (heading, args);
+
+    int testCounter = 0;
+
+
+    for(int i=0; i<inlength; i++){
+        UMP2M2.UMPStreamParse(in[i]);
+        while(UMP2M2.availableUMP()){
+            uint32_t newUmp = UMP2M2.readUMP();
+            //ump contains a ump 32 bit value. UMP messages that have 64bit will produce 2 UMP words
+            passFail (newUmp, out[testCounter++]);
+        }
+    }
+    printf(" length :");passFail (outlength, testCounter);
+    printf("\n");
+}
+
 
 void testRun_umpToump(const char* heading, uint32_t * in, int inlength, uint32_t * out)
 {
@@ -127,27 +150,11 @@ int main(){
     };
     testRun_bsToUmp(" Test 4 Sysex : ", bytes4, 32, tests4,10);
 
-    printf(" Switching to Mt4 \n");
-    BS2UMP.outputMIDI2 = true;
-    uint32_t tests1a[] = {0x40816000, 0xA0820000,0x40817000,0xe1860000};
-    testRun_bsToUmp(" Test 5 MT4 Note On w/running status: ", bytes1, 5, tests1a,4);
-
-    uint32_t tests3a[] = {0x40c60000,0x40000000};
-    testRun_bsToUmp(" Test 6 MT 4 PC 2 bytes : ", bytes3, 2, tests3a,2);
-
-    uint8_t bytes3b[] = {0xB6,0x00,0x01,0x20,0x0A,0xC6,0x41};
-    uint32_t tests3b[] = {0x40c60001,0x4100010A};
-    testRun_bsToUmp(" Test 7 MT 4 PC 2 bytes with Bank MSB LSB : ", bytes3b, 7, tests3b,2);
-
-    uint8_t bytes4b[] = {0xB6,101,0x00,100,0x06,0x06,0x08};
-    uint32_t tests4b[] = {0x40260006,0x10000000};
-    testRun_bsToUmp(" Test 8 MT 4 RPN : ", bytes4b, 7, tests4b,2);
-
     //Let's Send bad UMP Data
     uint32_t tests5_bad[] = {0x10F47F7F};
     uint8_t bytes5_bad[] = {0xF4, 0x7F, 0x7F,0x00,0x00};
     testRun_bsToUmp(" Test 9 Bad System Message : ", bytes5_bad, 5, tests5_bad,0);
-    testRun_bsToUmp(" Test 10 Retest MT4 Note On w/running status: ", bytes1, 5, tests1a,4);
+    testRun_bsToUmp(" Test 10 Retest MT2 Note On w/running status: ", bytes1, 5, tests1,2);
 
     uint8_t bytesSyesex[] = {
             0xf0, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e,0x1d, 0x1f, 0xf7,
@@ -217,6 +224,36 @@ int main(){
     uint32_t in2[] = {0x40904000, 0xc1040000};
     uint32_t out2[] = {0x20904060};
     testRun_umpToM1(" Test MT4 : ", in2,  2, out2, 1);
+
+    // ******** UMP2M2 ***********
+    printf("UMP to MIDI 2 Protocol \n");
+    testRun_umpToM2(" Test MIDI 2 : ", in2,  2, in2, 2);
+    testRun_umpToM2(" Test MT2 Note On : ", out2,  1, in2, 2);
+
+    uint32_t inMt2_PC1[] = {0x20B00001,0x20B0200A,0x20C04000};
+    uint32_t outMt4_PC1[] = {0x40c00001,0x4000010A};
+    testRun_umpToM2(" Test 6 MT 2 PC With Bank : ", inMt2_PC1, 3, outMt4_PC1,2);
+
+    uint32_t inMt2_PC2[] = {0x20C64100};
+    uint32_t outMt4_PC2[] = {0x40c60000,0x41000000};
+    testRun_umpToM2(" Test 6 MT 2 PC No Bank : ", inMt2_PC2, 1, outMt4_PC2,2);
+
+    uint32_t inMt2_RPN1[] = {0x20B66500, 0x20B66406, 0x20B60608};
+    uint32_t outMt4_RPN1[] = {0x40260006,0x10000000};
+    testRun_umpToM2(" Test 6 MT 2 RPN 0x6 no 38 : ", inMt2_RPN1, 3, outMt4_RPN1,2);
+
+    uint32_t inMt2_RPN2[] = {0x20B66500, 0x20B66406, 0x20B60608, 0x20B62600};
+    testRun_umpToM2(" Test 6 MT 2 RPN 0x6 with 38 : ", inMt2_RPN2, 4, outMt4_RPN1,2);
+
+    uint32_t inMt2_RPN3[] = {0x20B66520, 0x20B66406, 0x20B60608, 0x20B60609, 0x20B607EE};
+    uint32_t outMt2_RPN3[] = {0x40262006,0x10000000,0x40262006,0x12000000,0x40b60700,0xdd75d75d};
+    testRun_umpToM2(" Test 6 MT 2 RPN 0x2006 no 38 twice followed by a Volume CC : ",
+        inMt2_RPN3, 5, outMt2_RPN3,6);
+
+    uint32_t inMt2_RPN4[] = {0x20B66520, 0x20B66406, 0x20B60608, 0x20B62601, 0x20B60609 , 0x20B62602};
+    uint32_t outMt2_RPN4[] = {0x40262006,0x10040000,0x40262006,0x12080000};
+    testRun_umpToM2(" Test 6 MT 2 RPN 0x2006 with 38 twice  : ",
+        inMt2_RPN4, 6, outMt2_RPN4,4);
 
     //***** UMP Meesage Create *************
     printf("UMP Message Create \n");

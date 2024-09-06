@@ -1,5 +1,5 @@
 OPTS= -g -Wuninitialized -Wmaybe-uninitialized -Wall -Wshadow -Wcast-qual \
-      -std=c++11 -Wextra -pedantic -Wno-unused-parameter
+      -std=c++14 -Wextra -pedantic -Wno-unused-parameter
 
 SOURCES=$(shell find ./src -name "*.cpp")
 
