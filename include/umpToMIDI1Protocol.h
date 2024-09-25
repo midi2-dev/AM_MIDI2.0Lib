@@ -111,7 +111,7 @@ class umpToMIDI1Protocol{
                     }
                     case UMP_M2CVM:{
                         UMPPos=0;
-                        uint8_t status = (ump64word1 >> 16) & 0xFF;
+                        uint8_t status = (ump64word1 >> 16) & 0xF0;
                         uint8_t channel = (ump64word1 >> 16) & 0xF;
                         uint8_t val1 = (ump64word1 >> 8) & 0xFF;
                         uint8_t val2 = ump64word1 & 0xFF;
