@@ -27,7 +27,7 @@ namespace UMPMessage {
 
     uint32_t m1Create(uint8_t group, uint8_t status, uint8_t val1, uint8_t val2){
         return (((UMP_SYSTEM << 4) + (group & 0xF) + 0L) << 24)
-        + (((status & 0xF0) + 0L) << 16)
+        + (((status & 0xFF) + 0L) << 16)
         + (((val1  & 0x7F) + 0L) << 8) + (val2  & 0x7F);
     }
 
