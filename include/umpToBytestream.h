@@ -39,6 +39,12 @@ class umpToBytestream{
 		int writeIndex = 0;
 		int bufferLength = 0;
 
+        uint8_t lastRunningStatus = 255;
+        uint8_t lastRPN_MSB[16];
+        uint8_t lastRPN_LSB[16];
+        uint8_t lastNRPN_MSB[16];
+        uint8_t lastNRPN_LSB[16];
+
 		void increaseWrite(){
 			bufferLength++;
 			writeIndex++;
@@ -61,11 +67,7 @@ class umpToBytestream{
         uint8_t group;
 
         uint8_t filterByGroup = 255;
-        uint8_t lastRunningStatus = 255;
-        uint8_t lastRPN_MSB = 255;
-        uint8_t lastRPN_LSB = 255;
-        uint8_t lastNRPN_MSB = 255;
-        uint8_t lastNRPN_LSB = 255;
+
         bool enableRunningStatus = false;
 
         umpToBytestream(){
@@ -85,10 +87,12 @@ class umpToBytestream{
             writeIndex = 0;
             bufferLength = 0;
             lastRunningStatus = 255;
-            lastRPN_MSB = 255;
-            lastRPN_LSB = 255;
-            lastNRPN_MSB = 255;
-            lastNRPN_LSB = 255;
+            for (int ch = 0; ch < 16; ch++) {
+                lastRPN_MSB[ch] = 255;
+                lastRPN_LSB[ch] = 255;
+                lastNRPN_MSB[ch] = 255;
+                lastNRPN_LSB[ch] = 255;
+            }
         }
 
 		bool availableBS(){
@@ -268,60 +272,60 @@ class umpToBytestream{
                                 }
                                 case RPN: {//rpn
                                         stsCh = CC + channel;
-                                    if(lastRPN_MSB != val1 || lastRPN_LSB != val2)
-                                    {
+                                        if(lastRPN_MSB[channel] != val1 || lastRPN_LSB[channel] != val2)
+                                        {
+                                            checkRunningStatusAndAddByte(stsCh);
+                                            bsOut[writeIndex] = 101;increaseWrite();
+                                            bsOut[writeIndex] = val1;increaseWrite();
+                                            checkRunningStatusAndAddByte(stsCh);
+                                            bsOut[writeIndex] = 100;increaseWrite();
+                                            bsOut[writeIndex] = val2;increaseWrite();
+                                            lastRPN_MSB[channel] = val1;
+                                            lastRPN_LSB[channel] = val2;
+                                            lastNRPN_MSB[channel] = 255;
+                                            lastNRPN_LSB[channel] = 255;
+                                        }
+
+
+                                        uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
+
+                                        //bsOut[writeIndex] = CC + channel;increaseWrite();
                                         checkRunningStatusAndAddByte(stsCh);
-                                        bsOut[writeIndex] = 101;increaseWrite();
-                                        bsOut[writeIndex] = val1;increaseWrite();
+                                        bsOut[writeIndex] = 6;increaseWrite();
+                                        bsOut[writeIndex] = (val14bit >> 7) & 0x7F;increaseWrite();
+                                        //bsOut[writeIndex] = CC + channel;increaseWrite();
                                         checkRunningStatusAndAddByte(stsCh);
-                                        bsOut[writeIndex] = 100;increaseWrite();
-                                        bsOut[writeIndex] = val2;increaseWrite();
-                                        lastRPN_MSB = val1;
-                                        lastRPN_LSB = val2;
-                                        lastNRPN_MSB = 255;
-                                        lastNRPN_LSB = 255;
+                                        bsOut[writeIndex] = 38;increaseWrite();
+                                        bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
+
+                                        break;
                                     }
-
-
-                                    uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
-
-                                    //bsOut[writeIndex] = CC + channel;increaseWrite();
-                                    checkRunningStatusAndAddByte(stsCh);
-                                    bsOut[writeIndex] = 6;increaseWrite();
-                                    bsOut[writeIndex] = (val14bit >> 7) & 0x7F;increaseWrite();
-                                    //bsOut[writeIndex] = CC + channel;increaseWrite();
-                                    checkRunningStatusAndAddByte(stsCh);
-                                    bsOut[writeIndex] = 38;increaseWrite();
-                                    bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
-
-                                    break;
-                                }
                                 case NRPN: { //nrpn
                                         stsCh = CC + channel;
-                                    if(lastRPN_MSB != val1 || lastRPN_LSB != val2)
-                                    {
+                                        if(lastNRPN_MSB[channel] != val1 || lastNRPN_LSB[channel] != val2)
+                                        {
+                                            checkRunningStatusAndAddByte(stsCh);
+                                            bsOut[writeIndex] = 99;increaseWrite();
+                                            bsOut[writeIndex] = val1;increaseWrite();
+                                            checkRunningStatusAndAddByte(stsCh);
+                                            bsOut[writeIndex] = 98;increaseWrite();
+                                            bsOut[writeIndex] = val2;increaseWrite();
+                                            lastRPN_MSB[channel] = 255;
+                                            lastRPN_LSB[channel] = 255;
+                                            lastNRPN_MSB[channel] = val1;
+                                            lastNRPN_LSB[channel] = val2;
+                                        }
+
+                                        uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP, 32, 14);
+
                                         checkRunningStatusAndAddByte(stsCh);
-                                        bsOut[writeIndex] = 99;increaseWrite();
-                                        bsOut[writeIndex] = val1;increaseWrite();
+                                        bsOut[writeIndex] = 6;increaseWrite();
+                                        bsOut[writeIndex] = (val14bit >> 7) & 0x7F;increaseWrite();
                                         checkRunningStatusAndAddByte(stsCh);
-                                        bsOut[writeIndex] = 98;increaseWrite();
-                                        bsOut[writeIndex] = val2;increaseWrite();
-                                        lastRPN_MSB = 255;
-                                        lastRPN_LSB = 255;
-                                        lastNRPN_MSB = val1;
-                                        lastNRPN_LSB = val2;
+                                        bsOut[writeIndex] = 38;increaseWrite();
+                                        bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
+                                        break;
                                     }
-
-                                    uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP, 32, 14);
-
-                                    checkRunningStatusAndAddByte(stsCh);
-                                    bsOut[writeIndex] = 6;increaseWrite();
-                                    bsOut[writeIndex] = (val14bit >> 7) & 0x7F;increaseWrite();
-                                    checkRunningStatusAndAddByte(stsCh);
-                                    bsOut[writeIndex] = 38;increaseWrite();
-                                    bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
-                                    break;
-                                }
                                 case PROGRAM_CHANGE: { //Program change
                                     if (ump64word1 & 0x1) {
                                         checkRunningStatusAndAddByte(CC + channel);
