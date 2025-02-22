@@ -116,7 +116,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.form = (umpMess[0] >> 20) & 0xF;
-                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 6U);
+                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 6LU);
                 uint8_t sysex[6];
 
                 if(mess.dataLength > 0)sysex[0] =  (umpMess[0] >> 8) & 0x7F;
@@ -366,7 +366,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.messageType = mt;
                 mess.streamId  = (umpMess[0] >> 8) & 0xFF;
                 mess.form = status;
-                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 13U);
+                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 13LU);
                 uint8_t sysex[13];
 
                 if(mess.dataLength >= 1)sysex[0] =  umpMess[0] & 0xFF;
