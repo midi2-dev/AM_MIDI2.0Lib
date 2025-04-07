@@ -2,10 +2,10 @@
 // Created by andrew on 3/05/24.
 //
 
-#include "include/bytestreamToUMP.h"
-#include "include/umpToBytestream.h"
-#include "include/umpToMIDI1Protocol.h"
-#include "include/umpMessageCreate.h"
+#include "../include/bytestreamToUMP.h"
+#include "../include/umpToBytestream.h"
+#include "../include/umpToMIDI1Protocol.h"
+#include "../include/umpMessageCreate.h"
 #include <cstdio>
 
 #include "umpToMIDI2Protocol.h"
