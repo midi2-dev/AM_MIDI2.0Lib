@@ -61,6 +61,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         systemMessage(mess);
                         break;
                     default:
+                        mess.value = umpMess[0] & 0xFFFF;
                         systemMessage(mess);
                         break;
                 }
