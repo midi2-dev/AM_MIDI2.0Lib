@@ -33,6 +33,7 @@ void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
     midici =  MIDICI();
     midici.deviceId = deviceId;
     midici.umpGroup = group;
+    midici.refpoint = refpoint;
 }
 
 void midiCIProcessor::cleanupRequest(reqId peReqIdx){

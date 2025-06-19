@@ -47,6 +47,7 @@ struct MIDICI{
     uint8_t numChunk;
     uint8_t partialChunkCount;
     uint8_t requestId;
+    void * refpoint;
 };
 
 
@@ -159,7 +160,7 @@ public:
     //
     // Calling these functions from within a member class looks like:
     // MIDICIHandler->setCheckMUID(std::bind(&YourClass::checkMUID, this, std::placeholders::_1, std::placeholders::_2));
-
+    void * refpoint;
     inline void setCheckMUID(std::function<bool(uint8_t group, uint32_t muid)> fptr){
         checkMUID = fptr; }
     void endSysex7();
