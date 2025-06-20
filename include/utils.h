@@ -240,7 +240,7 @@ namespace M2Utils {
    return;
   }
 
-  if (srcVal == (1 << (srcBits-1))) {
+  if (srcVal == (1 << (srcBits-1))+0L) {
    sprintf(outputString,"MID");
    return;
   }

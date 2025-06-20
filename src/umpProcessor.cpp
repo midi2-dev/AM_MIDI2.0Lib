@@ -395,24 +395,42 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.data = sysex;
                 sendOutSysex(mess);
 
-            }else if(status == 8 || status ==9){
-                //Beginning of Mixed Data Set
-                //uint8_t mdsId  = (umpMess[0] >> 16) & 0xF;
+            }else if(status == 8){ //MDS Header
 
-                if(status == 8){
-                    /*uint16_t numValidBytes  = umpMess[0] & 0xFFFF;
-                    uint16_t numChunk  = (umpMess[1] >> 16) & 0xFFFF;
-                    uint16_t numOfChunk  = umpMess[1] & 0xFFFF;
-                    uint16_t manuId  = (umpMess[2] >> 16) & 0xFFFF;
-                    uint16_t deviceId  = umpMess[2] & 0xFFFF;
-                    uint16_t subId1  = (umpMess[3] >> 16) & 0xFFFF;
-                    uint16_t subId2  = umpMess[3] & 0xFFFF;*/
-                }else{
-                    // MDS bytes?
-                }
+                if(mds5Header)mds5Header(
+                    group,
+                    (umpMess[1] >> 16) & 0xF,
+                    umpMess[0] & 0xFFFF,
+                    (umpMess[1] >> 16) & 0xFFFF,
+                    umpMess[1] & 0xFFFF,
+                    (umpMess[2] >> 16) & 0xFFFF,
+                    umpMess[2] & 0xFFFF,
+                    (umpMess[3] >> 16) & 0xFFFF,
+                    umpMess[3] & 0xFFFF
+                    );
+            }else if(status == 9){ //MDS Payload
+                uint8_t sysex[14];
+                sysex[0] =  (umpMess[0] >> 8) & 0xFF;
+                sysex[1] =  umpMess[0] & 0xFF;
+                sysex[2] =  (umpMess[1] >> 24) & 0xFF;
+                sysex[3] =  (umpMess[1] >> 16) & 0xFF;
+                sysex[4] =  (umpMess[1] >> 8) & 0xFF;
+                sysex[5] =  umpMess[1] & 0xFF;
+                sysex[6] =  (umpMess[2] >> 24) & 0xFF;
+                sysex[7] =  (umpMess[2] >> 16) & 0xFF;
+                sysex[8] =  (umpMess[2] >> 8) & 0xFF;
+                sysex[9] =  umpMess[2] & 0xFF;
+                sysex[10] =  (umpMess[3] >> 24) & 0xFF;
+                sysex[11] =  (umpMess[3] >> 16) & 0xFF;
+                sysex[12] =  (umpMess[3] >> 8) & 0xFF;
+                sysex[13] =  umpMess[3] & 0xFF;
+                if(mds5Header)mds5Payload(
+                    group,
+                    (umpMess[1] >> 16) & 0xF,
+                    sysex, 14
+                    );
+            }else {
                 if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
-
-
             }
 
         }

@@ -130,6 +130,12 @@ class umpProcessor{
     std::function<void()> startOfSeq = nullptr;
     std::function<void()> endOfFile = nullptr;
 
+    //MT5
+    std::function<void(uint8_t group, uint8_t mds, uint16_t numberOfBytes, uint16_t totalChunks,
+        uint16_t chunkNumber, uint16_t manuId, uint16_t deviceId, uint16_t subId1,
+        uint16_t subId2)> mds5Header = nullptr;
+    std::function<void(uint8_t group, uint8_t mds, uint8_t * data, uint8_t dataLength)> mds5Payload = nullptr;
+
     //Handle new Messages
     std::function<void(uint32_t * ump, uint8_t length)> unknownUMPMessage = nullptr;
     
@@ -190,6 +196,15 @@ class umpProcessor{
     inline void setFunctionBlockNameNotify(std::function<void(struct umpData mess, uint8_t fbIdx)> fptr){functionBlockName = fptr; }
     inline void setStartOfSeq(std::function<void()> fptr){startOfSeq = fptr; }
     inline void setEndOfFile(std::function<void()> fptr){endOfFile = fptr; }
+
+
+    //MT5
+   inline void setMDSHeaderNotify(std::function<void(uint8_t group, uint8_t mds, uint16_t numberOfBytes,
+        uint16_t totalChunks, uint16_t chunkNumber, uint16_t manuId, uint16_t deviceId, uint16_t subId1,
+        uint16_t subId2)> fptr){ mds5Header = fptr;}
+    inline void setMDSPayloadNotify(std::function<void(uint8_t group, uint8_t mds, uint8_t * data,
+        uint8_t dataLength)>fptr){  mds5Payload = fptr;}
+
 
     //Unknown UMP
     inline void setUnknownUMP(std::function<void(uint32_t * ump, uint8_t length)> fptr){unknownUMPMessage = fptr; }
