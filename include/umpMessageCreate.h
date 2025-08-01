@@ -333,8 +333,8 @@ inline std::array<uint32_t, 4> mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool ac
     umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK_INFO_NOTFICATION << 16)
                 + ((active?1:0) << 15)
                 + (fbIdx << 8)
-                + (recv << 5)
-                + (sender << 4)
+                + (recv << 4)
+                + (sender << 5)
                 + (isMIDI1 << 2)
                 + direction;
     umpMess[1] = (firstGroup  << 24)
