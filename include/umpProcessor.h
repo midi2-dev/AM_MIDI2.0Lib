@@ -120,8 +120,8 @@ class umpProcessor{
     std::function<void(struct umpData mess)> midiEndpointName = nullptr;
     std::function<void(struct umpData mess)> midiEndpointProdId = nullptr;
 
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolReq = nullptr;
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolNotify = nullptr;
+    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointStreamConfigReq = nullptr;
+    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointStreamConfigNotify = nullptr;
 
     std::function<void(uint8_t fbIdx, bool active,
             uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
@@ -184,9 +184,9 @@ class umpProcessor{
     inline void setMidiEndpointDeviceInfoNotify(std::function<void(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
             std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)> fptr){
         midiEndpointDeviceInfo = fptr; }
-    inline void setJRProtocolRequest(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){ midiEndpointJRProtocolReq = fptr;}
-    inline void setJRProtocolNotify(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){
-        midiEndpointJRProtocolNotify = fptr;}
+    inline void setStreamConfigRequest(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){ midiEndpointStreamConfigReq = fptr;}
+    inline void setStreamConfigNotify(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){
+        midiEndpointStreamConfigNotify = fptr;}
 
     inline void setFunctionBlock(std::function<void(uint8_t filter, uint8_t fbIdx)> fptr){ functionBlock = fptr; }
     inline void setFunctionBlockNotify(std::function<void(uint8_t fbIdx, bool active,

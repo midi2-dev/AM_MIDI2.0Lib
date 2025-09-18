@@ -383,7 +383,7 @@ inline std::array<uint32_t, 4> mtFEndOfFile(){
 
 inline std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_PROTOCOL_REQUEST << 16)
+    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_STREAMCONFIG_REQUEST << 16)
             + (protocol << 8)
               + (jrrx << 1)
               + jrtx;
@@ -393,7 +393,7 @@ inline std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, b
 
 inline std::array<uint32_t, 4> mtFNotifyProtocol( uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_PROTOCOL_NOTIFICATION << 16)
+    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_STREAMCONFIG_NOTIFICATION << 16)
                  + (protocol << 8)
                  + (jrrx << 1)
                  + jrtx;

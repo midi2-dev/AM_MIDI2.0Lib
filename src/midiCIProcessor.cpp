@@ -30,6 +30,10 @@ void midiCIProcessor::startSysex7(uint8_t group, uint8_t deviceId){
 
     sysexPos = 0;
     buffer[0]='\0';
+    intTemp[0]=0;
+    intTemp[1]=0;
+    intTemp[2]=0;
+    intTemp[3]=0;
     midici =  MIDICI();
     midici.deviceId = deviceId;
     midici.umpGroup = group;
@@ -59,7 +63,7 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 	
 	if(sysexPos >= 12
        && midici.localMUID != M2_CI_BROADCAST
-       && checkMUID && !checkMUID(midici.umpGroup, midici.localMUID)
+       && checkMUID && !checkMUID(midici.umpGroup, midici.localMUID, refpoint)
         ){
 		return; //Not for this device
 	}

@@ -167,7 +167,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                     case CC: //CC
                         mess.index = val1;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case RPN: //RPN
@@ -177,7 +177,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.bank = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case PROGRAM_CHANGE: //Program Change Message
@@ -185,12 +185,12 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.flag1 = umpMess[0] & 1;
                         mess.bank = (umpMess[1] >> 8) & 0x7f;
                         mess.index = umpMess[1] & 0x7f;
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case PITCH_BEND: //PitchBend
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case NRPN_PERNOTE: //Assignable Per-Note Controller 1
@@ -199,14 +199,14 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.note = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
                     case PERNOTE_MANAGE: //Per-Note Management Message
 
                         mess.note = val1;
                         mess.flag1 =(bool)(val2 & 2);
                         mess.flag2 = (bool)(val2 & 1);
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
                     default:
                         if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
@@ -287,16 +287,16 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
                 }
 
-                case MIDIENDPOINT_PROTOCOL_REQUEST: //JR Protocol Req
-                    if(midiEndpointJRProtocolReq != nullptr)
-                        midiEndpointJRProtocolReq((uint8_t) (umpMess[0] >> 8),
+                case MIDIENDPOINT_STREAMCONFIG_REQUEST: //JR Protocol Req
+                    if(midiEndpointStreamConfigReq != nullptr)
+                        midiEndpointStreamConfigReq((uint8_t) (umpMess[0] >> 8),
                                                    (umpMess[0] >> 1) & 1,
                                                    umpMess[0] & 1
                                                    );
                     break;
-                case MIDIENDPOINT_PROTOCOL_NOTIFICATION: //JR Protocol Req
-                    if(midiEndpointJRProtocolNotify != nullptr)
-                        midiEndpointJRProtocolNotify((uint8_t) (umpMess[0] >> 8),
+                case MIDIENDPOINT_STREAMCONFIG_NOTIFICATION: //JR Protocol Req
+                    if(midiEndpointStreamConfigNotify != nullptr)
+                        midiEndpointStreamConfigNotify((uint8_t) (umpMess[0] >> 8),
                                                      (umpMess[0] >> 1) & 1,
                                                      umpMess[0] & 1
                                                     );
@@ -453,6 +453,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                     switch (mess.status){
                         case FLEXDATA_COMMON_TEMPO: { //Set Tempo Message
                             if(flexTempo != nullptr) flexTempo(mess, umpMess[1]);
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_TIMESIG: { //Set Time Signature Message
@@ -461,6 +462,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                  (umpMess[1] >> 16) & 0xFF,
                                                                  (umpMess[1] >> 8) & 0xFF
                                    );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_METRONOME: { //Set Metronome Message
@@ -472,6 +474,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                    (umpMess[2] >> 24) & 0xFF,
                                                                    (umpMess[2] >> 16) & 0xFF
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_KEYSIG: { //Set Key Signature Message
@@ -479,6 +482,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                    (umpMess[1] >> 24) & 0xFF,
                                                                    (umpMess[1] >> 16) & 0xFF
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_CHORD: { //Set Chord Message
@@ -502,6 +506,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                (umpMess[3] >> 4) & 0xF,//baAlt2Type
                                                                umpMess[1] & 0xF//baAlt2Deg
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         default:
@@ -514,7 +519,6 @@ void umpProcessor::processUMP(uint32_t UMP){
                 }
                 case FLEXDATA_PERFORMANCE: //Performance Events
                 case FLEXDATA_LYRIC:{ //Lyric Events
-
                         uint8_t dataLength  = 0;
                         uint8_t text[12];
 
@@ -528,9 +532,9 @@ void umpProcessor::processUMP(uint32_t UMP){
                         }
 
                         if(mess.statusBank== FLEXDATA_LYRIC && flexLyric != nullptr) flexLyric(mess, text,dataLength);
-                        if(mess.statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(mess,text,dataLength);
+                        else if(mess.statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(mess,text,dataLength);
+                        else if (flexData != nullptr) flexData(mess);
                     break;
-
                 }
                 default:
                     if(flexData != nullptr) {
@@ -546,9 +550,3 @@ void umpProcessor::processUMP(uint32_t UMP){
 		messPos++;
 	}
 }
-
-
-
-
-
-
