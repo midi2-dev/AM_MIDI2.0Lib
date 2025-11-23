@@ -225,8 +225,8 @@ inline std::array<uint32_t, 2> mt4ChannelPressure(uint8_t group, uint8_t channel
 
 inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index){
 	std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  PROGRAM_CHANGE, channel, program, bankValid?1:0);
-	umpMess[1] = bankValid? ((uint32_t)bank << 8)+ index :0;
+	umpMess[0] = mt4CreateFirstWord(group,  PROGRAM_CHANGE, channel, 0, bankValid ? 1 : 0);
+	umpMess[1] = ((uint32_t) program << 24) + (bankValid ? ((uint32_t) bank << 8) + index : 0);
 	return umpMess;
 }
 
