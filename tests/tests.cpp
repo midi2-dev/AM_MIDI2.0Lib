@@ -6,6 +6,7 @@
 #include "../include/umpToBytestream.h"
 #include "../include/umpToMIDI1Protocol.h"
 #include "../include/umpMessageCreate.h"
+#include "../include/umpProcessor.h"
 #include <cstdio>
 
 #include "umpToMIDI2Protocol.h"
@@ -264,6 +265,182 @@ int main(){
     uint32_t inUmp2[] = {UMPMessage::mt1TimingClock(8)};
     uint32_t outUmp2[] = {0x18f80000};
     testRun_umpToump(" UMP Timing Clock : ", inUmp2,  1, outUmp2);
+
+    //***** Flex Data (MT=0xD) *************
+    printf("Flex Data MT=0xD Create \n");
+
+    auto tempo = UMPMessage::mtDFlexTempo(0, 0, 0, 500000000);
+    uint32_t inTempo[] = {tempo[0], tempo[1], tempo[2], tempo[3]};
+    uint32_t outTempo[] = {0xd0000000, 0x1dcd6500, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexTempo 120bpm : ", inTempo, 4, outTempo);
+
+    auto keysig = UMPMessage::mtDFlexKeySig(0, 0, 0, 2, 0);
+    uint32_t inKeySig[] = {keysig[0], keysig[1], keysig[2], keysig[3]};
+    uint32_t outKeySig[] = {0xd0000005, 0x02000000, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexKeySig D major (2 sharps) : ", inKeySig, 4, outKeySig);
+
+    auto timesig = UMPMessage::mtDFlexTimeSig(0, 0, 0, 4, 2, 8);
+    uint32_t inTimeSig[] = {timesig[0], timesig[1], timesig[2], timesig[3]};
+    uint32_t outTimeSig[] = {0xd0000001, 0x04020800, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexTimeSig 4/4 : ", inTimeSig, 4, outTimeSig);
+
+    auto chord = UMPMessage::mtDFlexChord(0, 0, 0, 0,0,1, 0,0,0,0, 0,0,0,0, 0,0,0, 0,0,0,0);
+    uint32_t inChord[] = {chord[0], chord[1], chord[2], chord[3]};
+    uint32_t outChord[] = {0xd0000006, 0x00010000, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexChord C major no bass : ", inChord, 4, outChord);
+
+    // Flex Data with addrs=1 (Group) — verifies bits 21-20
+    auto keysigGrp = UMPMessage::mtDFlexKeySig(0, 1, 0, 2, 0);
+    uint32_t inKeySigGrp[] = {keysigGrp[0], keysigGrp[1], keysigGrp[2], keysigGrp[3]};
+    uint32_t outKeySigGrp[] = {0xd0100005, 0x02000000, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexKeySig addrs=Group : ", inKeySigGrp, 4, outKeySigGrp);
+
+    // Flex Data with form=1 (Start) — verifies bits 23-22
+    uint8_t perfText[] = {'H', 'i'};
+    auto perf = UMPMessage::mtDFlexPerformance(1, 1, 0, 5, 0, perfText, 2);
+    uint32_t inPerf[] = {perf[0], perf[1], perf[2], perf[3]};
+    uint32_t outPerf[] = {0xd1450100, 0x48690000, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexPerformance form=Start ch=5 : ", inPerf, 4, outPerf);
+
+    // Flex Data with form=3 (End), addrs=1, ch=9 — exercises all bit fields
+    uint8_t lyricText[] = {'!', '!'};
+    auto lyric = UMPMessage::mtDFlexLyric(2, 3, 1, 9, 0, lyricText, 2);
+    uint32_t inLyric[] = {lyric[0], lyric[1], lyric[2], lyric[3]};
+    uint32_t outLyric[] = {0xd2d90200, 0x21210000, 0x00000000, 0x00000000};
+    testRun_umpToump(" mtDFlexLyric form=End addrs=Group ch=9 : ", inLyric, 4, outLyric);
+
+    //***** Flex Data Roundtrip (create -> processUMP -> callback) *************
+    printf("Flex Data Roundtrip \n");
+
+    umpProcessor proc;
+
+    // Roundtrip: FlexTempo
+    uint32_t rtTempoVal = 0;
+    proc.setFlexTempo([&](struct umpFlexData mess, uint32_t num10nsPQN){
+        rtTempoVal = num10nsPQN;
+    });
+    auto rtTempo = UMPMessage::mtDFlexTempo(0, 0, 0, 500000000);
+    for(int i=0; i<4; i++) proc.processUMP(rtTempo[i]);
+    passFail(rtTempoVal, 500000000);
+    printf(" FlexTempo roundtrip\n");
+
+    // Roundtrip: FlexKeySig
+    uint8_t rtSharpFlats = 0, rtTonic = 0;
+    proc.setFlexKeySig([&](struct umpFlexData mess, uint8_t sf, uint8_t t){
+        rtSharpFlats = sf;
+        rtTonic = t;
+    });
+    auto rtKeySig = UMPMessage::mtDFlexKeySig(0, 0, 0, 3, 5);
+    for(int i=0; i<4; i++) proc.processUMP(rtKeySig[i]);
+    passFail(rtSharpFlats, 3);
+    passFail(rtTonic, 5);
+    printf(" FlexKeySig roundtrip\n");
+
+    // Roundtrip: FlexTimeSig
+    uint8_t rtNum = 0, rtDenom = 0, rtN32 = 0;
+    proc.setFlexTimeSig([&](struct umpFlexData mess, uint8_t n, uint8_t d, uint8_t n32){
+        rtNum = n; rtDenom = d; rtN32 = n32;
+    });
+    auto rtTimeSig = UMPMessage::mtDFlexTimeSig(0, 0, 0, 6, 3, 16);
+    for(int i=0; i<4; i++) proc.processUMP(rtTimeSig[i]);
+    passFail(rtNum, 6);
+    passFail(rtDenom, 3);
+    passFail(rtN32, 16);
+    printf(" FlexTimeSig roundtrip\n");
+
+    // Roundtrip: FlexChord — exercises all 18 chord parameters + verifies baAlt2Deg fix
+    uint8_t rtChShrpFlt=0, rtChTonic=0, rtChType=0;
+    uint8_t rtChAlt1T=0, rtChAlt1D=0, rtChAlt2T=0, rtChAlt2D=0;
+    uint8_t rtChAlt3T=0, rtChAlt3D=0, rtChAlt4T=0, rtChAlt4D=0;
+    uint8_t rtBaShrpFlt=0, rtBaTonic=0, rtBaType=0;
+    uint8_t rtBaAlt1T=0, rtBaAlt1D=0, rtBaAlt2T=0, rtBaAlt2D=0;
+    proc.setFlexChord([&](struct umpFlexData mess,
+        uint8_t a, uint8_t b, uint8_t c,
+        uint8_t d, uint8_t e, uint8_t f, uint8_t g,
+        uint8_t h, uint8_t i, uint8_t j, uint8_t k,
+        uint8_t l, uint8_t m, uint8_t n,
+        uint8_t o, uint8_t p, uint8_t q, uint8_t r){
+        rtChShrpFlt=a; rtChTonic=b; rtChType=c;
+        rtChAlt1T=d; rtChAlt1D=e; rtChAlt2T=f; rtChAlt2D=g;
+        rtChAlt3T=h; rtChAlt3D=i; rtChAlt4T=j; rtChAlt4D=k;
+        rtBaShrpFlt=l; rtBaTonic=m; rtBaType=n;
+        rtBaAlt1T=o; rtBaAlt1D=p; rtBaAlt2T=q; rtBaAlt2D=r;
+    });
+    // Use distinct non-zero values for every parameter to catch any mix-up
+    auto rtChord = UMPMessage::mtDFlexChord(0, 0, 0,
+        2, 3, 0x15,       // chShrpFlt=2, chTonic=3(Eb), chType=0x15
+        1, 2, 3, 4,       // alt1-2
+        5, 6, 7, 8,       // alt3-4
+        9, 10, 0x20,      // baShrpFlt=9, baTonic=10, baType=0x20
+        11, 12, 13, 14);  // baAlt1-2
+    for(int i=0; i<4; i++) proc.processUMP(rtChord[i]);
+    passFail(rtChShrpFlt, 2); passFail(rtChTonic, 3); passFail(rtChType, 0x15);
+    passFail(rtChAlt1T, 1); passFail(rtChAlt1D, 2);
+    passFail(rtChAlt2T, 3); passFail(rtChAlt2D, 4);
+    passFail(rtChAlt3T, 5); passFail(rtChAlt3D, 6);
+    passFail(rtChAlt4T, 7); passFail(rtChAlt4D, 8);
+    passFail(rtBaShrpFlt, 9); passFail(rtBaTonic, 10); passFail(rtBaType, 0x20);
+    passFail(rtBaAlt1T, 11); passFail(rtBaAlt1D, 12);
+    passFail(rtBaAlt2T, 13); passFail(rtBaAlt2D, 14);
+    printf(" FlexChord roundtrip (18 params)\n");
+
+    // Roundtrip: FlexPerformance with form verification
+    uint8_t rtPerfForm = 0xFF;
+    uint8_t rtPerfData[12] = {};
+    uint8_t rtPerfLen = 0;
+    proc.setFlexPerformance([&](struct umpFlexData mess, uint8_t* data, uint8_t len){
+        rtPerfForm = mess.form;
+        rtPerfLen = len;
+        for(int i=0; i<len && i<12; i++) rtPerfData[i] = data[i];
+    });
+    uint8_t rtPerfText[] = {'T','e','s','t'};
+    auto rtPerf = UMPMessage::mtDFlexPerformance(0, 0, 0, 0, 0, rtPerfText, 4);
+    for(int i=0; i<4; i++) proc.processUMP(rtPerf[i]);
+    passFail(rtPerfForm, 0);
+    passFail(rtPerfLen, 4);
+    passFail(rtPerfData[0], 'T');
+    passFail(rtPerfData[1], 'e');
+    passFail(rtPerfData[2], 's');
+    passFail(rtPerfData[3], 't');
+    printf(" FlexPerformance roundtrip\n");
+
+    //***** Per-Note Expression *************
+    printf("Per-Note Expression Create \n");
+
+    auto pnpb = UMPMessage::mt4PerNotePitchBend(0, 0, 60, 0x80000000);
+    uint32_t inPNPB[] = {pnpb[0], pnpb[1]};
+    uint32_t outPNPB[] = {0x40603c00, 0x80000000};
+    testRun_umpToump(" mt4PerNotePitchBend note=60 center : ", inPNPB, 2, outPNPB);
+
+    auto pncc = UMPMessage::mt4PerNoteCC(0, 0, 60, 74, 0xFFFFFFFF);
+    uint32_t inPNCC[] = {pncc[0], pncc[1]};
+    uint32_t outPNCC[] = {0x40103c4a, 0xffffffff};
+    testRun_umpToump(" mt4PerNoteCC note=60 CC74 max : ", inPNCC, 2, outPNCC);
+
+    //***** Per-Note Roundtrip *************
+    printf("Per-Note Roundtrip \n");
+
+    uint8_t rtPNNote = 0;
+    uint32_t rtPNValue = 0;
+    uint8_t rtPNStatus = 0;
+    proc.setCVM([&](struct umpCVM mess){
+        rtPNNote = mess.note;
+        rtPNValue = mess.value;
+        rtPNStatus = mess.status;
+    });
+
+    auto rtPNPB = UMPMessage::mt4PerNotePitchBend(0, 0, 60, 0x80000000);
+    for(int i=0; i<2; i++) proc.processUMP(rtPNPB[i]);
+    passFail(rtPNNote, 60);
+    passFail(rtPNValue, 0x80000000);
+    passFail(rtPNStatus, PITCH_BEND_PERNOTE);
+    printf(" PerNotePitchBend roundtrip\n");
+
+    auto rtPNCC = UMPMessage::mt4PerNoteCC(0, 3, 48, 74, 0xABCD1234);
+    for(int i=0; i<2; i++) proc.processUMP(rtPNCC[i]);
+    passFail(rtPNNote, 48);
+    passFail(rtPNValue, 0xABCD1234);
+    printf(" PerNoteCC roundtrip\n");
 
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);

@@ -443,8 +443,8 @@ void umpProcessor::processUMP(uint32_t UMP){
             mess.messageType = mt;
             mess.status = umpMess[0] & 0xFF;
             mess.statusBank = (umpMess[0] >> 8) & 0xFF;
-            mess.form = (umpMess[0] >> 20) & 3;
-            mess.addrs = (umpMess[0] >> 18) & 3;
+            mess.form = (umpMess[0] >> 22) & 3;
+            mess.addrs = (umpMess[0] >> 20) & 3;
             mess.data = umpMess;
 
             //SysEx 8
@@ -504,7 +504,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                (umpMess[3] >> 12) & 0xF,//baAlt1Type
                                                                (umpMess[3] >> 8) & 0xF,//baAlt1Deg
                                                                (umpMess[3] >> 4) & 0xF,//baAlt2Type
-                                                               umpMess[1] & 0xF//baAlt2Deg
+                                                               umpMess[3] & 0xF//baAlt2Deg
                                 );
                             else if (flexData != nullptr) flexData(mess);
                             break;
