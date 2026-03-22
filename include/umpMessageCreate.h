@@ -291,7 +291,8 @@ inline std::array<uint32_t, 4> mt5MDSPayload(uint8_t group, uint8_t mds, uint8_t
     }
 
 // Flex Data (MT=0xD) creation functions
-// addrs: 0=Channel, 1=Group, 0xFF=NoChannel  form: 0=Complete, 1=Start, 2=Continue, 3=End
+// addrs: 0=Channel, 1=Group (2-bit field, masked to 0x3)
+// form:  0=Complete, 1=Start, 2=Continue, 3=End
 
 inline std::array<uint32_t, 4> mtDFlexData(uint8_t group, uint8_t form, uint8_t addrs,
                                             uint8_t channel, uint8_t statusBank, uint8_t status){

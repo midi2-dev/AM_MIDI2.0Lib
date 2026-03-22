@@ -442,6 +442,49 @@ int main(){
     passFail(rtPNValue, 0xABCD1234);
     printf(" PerNoteCC roundtrip\n");
 
+    // mt4PerNoteRPN: group=1, ch=2, note=64, index=5 (RPN bank 0), value=0x12345678
+    // word0: MT=4 group=1 status=0x00(RPN_PERNOTE) ch=2 note=64 index=5
+    //        0x41024005
+    auto pnrpn = UMPMessage::mt4PerNoteRPN(1, 2, 64, 5, 0x12345678);
+    uint32_t inPNRPN[] = {pnrpn[0], pnrpn[1]};
+    uint32_t outPNRPN[] = {0x41024005, 0x12345678};
+    testRun_umpToump(" mt4PerNoteRPN note=64 idx=5 : ", inPNRPN, 2, outPNRPN);
+
+    // mt4PerNoteManage: group=0, ch=0, note=60, optionFlags=3 (detach+reset)
+    // word0: MT=4 group=0 status=0xF0(PERNOTE_MANAGE) ch=0 note=60 flags=3
+    //        0x40F03c03
+    auto pnman = UMPMessage::mt4PerNoteManage(0, 0, 60, 3);
+    uint32_t inPNMan[] = {pnman[0], pnman[1]};
+    uint32_t outPNMan[] = {0x40f03c03, 0x00000000};
+    testRun_umpToump(" mt4PerNoteManage note=60 flags=3 : ", inPNMan, 2, outPNMan);
+
+    //***** Flex Metronome Roundtrip *************
+    printf("Flex Metronome Roundtrip \n");
+
+    uint8_t rtMetClk = 0, rtMetAcc1 = 0, rtMetAcc2 = 0, rtMetAcc3 = 0;
+    uint8_t rtMetSub1 = 0, rtMetSub2 = 0;
+    proc.setFlexMetronome([&](struct umpFlexData mess, uint8_t numClkpPriCli,
+                              uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
+                              uint8_t numSubDivCli1, uint8_t numSubDivCli2){
+        (void) mess;
+        rtMetClk  = numClkpPriCli;
+        rtMetAcc1 = bAccP1;
+        rtMetAcc2 = bAccP2;
+        rtMetAcc3 = bAccP3;
+        rtMetSub1 = numSubDivCli1;
+        rtMetSub2 = numSubDivCli2;
+    });
+
+    auto rtMet = UMPMessage::mtDFlexMetronome(0, 0, 0, 24, 2, 1, 0, 4, 3);
+    for(int i=0; i<4; i++) proc.processUMP(rtMet[i]);
+    passFail(rtMetClk,  24);
+    passFail(rtMetAcc1, 2);
+    passFail(rtMetAcc2, 1);
+    passFail(rtMetAcc3, 0);
+    passFail(rtMetSub1, 4);
+    passFail(rtMetSub2, 3);
+    printf(" FlexMetronome roundtrip\n");
+
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);
 
