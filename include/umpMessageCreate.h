@@ -230,6 +230,39 @@ inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, 
 	return umpMess;
 }
 
+    // Per-Note Expression (MIDI 2.0)
+    inline std::array<uint32_t, 2> mt4PerNotePitchBend(uint8_t group, uint8_t channel,
+                                                        uint8_t noteNumber, uint32_t pitch){
+        std::array<uint32_t, 2> umpMess = {0,0};
+        umpMess[0] = mt4CreateFirstWord(group, PITCH_BEND_PERNOTE, channel, noteNumber, 0);
+        umpMess[1] = pitch;
+        return umpMess;
+    }
+
+    inline std::array<uint32_t, 2> mt4PerNoteCC(uint8_t group, uint8_t channel,
+                                                 uint8_t noteNumber, uint8_t index, uint32_t value){
+        std::array<uint32_t, 2> umpMess = {0,0};
+        umpMess[0] = mt4CreateFirstWord(group, NRPN_PERNOTE, channel, noteNumber, index);
+        umpMess[1] = value;
+        return umpMess;
+    }
+
+    inline std::array<uint32_t, 2> mt4PerNoteRPN(uint8_t group, uint8_t channel,
+                                                  uint8_t noteNumber, uint8_t index, uint32_t value){
+        std::array<uint32_t, 2> umpMess = {0,0};
+        umpMess[0] = mt4CreateFirstWord(group, RPN_PERNOTE, channel, noteNumber, index);
+        umpMess[1] = value;
+        return umpMess;
+    }
+
+    inline std::array<uint32_t, 2> mt4PerNoteManage(uint8_t group, uint8_t channel,
+                                                     uint8_t noteNumber, uint8_t optionFlags){
+        std::array<uint32_t, 2> umpMess = {0,0};
+        umpMess[0] = mt4CreateFirstWord(group, PERNOTE_MANAGE, channel, noteNumber, optionFlags);
+        umpMess[1] = 0;
+        return umpMess;
+    }
+
     //TODO mt5 Sysex8
 inline std::array<uint32_t, 4> mt5MDSHeader(uint8_t group, uint8_t mds, uint16_t numberOfBytes, uint16_t totalChunks, uint16_t chunkNumber,
                                             uint16_t manuId, uint16_t deviceId, uint16_t subId1, uint16_t subId2){
@@ -257,7 +290,119 @@ inline std::array<uint32_t, 4> mt5MDSPayload(uint8_t group, uint8_t mds, uint8_t
         return umpMess;
     }
 
-//TODO mtD*
+// Flex Data (MT=0xD) creation functions
+// addrs: 0=Channel, 1=Group (2-bit field, masked to 0x3)
+// form:  0=Complete, 1=Start, 2=Continue, 3=End
+
+inline std::array<uint32_t, 4> mtDFlexData(uint8_t group, uint8_t form, uint8_t addrs,
+                                            uint8_t channel, uint8_t statusBank, uint8_t status){
+    std::array<uint32_t, 4> umpMess = {0,0,0,0};
+    umpMess[0] = ((uint32_t)UMP_FLEX_DATA << 28)
+               + (((uint32_t)group & 0xF) << 24)
+               + (((uint32_t)form  & 0x3) << 22)
+               + (((uint32_t)addrs & 0x3) << 20)
+               + (((uint32_t)channel & 0xF) << 16)
+               + (((uint32_t)statusBank & 0xFF) << 8)
+               + ((uint32_t)status & 0xFF);
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexTempo(uint8_t group, uint8_t addrs, uint8_t channel,
+                                             uint32_t num10nsPQN){
+    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TEMPO);
+    umpMess[1] = num10nsPQN;
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexTimeSig(uint8_t group, uint8_t addrs, uint8_t channel,
+                                               uint8_t numerator, uint8_t denominator,
+                                               uint8_t num32Notes){
+    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TIMESIG);
+    umpMess[1] = ((uint32_t)numerator  << 24)
+               + ((uint32_t)denominator << 16)
+               + ((uint32_t)num32Notes  <<  8);
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexMetronome(uint8_t group, uint8_t addrs, uint8_t channel,
+                                                 uint8_t numClkpPriCli, uint8_t bAccP1,
+                                                 uint8_t bAccP2, uint8_t bAccP3,
+                                                 uint8_t numSubDivCli1, uint8_t numSubDivCli2){
+    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_METRONOME);
+    umpMess[1] = ((uint32_t)numClkpPriCli << 24)
+               + ((uint32_t)bAccP1        << 16)
+               + ((uint32_t)bAccP2        <<  8)
+               + ((uint32_t)bAccP3);
+    umpMess[2] = ((uint32_t)numSubDivCli1 << 24)
+               + ((uint32_t)numSubDivCli2 << 16);
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexKeySig(uint8_t group, uint8_t addrs, uint8_t channel,
+                                              uint8_t sharpFlats, uint8_t tonic){
+    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_KEYSIG);
+    umpMess[1] = ((uint32_t)sharpFlats << 24)
+               + ((uint32_t)tonic      << 16);
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexChord(uint8_t group, uint8_t addrs, uint8_t channel,
+                                             uint8_t chShrpFlt, uint8_t chTonic,
+                                             uint8_t chType,
+                                             uint8_t chAlt1Type, uint8_t chAlt1Deg,
+                                             uint8_t chAlt2Type, uint8_t chAlt2Deg,
+                                             uint8_t chAlt3Type, uint8_t chAlt3Deg,
+                                             uint8_t chAlt4Type, uint8_t chAlt4Deg,
+                                             uint8_t baShrpFlt,  uint8_t baTonic,
+                                             uint8_t baType,
+                                             uint8_t baAlt1Type, uint8_t baAlt1Deg,
+                                             uint8_t baAlt2Type, uint8_t baAlt2Deg){
+    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_CHORD);
+    umpMess[1] = (((uint32_t)chShrpFlt  & 0xF) << 28)
+               + (((uint32_t)chTonic    & 0xF) << 24)
+               + (((uint32_t)chType     & 0xFF) << 16)
+               + (((uint32_t)chAlt1Type & 0xF) << 12)
+               + (((uint32_t)chAlt1Deg  & 0xF) <<  8)
+               + (((uint32_t)chAlt2Type & 0xF) <<  4)
+               + ( (uint32_t)chAlt2Deg  & 0xF);
+    umpMess[2] = (((uint32_t)chAlt3Type & 0xF) << 28)
+               + (((uint32_t)chAlt3Deg  & 0xF) << 24)
+               + (((uint32_t)chAlt4Type & 0xF) << 20)
+               + (((uint32_t)chAlt4Deg  & 0xF) << 16);
+    umpMess[3] = (((uint32_t)baShrpFlt  & 0xF) << 28)
+               + (((uint32_t)baTonic    & 0xF) << 24)
+               + (((uint32_t)baType     & 0xFF) << 16)
+               + (((uint32_t)baAlt1Type & 0xF) << 12)
+               + (((uint32_t)baAlt1Deg  & 0xF) <<  8)
+               + (((uint32_t)baAlt2Type & 0xF) <<  4)
+               + ( (uint32_t)baAlt2Deg  & 0xF);
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexTextData(uint8_t group, uint8_t form, uint8_t addrs,
+                                                uint8_t channel, uint8_t statusBank,
+                                                uint8_t status, uint8_t* text, uint8_t textLen){
+    auto umpMess = mtDFlexData(group, form, addrs, channel, statusBank, status);
+    uint8_t offset = 0;
+    for(uint8_t i = 1; i <= 3; i++){
+        for(int shift = 24; shift >= 0; shift -= 8){
+            if(offset < textLen) umpMess[i] += ((uint32_t)text[offset++] << shift);
+        }
+    }
+    return umpMess;
+}
+
+inline std::array<uint32_t, 4> mtDFlexPerformance(uint8_t group, uint8_t form, uint8_t addrs,
+                                                   uint8_t channel, uint8_t status,
+                                                   uint8_t* text, uint8_t textLen){
+    return mtDFlexTextData(group, form, addrs, channel, FLEXDATA_PERFORMANCE, status, text, textLen);
+}
+
+inline std::array<uint32_t, 4> mtDFlexLyric(uint8_t group, uint8_t form, uint8_t addrs,
+                                             uint8_t channel, uint8_t status,
+                                             uint8_t* text, uint8_t textLen){
+    return mtDFlexTextData(group, form, addrs, channel, FLEXDATA_LYRIC, status, text, textLen);
+}
 
 inline std::array<uint32_t, 4> mtFMidiEndpoint(uint8_t filter){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
