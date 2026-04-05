@@ -122,8 +122,7 @@ class umpToBytestream{
                             return;
                             break;
                         case UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
-                            if(filterByGroup<16 && group != filterByGroup)
-                            {
+                            if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
 
@@ -149,8 +148,7 @@ class umpToBytestream{
                             break;
                         }
                         case UMP_M1CVM: {//32 Bits MIDI 1.0 Channel Voice Message
-                            if(filterByGroup<16 && group != filterByGroup)
-                            {
+                            if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
                             uint8_t stsCh = UMP >> 16 & 0xFF;
@@ -186,8 +184,7 @@ class umpToBytestream{
                             break;
                         case UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
                                 UMPPos = 0;
-                                if(filterByGroup<16 && group != filterByGroup)
-                                {
+                                if(filterByGroup<16 && group != filterByGroup){
                                     return;
                                 }
 
@@ -231,10 +228,9 @@ class umpToBytestream{
                         }
                         case UMP_M2CVM:{
                             UMPPos=0;
-                                if(filterByGroup<16 && group != filterByGroup)
-                                {
-                                    return;
-                                }
+                            if(filterByGroup<16 && group != filterByGroup){
+                                return;
+                            }
                             uint8_t status = ump64word1 >> 16 & 0xF0;
                             uint8_t channel = ump64word1 >> 16 & 0xF;
                             uint8_t val1 = ump64word1 >> 8 & 0x7F;

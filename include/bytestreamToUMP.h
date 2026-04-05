@@ -77,6 +77,7 @@ class bytestreamToUMP{
 
 	public:
 		uint8_t defaultGroup = 0;
+		bool enableRunningStatus = true;
 		
 		bytestreamToUMP(){
 			clearAll();
@@ -179,8 +180,11 @@ class bytestreamToUMP{
                 sysex[sysex7Pos++] = midi1Byte;
 			}
             else if (d1 != 255) { // Second byte
-                    bsToUMP(d0, d1, midi1Byte);
-                    d1 = 255;
+                bsToUMP(d0, d1, midi1Byte);
+                d1 = 255;
+            	if (!(enableRunningStatus && d0 < SYSEX_START)){
+            		d0 = 0;
+            	}
             }
             else if (d0){ // status byte set
                 if (
@@ -190,9 +194,11 @@ class bytestreamToUMP{
                         || d0 == SONG_SELECT
                         ) {
                     bsToUMP(d0, midi1Byte, 0);
+                	if (!(enableRunningStatus && d0 < SYSEX_START)){
+                		d0 = 0;
+                	}
                 } else if (d0 == 0xF4 || d0 == 0xF5 || d0 == 0xFD || d0==0xF9) {
                     resetBuffer();
-
                 } else if (d0 < SYSEX_START || d0 == SPP) { // First data byte
                     d1=midi1Byte;
                 }

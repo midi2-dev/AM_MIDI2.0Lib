@@ -290,26 +290,26 @@ inline std::array<uint32_t, 4> mt5MDSPayload(uint8_t group, uint8_t mds, uint8_t
         return umpMess;
     }
 
-// Flex Data (MT=0xD) creation functions
-// addrs: 0=Channel, 1=Group (2-bit field, masked to 0x3)
-// form:  0=Complete, 1=Start, 2=Continue, 3=End
+    // Flex Data (MT=0xD) creation functions
+    // addrs: 0=Channel, 1=Group (2-bit field, masked to 0x3)
+    // form:  0=Complete, 1=Start, 2=Continue, 3=End
 
-inline std::array<uint32_t, 4> mtDFlexData(uint8_t group, uint8_t form, uint8_t addrs,
-                                            uint8_t channel, uint8_t statusBank, uint8_t status){
-    std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = ((uint32_t)UMP_FLEX_DATA << 28)
-               + (((uint32_t)group & 0xF) << 24)
-               + (((uint32_t)form  & 0x3) << 22)
-               + (((uint32_t)addrs & 0x3) << 20)
-               + (((uint32_t)channel & 0xF) << 16)
-               + (((uint32_t)statusBank & 0xFF) << 8)
-               + ((uint32_t)status & 0xFF);
-    return umpMess;
-}
+    inline std::array<uint32_t, 4> mtDFlexData(uint8_t group, uint8_t form, uint8_t addrs,
+                                                uint8_t channel, uint8_t statusBank, uint8_t status){
+        std::array<uint32_t, 4> umpMess = {0,0,0,0};
+        umpMess[0] = ((uint32_t)UMP_FLEX_DATA << 28)
+                   + (((uint32_t)group & 0xF) << 24)
+                   + (((uint32_t)form  & 0x3) << 22)
+                   + (((uint32_t)addrs & 0x3) << 20)
+                   + (((uint32_t)channel & 0xF) << 16)
+                   + (((uint32_t)statusBank & 0xFF) << 8)
+                   + ((uint32_t)status & 0xFF);
+        return umpMess;
+    }
 
 inline std::array<uint32_t, 4> mtDFlexTempo(uint8_t group, uint8_t addrs, uint8_t channel,
                                              uint32_t num10nsPQN){
-    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TEMPO);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TEMPO);
     umpMess[1] = num10nsPQN;
     return umpMess;
 }
@@ -317,7 +317,7 @@ inline std::array<uint32_t, 4> mtDFlexTempo(uint8_t group, uint8_t addrs, uint8_
 inline std::array<uint32_t, 4> mtDFlexTimeSig(uint8_t group, uint8_t addrs, uint8_t channel,
                                                uint8_t numerator, uint8_t denominator,
                                                uint8_t num32Notes){
-    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TIMESIG);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TIMESIG);
     umpMess[1] = ((uint32_t)numerator  << 24)
                + ((uint32_t)denominator << 16)
                + ((uint32_t)num32Notes  <<  8);
@@ -328,7 +328,7 @@ inline std::array<uint32_t, 4> mtDFlexMetronome(uint8_t group, uint8_t addrs, ui
                                                  uint8_t numClkpPriCli, uint8_t bAccP1,
                                                  uint8_t bAccP2, uint8_t bAccP3,
                                                  uint8_t numSubDivCli1, uint8_t numSubDivCli2){
-    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_METRONOME);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_METRONOME);
     umpMess[1] = ((uint32_t)numClkpPriCli << 24)
                + ((uint32_t)bAccP1        << 16)
                + ((uint32_t)bAccP2        <<  8)
@@ -340,7 +340,7 @@ inline std::array<uint32_t, 4> mtDFlexMetronome(uint8_t group, uint8_t addrs, ui
 
 inline std::array<uint32_t, 4> mtDFlexKeySig(uint8_t group, uint8_t addrs, uint8_t channel,
                                               uint8_t sharpFlats, uint8_t tonic){
-    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_KEYSIG);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_KEYSIG);
     umpMess[1] = ((uint32_t)sharpFlats << 24)
                + ((uint32_t)tonic      << 16);
     return umpMess;
@@ -357,7 +357,7 @@ inline std::array<uint32_t, 4> mtDFlexChord(uint8_t group, uint8_t addrs, uint8_
                                              uint8_t baType,
                                              uint8_t baAlt1Type, uint8_t baAlt1Deg,
                                              uint8_t baAlt2Type, uint8_t baAlt2Deg){
-    auto umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_CHORD);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_CHORD);
     umpMess[1] = (((uint32_t)chShrpFlt  & 0xF) << 28)
                + (((uint32_t)chTonic    & 0xF) << 24)
                + (((uint32_t)chType     & 0xFF) << 16)
@@ -382,7 +382,7 @@ inline std::array<uint32_t, 4> mtDFlexChord(uint8_t group, uint8_t addrs, uint8_
 inline std::array<uint32_t, 4> mtDFlexTextData(uint8_t group, uint8_t form, uint8_t addrs,
                                                 uint8_t channel, uint8_t statusBank,
                                                 uint8_t status, uint8_t* text, uint8_t textLen){
-    auto umpMess = mtDFlexData(group, form, addrs, channel, statusBank, status);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, form, addrs, channel, statusBank, status);
     uint8_t offset = 0;
     for(uint8_t i = 1; i <= 3; i++){
         for(int shift = 24; shift >= 0; shift -= 8){
