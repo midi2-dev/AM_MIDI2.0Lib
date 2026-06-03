@@ -269,7 +269,7 @@ public:
                         case 0xE0: //Pitch bend
                             out1 = ((0x04 << 4) + group) << 24;
                             out1 += (status + channel) << 16;
-                            uint8_t pb = (val2 << 7) + val1;
+                            uint32_t pb = (val2 << 7) + val1;
                             out2 += M2Utils::scaleUp(pb, 14, 32);
                             umpMess[writeIndex] = out1;
                             increaseWrite();

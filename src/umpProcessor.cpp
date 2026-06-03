@@ -40,6 +40,7 @@ void umpProcessor::processUMP(uint32_t UMP){
 
             if(mt == UMP_UTILITY && utilityMessage!= nullptr){ //32 bits Utility Messages
                 umpGeneric mess = umpGeneric();
+                mess.refpoint = refpoint;
                 mess.messageType = mt;
                 mess.status = (umpMess[0] >> 20) & 0xF;
                 mess.value = (umpMess[0] >> 16) & 0xFFFF;
@@ -47,6 +48,7 @@ void umpProcessor::processUMP(uint32_t UMP){
 		} else 
             if(mt == UMP_SYSTEM && systemMessage!= nullptr){ //32 bits System Real Time and System Common Messages (except System Exclusive)
                 umpGeneric mess = umpGeneric();
+                mess.refpoint = refpoint;
                 mess.messageType = mt;
                 mess.umpGroup = group;
                 mess.status =  umpMess[0] >> 16 & 0xFF;
@@ -61,6 +63,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         systemMessage(mess);
                         break;
                     default:
+                        mess.value = umpMess[0] & 0xFFFF;
                         systemMessage(mess);
                         break;
                 }
@@ -68,6 +71,7 @@ void umpProcessor::processUMP(uint32_t UMP){
 	    } else 
             if(mt == UMP_M1CVM && channelVoiceMessage != nullptr){ //32 Bits MIDI 1.0 Channel Voice Messages
                 umpCVM mess = umpCVM();
+                mess.refpoint = refpoint;
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.status = umpMess[0] >> 16 & 0xF0;
@@ -113,10 +117,11 @@ void umpProcessor::processUMP(uint32_t UMP){
         ){ //64bit Messages
             if(mt == UMP_SYSEX7 && sendOutSysex != nullptr){ //64 bits Data Messages (including System Exclusive)
                 umpData mess = umpData();
+                mess.refpoint = refpoint;
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.form = (umpMess[0] >> 20) & 0xF;
-                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 6LU);
+                mess.dataLength  = (uint8_t)std::min((uint8_t)(umpMess[0] >> 16) & 0xF, 6LU);
                 uint8_t sysex[6];
 
                 if(mess.dataLength > 0)sysex[0] =  (umpMess[0] >> 8) & 0x7F;
@@ -132,6 +137,7 @@ void umpProcessor::processUMP(uint32_t UMP){
 		} else 
             if(mt == UMP_M2CVM && channelVoiceMessage != nullptr){//64 bits MIDI 2.0 Channel Voice Messages
                 umpCVM mess = umpCVM();
+                mess.refpoint = refpoint;
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.status = (umpMess[0] >> 16) & 0xF0;
@@ -161,7 +167,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                     case CC: //CC
                         mess.index = val1;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case RPN: //RPN
@@ -171,7 +177,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.bank = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case PROGRAM_CHANGE: //Program Change Message
@@ -179,12 +185,12 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.flag1 = umpMess[0] & 1;
                         mess.bank = (umpMess[1] >> 8) & 0x7f;
                         mess.index = umpMess[1] & 0x7f;
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case PITCH_BEND: //PitchBend
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
 
                     case NRPN_PERNOTE: //Assignable Per-Note Controller 1
@@ -193,14 +199,14 @@ void umpProcessor::processUMP(uint32_t UMP){
                         mess.note = val1;
                         mess.index = val2;
                         mess.value = umpMess[1];
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
                     case PERNOTE_MANAGE: //Per-Note Management Message
 
                         mess.note = val1;
                         mess.flag1 =(bool)(val2 & 2);
                         mess.flag2 = (bool)(val2 & 1);
-                        if(channelVoiceMessage != nullptr) channelVoiceMessage(mess);
+                        channelVoiceMessage(mess);
                         break;
                     default:
                         if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
@@ -258,6 +264,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case MIDIENDPOINT_NAME_NOTIFICATION:
                 case MIDIENDPOINT_PRODID_NOTIFICATION: {
                         umpData mess = umpData();
+                        mess.refpoint = refpoint;
                         mess.messageType = mt;
                         mess.status = (uint8_t) status;
                         mess.form = umpMess[0] >> 24 & 0x3;
@@ -280,16 +287,16 @@ void umpProcessor::processUMP(uint32_t UMP){
                     break;
                 }
 
-                case MIDIENDPOINT_PROTOCOL_REQUEST: //JR Protocol Req
-                    if(midiEndpointJRProtocolReq != nullptr)
-                        midiEndpointJRProtocolReq((uint8_t) (umpMess[0] >> 8),
+                case MIDIENDPOINT_STREAMCONFIG_REQUEST: //JR Protocol Req
+                    if(midiEndpointStreamConfigReq != nullptr)
+                        midiEndpointStreamConfigReq((uint8_t) (umpMess[0] >> 8),
                                                    (umpMess[0] >> 1) & 1,
                                                    umpMess[0] & 1
                                                    );
                     break;
-                case MIDIENDPOINT_PROTOCOL_NOTIFICATION: //JR Protocol Req
-                    if(midiEndpointJRProtocolNotify != nullptr)
-                        midiEndpointJRProtocolNotify((uint8_t) (umpMess[0] >> 8),
+                case MIDIENDPOINT_STREAMCONFIG_NOTIFICATION: //JR Protocol Req
+                    if(midiEndpointStreamConfigNotify != nullptr)
+                        midiEndpointStreamConfigNotify((uint8_t) (umpMess[0] >> 8),
                                                      (umpMess[0] >> 1) & 1,
                                                      umpMess[0] & 1
                                                     );
@@ -322,6 +329,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                 case FUNCTIONBLOCK_NAME_NOTIFICATION:{
                     uint8_t fbIdx = (umpMess[0] >> 8) & 0x7F;
                     umpData mess = umpData();
+                    mess.refpoint = refpoint;
                     mess.messageType = mt;
                     mess.status = (uint8_t) status;
                     mess.form = umpMess[0] >> 24 & 0x3;
@@ -362,11 +370,12 @@ void umpProcessor::processUMP(uint32_t UMP){
 
             if(status <= 3){
                 umpData mess = umpData();
+                mess.refpoint = refpoint;
                 mess.umpGroup = group;
                 mess.messageType = mt;
                 mess.streamId  = (umpMess[0] >> 8) & 0xFF;
                 mess.form = status;
-                mess.dataLength  = (uint8_t)std::min((umpMess[0] >> 16) & 0xF, 13LU);
+                mess.dataLength  = (uint8_t)std::min((uint8_t)(umpMess[0] >> 16) & 0xF, 13LU);
                 uint8_t sysex[13];
 
                 if(mess.dataLength >= 1)sysex[0] =  umpMess[0] & 0xFF;
@@ -386,52 +395,78 @@ void umpProcessor::processUMP(uint32_t UMP){
                 mess.data = sysex;
                 sendOutSysex(mess);
 
-            }else if(status == 8 || status ==9){
-                //Beginning of Mixed Data Set
-                //uint8_t mdsId  = (umpMess[0] >> 16) & 0xF;
+            }else if(status == 8){ //MDS Header
 
-                if(status == 8){
-                    /*uint16_t numValidBytes  = umpMess[0] & 0xFFFF;
-                    uint16_t numChunk  = (umpMess[1] >> 16) & 0xFFFF;
-                    uint16_t numOfChunk  = umpMess[1] & 0xFFFF;
-                    uint16_t manuId  = (umpMess[2] >> 16) & 0xFFFF;
-                    uint16_t deviceId  = umpMess[2] & 0xFFFF;
-                    uint16_t subId1  = (umpMess[3] >> 16) & 0xFFFF;
-                    uint16_t subId2  = umpMess[3] & 0xFFFF;*/
-                }else{
-                    // MDS bytes?
-                }
+                if(mds5Header)mds5Header(
+                    group,
+                    (umpMess[1] >> 16) & 0xF,
+                    umpMess[0] & 0xFFFF,
+                    (umpMess[1] >> 16) & 0xFFFF,
+                    umpMess[1] & 0xFFFF,
+                    (umpMess[2] >> 16) & 0xFFFF,
+                    umpMess[2] & 0xFFFF,
+                    (umpMess[3] >> 16) & 0xFFFF,
+                    umpMess[3] & 0xFFFF
+                    );
+            }else if(status == 9){ //MDS Payload
+                uint8_t sysex[14];
+                sysex[0] =  (umpMess[0] >> 8) & 0xFF;
+                sysex[1] =  umpMess[0] & 0xFF;
+                sysex[2] =  (umpMess[1] >> 24) & 0xFF;
+                sysex[3] =  (umpMess[1] >> 16) & 0xFF;
+                sysex[4] =  (umpMess[1] >> 8) & 0xFF;
+                sysex[5] =  umpMess[1] & 0xFF;
+                sysex[6] =  (umpMess[2] >> 24) & 0xFF;
+                sysex[7] =  (umpMess[2] >> 16) & 0xFF;
+                sysex[8] =  (umpMess[2] >> 8) & 0xFF;
+                sysex[9] =  umpMess[2] & 0xFF;
+                sysex[10] =  (umpMess[3] >> 24) & 0xFF;
+                sysex[11] =  (umpMess[3] >> 16) & 0xFF;
+                sysex[12] =  (umpMess[3] >> 8) & 0xFF;
+                sysex[13] =  umpMess[3] & 0xFF;
+                if(mds5Header)mds5Payload(
+                    group,
+                    (umpMess[1] >> 16) & 0xF,
+                    sysex, 14
+                    );
+            }else {
                 if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
-
-
             }
 
         }
         else
         if(mt == UMP_FLEX_DATA){ //128 bits Data Messages (including System Exclusive 8)
-            uint8_t statusBank = (umpMess[0] >> 8) & 0xFF;
-            uint8_t status = umpMess[0] & 0xFF;
-            uint8_t channel = (umpMess[0] >> 16) & 0xF;
-            uint8_t addrs = (umpMess[0] >> 18) & 3;
-            uint8_t form = (umpMess[0] >> 20) & 3;
+            umpFlexData mess = umpFlexData();
+            mess.refpoint = refpoint;
+            mess.umpGroup = group;
+            mess.channel = (umpMess[0] >> 16) & 0xF;
+            mess.messageType = mt;
+            mess.status = umpMess[0] & 0xFF;
+            mess.statusBank = (umpMess[0] >> 8) & 0xFF;
+            mess.form = (umpMess[0] >> 22) & 3;
+            mess.addrs = (umpMess[0] >> 20) & 3;
+            mess.data = umpMess;
+
             //SysEx 8
-            switch (statusBank){
+            switch (mess.statusBank){
                 case FLEXDATA_COMMON:{ //Common/Configuration for MIDI File, Project, and Track
-                    switch (status){
+                    switch (mess.status){
                         case FLEXDATA_COMMON_TEMPO: { //Set Tempo Message
-                            if(flexTempo != nullptr) flexTempo(group, umpMess[1]);
+                            if(flexTempo != nullptr) flexTempo(mess, umpMess[1]);
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_TIMESIG: { //Set Time Signature Message
-                            if(flexTimeSig != nullptr) flexTimeSig(group,
+                            if(flexTimeSig != nullptr) flexTimeSig(mess,
                                                                  (umpMess[1] >> 24) & 0xFF,
                                                                  (umpMess[1] >> 16) & 0xFF,
                                                                  (umpMess[1] >> 8) & 0xFF
                                    );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_METRONOME: { //Set Metronome Message
-                            if(flexMetronome != nullptr) flexMetronome(group,
+                            if(flexMetronome != nullptr) flexMetronome(mess,
                                                                    (umpMess[1] >> 24) & 0xFF,
                                                                    (umpMess[1] >> 16) & 0xFF,
                                                                    (umpMess[1] >> 8) & 0xFF,
@@ -439,17 +474,19 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                    (umpMess[2] >> 24) & 0xFF,
                                                                    (umpMess[2] >> 16) & 0xFF
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_KEYSIG: { //Set Key Signature Message
-                            if(flexKeySig != nullptr) flexKeySig(group, addrs, channel,
+                            if(flexKeySig != nullptr) flexKeySig(mess,
                                                                    (umpMess[1] >> 24) & 0xFF,
                                                                    (umpMess[1] >> 16) & 0xFF
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         case FLEXDATA_COMMON_CHORD: { //Set Chord Message
-                            if(flexChord != nullptr) flexChord(group, addrs, channel,
+                            if(flexChord != nullptr) flexChord(mess,
                                                                        (umpMess[1] >> 28) & 0xF, //chShrpFlt
                                                                        (umpMess[1] >> 24) & 0xF, //chTonic
                                                                        (umpMess[1] >> 16) & 0xFF, //chType
@@ -467,42 +504,42 @@ void umpProcessor::processUMP(uint32_t UMP){
                                                                (umpMess[3] >> 12) & 0xF,//baAlt1Type
                                                                (umpMess[3] >> 8) & 0xF,//baAlt1Deg
                                                                (umpMess[3] >> 4) & 0xF,//baAlt2Type
-                                                               umpMess[1] & 0xF//baAlt2Deg
+                                                               umpMess[3] & 0xF//baAlt2Deg
                                 );
+                            else if (flexData != nullptr) flexData(mess);
                             break;
                         }
                         default:
-                            if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+                            if(flexData != nullptr) {
+                                flexData(mess);
+                            }
                             break;
                     }
                     break;
                 }
                 case FLEXDATA_PERFORMANCE: //Performance Events
                 case FLEXDATA_LYRIC:{ //Lyric Events
-                        umpData mess = umpData();
-                        mess.umpGroup = group;
-                        mess.messageType = mt;
-                        mess.status = status;
-                        mess.form = form;
-                        mess.dataLength  = 0;
+                        uint8_t dataLength  = 0;
                         uint8_t text[12];
 
                         for(uint8_t i = 1; i<=3; i++){
                             for(int j = 24; j>=0; j-=8){
                                 uint8_t c = (umpMess[i] >> j) & 0xFF;
                                 if(c){
-                                    text[mess.dataLength++]=c;
+                                    text[dataLength++]=c;
                                 }
                             }
                         }
-                        mess.data = text;
-                        if(statusBank== FLEXDATA_LYRIC && flexLyric != nullptr) flexLyric(mess, addrs, channel);
-                        if(statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(mess, addrs, channel);
-                    break;
 
+                        if(mess.statusBank== FLEXDATA_LYRIC && flexLyric != nullptr) flexLyric(mess, text,dataLength);
+                        else if(mess.statusBank== FLEXDATA_PERFORMANCE && flexPerformance != nullptr) flexPerformance(mess,text,dataLength);
+                        else if (flexData != nullptr) flexData(mess);
+                    break;
                 }
                 default:
-                    if(unknownUMPMessage)unknownUMPMessage(umpMess, 4);
+                    if(flexData != nullptr) {
+                        flexData(mess);
+                    }
                     break;
             }
         }else{
@@ -513,9 +550,3 @@ void umpProcessor::processUMP(uint32_t UMP){
 		messPos++;
 	}
 }
-
-
-
-
-
-

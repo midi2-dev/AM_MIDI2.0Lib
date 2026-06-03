@@ -11,8 +11,8 @@ dirs:
 	mkdir -p build
 
 tests:
-	g++ $(OPTS) -I . -I ./include -o tests $(SOURCES) tests.cpp
-	./tests
+	g++ $(OPTS) -I . -I ./include -o test $(SOURCES) tests/tests.cpp
+	./test
 
 build/%.o: src/%.cpp
 	g++ $(OPTS) -I . -I ./include \
@@ -23,4 +23,4 @@ midi2: $(OBJECTS)
 
 clean:
 	rm -rf build
-	rm tests
+	rm test

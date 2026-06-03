@@ -77,6 +77,7 @@ class bytestreamToUMP{
 
 	public:
 		uint8_t defaultGroup = 0;
+		bool enableRunningStatus = true;
 		
 		bytestreamToUMP(){
 			clearAll();
@@ -114,6 +115,24 @@ class bytestreamToUMP{
 			}
 			return mess;
 		}
+
+		void dumpSysex7State(bool reset) {
+			if (sysex7State > 0 && sysex7Pos > 0) {
+				//Then dump current bytes
+				umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
+				umpMess[writeIndex] +=  (sysex7State + 0L) << 20;
+				umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16);
+				umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
+				increaseWrite();
+				umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5] + 0L;
+				increaseWrite();
+				M2Utils::clear(sysex, 0, sizeof(sysex));
+				if (sysex7State==1)sysex7State=2;
+			}
+
+			if (reset)sysex7State = 1;
+			sysex7Pos = 0;
+		}
 		
 		void bytestreamParse(uint8_t midi1Byte){
 			if (midi1Byte == TUNEREQUEST
@@ -132,8 +151,7 @@ class bytestreamToUMP{
 				d0 = midi1Byte;
 				d1 = 255;
 				if (midi1Byte == SYSEX_START){
-					sysex7State = 1;
-					sysex7Pos = 0;
+					dumpSysex7State(true);
 				}
                 else if (midi1Byte == SYSEX_STOP){
                     umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
@@ -162,8 +180,11 @@ class bytestreamToUMP{
                 sysex[sysex7Pos++] = midi1Byte;
 			}
             else if (d1 != 255) { // Second byte
-                    bsToUMP(d0, d1, midi1Byte);
-                    d1 = 255;
+                bsToUMP(d0, d1, midi1Byte);
+                d1 = 255;
+            	if (!(enableRunningStatus && d0 < SYSEX_START)){
+            		d0 = 0;
+            	}
             }
             else if (d0){ // status byte set
                 if (
@@ -173,9 +194,11 @@ class bytestreamToUMP{
                         || d0 == SONG_SELECT
                         ) {
                     bsToUMP(d0, midi1Byte, 0);
+                	if (!(enableRunningStatus && d0 < SYSEX_START)){
+                		d0 = 0;
+                	}
                 } else if (d0 == 0xF4 || d0 == 0xF5 || d0 == 0xFD || d0==0xF9) {
                     resetBuffer();
-
                 } else if (d0 < SYSEX_START || d0 == SPP) { // First data byte
                     d1=midi1Byte;
                 }

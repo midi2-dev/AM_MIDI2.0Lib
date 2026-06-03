@@ -21,8 +21,12 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#pragma once
+
+
 #include <cstdint>
 #include <tuple>
+#include <cstdio>
 
 
 #define NOTE_OFF 0x80
@@ -74,8 +78,8 @@
 #define MIDIENDPOINT_DEVICEINFO_NOTIFICATION 0x002
 #define MIDIENDPOINT_NAME_NOTIFICATION 0x003
 #define MIDIENDPOINT_PRODID_NOTIFICATION 0x004
-#define MIDIENDPOINT_PROTOCOL_REQUEST 0x005
-#define MIDIENDPOINT_PROTOCOL_NOTIFICATION 0x006
+#define MIDIENDPOINT_STREAMCONFIG_REQUEST 0x005
+#define MIDIENDPOINT_STREAMCONFIG_NOTIFICATION 0x006
 #define STARTOFSEQ 0x020
 #define ENDOFFILE 0x021
 
@@ -228,6 +232,35 @@ namespace M2Utils {
   // simple bit shift
   uint8_t scaleBits = (srcBits - dstBits);
   return srcVal >> scaleBits;
+ }
+
+ inline void hirezRepresentation(char * outputString, uint32_t srcVal, uint8_t srcBits, uint8_t decimalPlaces) {
+  if (srcVal==0) {
+   sprintf(outputString,"MIN");
+   return;
+  }
+
+  if (srcVal == (1UL << (srcBits-1))+0L) {
+   sprintf(outputString,"MID");
+   return;
+  }
+
+  uint32_t maxval = 0xFFFFFFFF;
+  if (srcBits!=32) {
+   maxval = (1<< (srcBits))-1;
+  }
+
+  if (srcVal==maxval) {
+   sprintf(outputString,"MAX");
+   return;
+  }
+
+  uint8_t fractionalBits = srcBits - 7;
+  uint32_t fractionalValue = srcVal - (srcVal>> fractionalBits <<fractionalBits );
+  float hiRezValue = (float)(srcVal >> fractionalBits) + ( (float)fractionalValue / (float)(1<<fractionalBits));
+
+  sprintf(outputString, "%.*f", decimalPlaces, hiRezValue );
+
  }
 
 }

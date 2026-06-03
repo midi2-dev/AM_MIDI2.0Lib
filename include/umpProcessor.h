@@ -39,6 +39,7 @@ struct umpCVM{
     uint8_t bank;
     bool flag1;
     bool flag2;
+    void * refpoint;
 };
 
 struct umpGeneric{
@@ -47,6 +48,7 @@ struct umpGeneric{
     uint8_t messageType;
     uint8_t status;
     uint16_t value;
+    void * refpoint;
 };
 
 struct umpData{
@@ -58,6 +60,20 @@ struct umpData{
     uint8_t form;
     uint8_t* data;
     uint8_t dataLength;
+    void * refpoint;
+};
+
+struct umpFlexData{
+    umpFlexData() : umpGroup(255), status(0),  form(0) {}
+    uint8_t umpGroup;
+    uint8_t channel;
+    uint8_t messageType;
+    uint8_t status;
+    uint8_t statusBank;
+    uint8_t form;
+    uint8_t addrs;
+    uint32_t* data;
+    void * refpoint;
 };
 
 class umpProcessor{
@@ -80,17 +96,19 @@ class umpProcessor{
     std::function<void(struct umpData mess)> sendOutSysex = nullptr;
 
     // Message Type 0xD  callbacks
-    std::function<void(uint8_t group, uint32_t num10nsPQN)> flexTempo = nullptr;
-    std::function<void(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> flexTimeSig = nullptr;
-    std::function<void(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
+    std::function<void(struct umpFlexData mess, uint32_t num10nsPQN)> flexTempo = nullptr;
+    std::function<void(struct umpFlexData mess, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> flexTimeSig = nullptr;
+    std::function<void(struct umpFlexData mess, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
             uint8_t numSubDivCli1, uint8_t numSubDivCli2)> flexMetronome = nullptr;
-    std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic)> flexKeySig = nullptr;
-    std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
+    std::function<void(struct umpFlexData mess, uint8_t sharpFlats, uint8_t tonic)> flexKeySig = nullptr;
+    std::function<void(struct umpFlexData mess, uint8_t chShrpFlt, uint8_t chTonic,
             uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
             uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
             uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)> flexChord = nullptr;
-    std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> flexPerformance = nullptr;
-    std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> flexLyric = nullptr;
+    std::function<void(struct umpFlexData mess, uint8_t * data, uint8_t datalength)> flexPerformance = nullptr;
+    std::function<void(struct umpFlexData mess, uint8_t * data, uint8_t datalength)> flexLyric = nullptr;
+
+    std::function<void(struct umpFlexData mess)>  flexData = nullptr;
 
     // Message Type 0xF  callbacks
     std::function<void(uint8_t majVer, uint8_t minVer, uint8_t filter)> midiEndpoint = nullptr;
@@ -102,8 +120,8 @@ class umpProcessor{
     std::function<void(struct umpData mess)> midiEndpointName = nullptr;
     std::function<void(struct umpData mess)> midiEndpointProdId = nullptr;
 
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolReq = nullptr;
-    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointJRProtocolNotify = nullptr;
+    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointStreamConfigReq = nullptr;
+    std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> midiEndpointStreamConfigNotify = nullptr;
 
     std::function<void(uint8_t fbIdx, bool active,
             uint8_t direction, bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
@@ -112,10 +130,18 @@ class umpProcessor{
     std::function<void()> startOfSeq = nullptr;
     std::function<void()> endOfFile = nullptr;
 
+    //MT5
+    std::function<void(uint8_t group, uint8_t mds, uint16_t numberOfBytes, uint16_t totalChunks,
+        uint16_t chunkNumber, uint16_t manuId, uint16_t deviceId, uint16_t subId1,
+        uint16_t subId2)> mds5Header = nullptr;
+    std::function<void(uint8_t group, uint8_t mds, uint8_t * data, uint8_t dataLength)> mds5Payload = nullptr;
+
     //Handle new Messages
     std::function<void(uint32_t * ump, uint8_t length)> unknownUMPMessage = nullptr;
     
   public:
+
+    void * refpoint;
 
 	void clearUMP();
     void processUMP(uint32_t UMP);
@@ -127,20 +153,22 @@ class umpProcessor{
     inline void setSysEx(std::function<void(struct umpData mess)> fptr ){sendOutSysex = fptr; }
 
     //---------- Flex Data
-    inline void setFlexTempo(std::function<void(uint8_t group, uint32_t num10nsPQN)> fptr ){ flexTempo = fptr; }
-    inline void setFlexTimeSig(std::function<void(uint8_t group, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> fptr){
+    inline void setFlexTempo(std::function<void(struct umpFlexData mess, uint32_t num10nsPQN)> fptr ){ flexTempo = fptr; }
+    inline void setFlexTimeSig(std::function<void(struct umpFlexData mess, uint8_t numerator, uint8_t denominator, uint8_t num32Notes)> fptr){
         flexTimeSig = fptr; }
-    inline void setFlexMetronome(std::function<void(uint8_t group, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
+    inline void setFlexMetronome(std::function<void(struct umpFlexData mess, uint8_t numClkpPriCli, uint8_t bAccP1, uint8_t bAccP2, uint8_t bAccP3,
                           uint8_t numSubDivCli1, uint8_t numSubDivCli2)> fptr){ flexMetronome = fptr; }
-    inline void setFlexKeySig(std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t sharpFlats, uint8_t tonic)> fptr){
+    inline void setFlexKeySig(std::function<void(struct umpFlexData mess, uint8_t sharpFlats, uint8_t tonic)> fptr){
         flexKeySig = fptr; }
-    inline void setFlexChord(std::function<void(uint8_t group, uint8_t addrs, uint8_t channel, uint8_t chShrpFlt, uint8_t chTonic,
+    inline void setFlexChord(std::function<void(struct umpFlexData mess, uint8_t chShrpFlt, uint8_t chTonic,
                       uint8_t chType, uint8_t chAlt1Type, uint8_t chAlt1Deg, uint8_t chAlt2Type, uint8_t chAlt2Deg,
                       uint8_t chAlt3Type, uint8_t chAlt3Deg, uint8_t chAlt4Type, uint8_t chAlt4Deg, uint8_t baShrpFlt, uint8_t baTonic,
                       uint8_t baType, uint8_t baAlt1Type, uint8_t baAlt1Deg, uint8_t baAlt2Type, uint8_t baAlt2Deg)> fptr){
         flexChord = fptr; }
-    inline void setFlexPerformance(std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> fptr){ flexPerformance = fptr; }
-    inline void setFlexLyric(std::function<void(struct umpData mess, uint8_t addrs, uint8_t channel)> fptr){ flexLyric = fptr; }
+    inline void setFlexPerformance(std::function<void(struct umpFlexData mess, uint8_t * data, uint8_t datalength)> fptr){ flexPerformance = fptr; }
+    inline void setFlexLyric(std::function<void(struct umpFlexData mess, uint8_t * data, uint8_t datalength)> fptr){ flexLyric = fptr; }
+
+    inline void setFlexDataGeneric(std::function<void(struct umpFlexData mess)> fptr){ flexData = fptr; }
 
     //---------- UMP Stream
 
@@ -156,9 +184,9 @@ class umpProcessor{
     inline void setMidiEndpointDeviceInfoNotify(std::function<void(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
             std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version)> fptr){
         midiEndpointDeviceInfo = fptr; }
-    inline void setJRProtocolRequest(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){ midiEndpointJRProtocolReq = fptr;}
-    inline void setJRProtocolNotify(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){
-        midiEndpointJRProtocolNotify = fptr;}
+    inline void setStreamConfigRequest(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){ midiEndpointStreamConfigReq = fptr;}
+    inline void setStreamConfigNotify(std::function<void(uint8_t protocol, bool jrrx, bool jrtx)> fptr){
+        midiEndpointStreamConfigNotify = fptr;}
 
     inline void setFunctionBlock(std::function<void(uint8_t filter, uint8_t fbIdx)> fptr){ functionBlock = fptr; }
     inline void setFunctionBlockNotify(std::function<void(uint8_t fbIdx, bool active,
@@ -168,6 +196,15 @@ class umpProcessor{
     inline void setFunctionBlockNameNotify(std::function<void(struct umpData mess, uint8_t fbIdx)> fptr){functionBlockName = fptr; }
     inline void setStartOfSeq(std::function<void()> fptr){startOfSeq = fptr; }
     inline void setEndOfFile(std::function<void()> fptr){endOfFile = fptr; }
+
+
+    //MT5
+   inline void setMDSHeaderNotify(std::function<void(uint8_t group, uint8_t mds, uint16_t numberOfBytes,
+        uint16_t totalChunks, uint16_t chunkNumber, uint16_t manuId, uint16_t deviceId, uint16_t subId1,
+        uint16_t subId2)> fptr){ mds5Header = fptr;}
+    inline void setMDSPayloadNotify(std::function<void(uint8_t group, uint8_t mds, uint8_t * data,
+        uint8_t dataLength)>fptr){  mds5Payload = fptr;}
+
 
     //Unknown UMP
     inline void setUnknownUMP(std::function<void(uint32_t * ump, uint8_t length)> fptr){unknownUMPMessage = fptr; }
