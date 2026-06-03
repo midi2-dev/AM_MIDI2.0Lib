@@ -27,14 +27,14 @@
 namespace UMPMessage {
 
     inline uint32_t m1Create(uint8_t group, uint8_t status, uint8_t val1, uint8_t val2){
-        return (((UMP_SYSTEM << 4) + (group & 0xF) + 0L) << 24)
+        return (((MIDI1_MSGS::UMP_SYSTEM << 4) + (group & 0xF) + 0L) << 24)
         + (((status & 0xFF) + 0L) << 16)
         + (((val1  & 0x7F) + 0L) << 8) + (val2  & 0x7F);
     }
 
     inline uint32_t mt2Create(uint8_t group,  uint8_t status, uint8_t channel, uint8_t val1, uint8_t val2){
         uint32_t message;
-        message = ((UMP_M1CVM << 4) + (group & 0xF) + 0L) << 24;
+        message = ((MIDI1_MSGS::UMP_M1CVM << 4) + (group & 0xF) + 0L) << 24;
         message +=  ((status & 0xF0) + (channel & 0xF)  + 0L) << 16;
         message +=  ((int)val1 & 0x7F)  << 8;
         message += val2  & 0x7F;
@@ -43,7 +43,7 @@ namespace UMPMessage {
 
     inline uint32_t mt4CreateFirstWord(uint8_t group,  uint8_t status, uint8_t channel, uint8_t val1, uint8_t val2){
         uint32_t message;
-        message = ((UMP_M2CVM << 4) + (group & 0xF) + 0L) << 24;
+        message = ((MIDI1_MSGS::UMP_M2CVM << 4) + (group & 0xF) + 0L) << 24;
         message +=  ((status & 0xF0) + (channel & 0xF)  + 0L) << 16;
         message +=  (int)val1  << 8;
         message += val2;
@@ -55,83 +55,83 @@ namespace UMPMessage {
     }
 
     inline uint32_t mt0JRClock(uint16_t clockTime){
-        return  ((UTILITY_JRCLOCK + 0L) << 20) + clockTime;
+        return  ((MIDI1_MSGS::UTILITY_JRCLOCK + 0L) << 20) + clockTime;
     }
 
     inline uint32_t mt0JRTimeStamp(uint16_t timestamp){
-        return ((UTILITY_JRTS + 0L) << 20) + timestamp;
+        return ((MIDI1_MSGS::UTILITY_JRTS + 0L) << 20) + timestamp;
     }
 
     inline uint32_t mt0DeltaClockTick(uint16_t ticksPerQtrNote){
-        return ((UTILITY_DELTACLOCKTICK + 0L) << 20) + ticksPerQtrNote;
+        return ((MIDI1_MSGS::UTILITY_DELTACLOCKTICK + 0L) << 20) + ticksPerQtrNote;
     }
 
     inline uint32_t mt0DeltaTicksSinceLast(uint16_t noTicksSince){
-        return ((UTILITY_DELTACLOCKSINCE + 0L) << 20) + noTicksSince;
+        return ((MIDI1_MSGS::UTILITY_DELTACLOCKSINCE + 0L) << 20) + noTicksSince;
     }
 
     inline uint32_t mt1MTC(uint8_t group, uint8_t timeCode){
-        return m1Create(group, TIMING_CODE, timeCode, 0);
+        return m1Create(group, MIDI1_MSGS::TIMING_CODE, timeCode, 0);
     }
 
     inline uint32_t mt1SPP(uint8_t group, uint16_t position){
-        return m1Create(group, SPP, position & 0x7F , (position >> 7) & 0x7F );
+        return m1Create(group, MIDI1_MSGS::SPP, position & 0x7F , (position >> 7) & 0x7F );
     }
 
     inline uint32_t mt1SongSelect(uint8_t group, uint8_t song){
-        return m1Create(group, SONG_SELECT, song, 0 );
+        return m1Create(group, MIDI1_MSGS::SONG_SELECT, song, 0 );
     }
 
     inline uint32_t mt1TuneRequest(uint8_t group){
-        return m1Create(group, TUNEREQUEST, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::TUNEREQUEST, 0, 0 );
     }
 
     inline uint32_t mt1TimingClock(uint8_t group){
-        return m1Create(group, TIMINGCLOCK, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::TIMINGCLOCK, 0, 0 );
     }
 
     inline uint32_t mt1SeqStart(uint8_t group){
-        return m1Create(group, SEQSTART, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::SEQSTART, 0, 0 );
     }
 
     inline uint32_t mt1SeqCont(uint8_t group){
-        return m1Create(group, SEQCONT, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::SEQCONT, 0, 0 );
     }
 
     inline uint32_t mt1SeqStop(uint8_t group){
-        return m1Create(group, SEQSTOP, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::SEQSTOP, 0, 0 );
     }
 
     inline uint32_t mt1ActiveSense(uint8_t group){
-        return m1Create(group, ACTIVESENSE, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::ACTIVESENSE, 0, 0 );
     }
 
     inline uint32_t mt1SystemReset(uint8_t group){
-        return m1Create(group, SYSTEMRESET, 0, 0 );
+        return m1Create(group, MIDI1_MSGS::SYSTEMRESET, 0, 0 );
     }
 
 
     inline uint32_t mt2NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
-        return mt2Create(group,  NOTE_ON, channel, noteNumber , velocity );
+        return mt2Create(group,  MIDI1_MSGS::NOTE_ON, channel, noteNumber , velocity );
     }
     inline uint32_t mt2NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t velocity){
-        return mt2Create(group,  NOTE_OFF, channel, noteNumber, velocity );
+        return mt2Create(group,  MIDI1_MSGS::NOTE_OFF, channel, noteNumber, velocity );
     }
 
     inline uint32_t mt2PolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint8_t pressure){
-        return mt2Create(group,  KEY_PRESSURE, channel , noteNumber, pressure );
+        return mt2Create(group,  MIDI1_MSGS::KEY_PRESSURE, channel , noteNumber, pressure );
     }
     inline uint32_t mt2CC(uint8_t group, uint8_t channel, uint8_t index, uint8_t value){
-        return mt2Create(group,  CC, channel, index , value );
+        return mt2Create(group,  MIDI1_MSGS::CC, channel, index , value );
     }
     inline uint32_t mt2ProgramChange(uint8_t group, uint8_t channel, uint8_t program){
-        return mt2Create(group,  PROGRAM_CHANGE, channel, program, 0);
+        return mt2Create(group,  MIDI1_MSGS::PROGRAM_CHANGE, channel, program, 0);
     }
     inline uint32_t mt2ChannelPressure(uint8_t group, uint8_t channel, uint8_t pressure){
-        return mt2Create(group,  CHANNEL_PRESSURE, channel, pressure, 0);
+        return mt2Create(group,  MIDI1_MSGS::CHANNEL_PRESSURE, channel, pressure, 0);
     }
     inline uint32_t mt2PitchBend(uint8_t group, uint8_t channel, uint16_t value){
-        return mt2Create(group,  PITCH_BEND, channel, value & 0x7F, (value >> 7) & 0x7F);
+        return mt2Create(group,  MIDI1_MSGS::PITCH_BEND, channel, value & 0x7F, (value >> 7) & 0x7F);
     }
 
     inline std::array<uint32_t, 2> mt3Sysex7(uint8_t group, uint8_t status, uint8_t numBytes, std::array<uint8_t, 6> sx){
@@ -152,7 +152,7 @@ namespace UMPMessage {
 
     inline std::array<uint32_t, 2> mt4NoteOn(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
         std::array<uint32_t, 2> umpMess  = {0,0};
-	    umpMess[0] = mt4CreateFirstWord(group,  NOTE_ON, channel, noteNumber, attributeType);
+	    umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::NOTE_ON, channel, noteNumber, attributeType);
 	    umpMess[1] = velocity << 16;
 	    umpMess[1] += attributeData;
 	    return umpMess;
@@ -160,7 +160,7 @@ namespace UMPMessage {
 
     inline std::array<uint32_t, 2> mt4NoteOff(uint8_t group, uint8_t channel, uint8_t noteNumber, uint16_t velocity, uint8_t attributeType, uint16_t attributeData){
         std::array<uint32_t, 2> umpMess  = {0,0};
-	    umpMess[0] = mt4CreateFirstWord(group,  NOTE_OFF, channel, noteNumber, attributeType);
+	    umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::NOTE_OFF, channel, noteNumber, attributeType);
 	    umpMess[1] = velocity << 16;
 	    umpMess[1] += attributeData;
 	    return umpMess;
@@ -168,35 +168,35 @@ namespace UMPMessage {
 
 inline std::array<uint32_t, 2> mt4CPolyPressure(uint8_t group, uint8_t channel, uint8_t noteNumber, uint32_t pressure){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  KEY_PRESSURE, channel, noteNumber, 0);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::KEY_PRESSURE, channel, noteNumber, 0);
 	umpMess[1] = pressure;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4PitchBend(uint8_t group, uint8_t channel, uint32_t pitch){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  PITCH_BEND, channel, 0, 0);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::PITCH_BEND, channel, 0, 0);
 	umpMess[1] = pitch;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4CC(uint8_t group, uint8_t channel, uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  CC , channel, index, 0);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::CC , channel, index, 0);
 	umpMess[1] = value;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4RPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};;
-	umpMess[0] = mt4CreateFirstWord(group,  RPN , channel, bank, index);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::RPN , channel, bank, index);
 	umpMess[1] = value;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4NRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, uint32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  NRPN , channel, bank, index);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::NRPN , channel, bank, index);
 	umpMess[1] = value;
 	return umpMess;
 }
@@ -204,28 +204,28 @@ inline std::array<uint32_t, 2> mt4NRPN(uint8_t group, uint8_t channel,uint8_t ba
 
 inline std::array<uint32_t, 2> mt4RelativeRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  RPN_RELATIVE , channel, bank, index);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::RPN_RELATIVE , channel, bank, index);
 	umpMess[1] = (uint32_t)value;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4RelativeNRPN(uint8_t group, uint8_t channel,uint8_t bank,  uint8_t index, int32_t value){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  NRPN_RELATIVE , channel, bank, index);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::NRPN_RELATIVE , channel, bank, index);
 	umpMess[1] = (uint32_t)value;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4ChannelPressure(uint8_t group, uint8_t channel,uint32_t pressure){
     std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  CHANNEL_PRESSURE, channel, 0, 0);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::CHANNEL_PRESSURE, channel, 0, 0);
 	umpMess[1] = pressure;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, uint8_t program, bool bankValid, uint8_t bank, uint8_t index){
 	std::array<uint32_t, 2> umpMess  = {0,0};
-	umpMess[0] = mt4CreateFirstWord(group,  PROGRAM_CHANGE, channel, 0, bankValid ? 1 : 0);
+	umpMess[0] = mt4CreateFirstWord(group,  MIDI1_MSGS::PROGRAM_CHANGE, channel, 0, bankValid ? 1 : 0);
 	umpMess[1] = ((uint32_t) program << 24) + (bankValid ? ((uint32_t) bank << 8) + index : 0);
 	return umpMess;
 }
@@ -234,7 +234,7 @@ inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, 
     inline std::array<uint32_t, 2> mt4PerNotePitchBend(uint8_t group, uint8_t channel,
                                                         uint8_t noteNumber, uint32_t pitch){
         std::array<uint32_t, 2> umpMess = {0,0};
-        umpMess[0] = mt4CreateFirstWord(group, PITCH_BEND_PERNOTE, channel, noteNumber, 0);
+        umpMess[0] = mt4CreateFirstWord(group, MIDI1_MSGS::PITCH_BEND_PERNOTE, channel, noteNumber, 0);
         umpMess[1] = pitch;
         return umpMess;
     }
@@ -242,7 +242,7 @@ inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, 
     inline std::array<uint32_t, 2> mt4PerNoteCC(uint8_t group, uint8_t channel,
                                                  uint8_t noteNumber, uint8_t index, uint32_t value){
         std::array<uint32_t, 2> umpMess = {0,0};
-        umpMess[0] = mt4CreateFirstWord(group, NRPN_PERNOTE, channel, noteNumber, index);
+        umpMess[0] = mt4CreateFirstWord(group, MIDI1_MSGS::NRPN_PERNOTE, channel, noteNumber, index);
         umpMess[1] = value;
         return umpMess;
     }
@@ -250,7 +250,7 @@ inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, 
     inline std::array<uint32_t, 2> mt4PerNoteRPN(uint8_t group, uint8_t channel,
                                                   uint8_t noteNumber, uint8_t index, uint32_t value){
         std::array<uint32_t, 2> umpMess = {0,0};
-        umpMess[0] = mt4CreateFirstWord(group, RPN_PERNOTE, channel, noteNumber, index);
+        umpMess[0] = mt4CreateFirstWord(group, MIDI1_MSGS::RPN_PERNOTE, channel, noteNumber, index);
         umpMess[1] = value;
         return umpMess;
     }
@@ -258,7 +258,7 @@ inline std::array<uint32_t, 2> mt4ProgramChange(uint8_t group, uint8_t channel, 
     inline std::array<uint32_t, 2> mt4PerNoteManage(uint8_t group, uint8_t channel,
                                                      uint8_t noteNumber, uint8_t optionFlags){
         std::array<uint32_t, 2> umpMess = {0,0};
-        umpMess[0] = mt4CreateFirstWord(group, PERNOTE_MANAGE, channel, noteNumber, optionFlags);
+        umpMess[0] = mt4CreateFirstWord(group, MIDI1_MSGS::PERNOTE_MANAGE, channel, noteNumber, optionFlags);
         umpMess[1] = 0;
         return umpMess;
     }
@@ -297,7 +297,7 @@ inline std::array<uint32_t, 4> mt5MDSPayload(uint8_t group, uint8_t mds, uint8_t
     inline std::array<uint32_t, 4> mtDFlexData(uint8_t group, uint8_t form, uint8_t addrs,
                                                 uint8_t channel, uint8_t statusBank, uint8_t status){
         std::array<uint32_t, 4> umpMess = {0,0,0,0};
-        umpMess[0] = ((uint32_t)UMP_FLEX_DATA << 28)
+        umpMess[0] = ((uint32_t)MIDI1_MSGS::UMP_FLEX_DATA << 28)
                    + (((uint32_t)group & 0xF) << 24)
                    + (((uint32_t)form  & 0x3) << 22)
                    + (((uint32_t)addrs & 0x3) << 20)
@@ -309,7 +309,7 @@ inline std::array<uint32_t, 4> mt5MDSPayload(uint8_t group, uint8_t mds, uint8_t
 
 inline std::array<uint32_t, 4> mtDFlexTempo(uint8_t group, uint8_t addrs, uint8_t channel,
                                              uint32_t num10nsPQN){
-    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TEMPO);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, MIDI1_MSGS::FLEXDATA_COMMON, MIDI1_MSGS::FLEXDATA_COMMON_TEMPO);
     umpMess[1] = num10nsPQN;
     return umpMess;
 }
@@ -317,7 +317,7 @@ inline std::array<uint32_t, 4> mtDFlexTempo(uint8_t group, uint8_t addrs, uint8_
 inline std::array<uint32_t, 4> mtDFlexTimeSig(uint8_t group, uint8_t addrs, uint8_t channel,
                                                uint8_t numerator, uint8_t denominator,
                                                uint8_t num32Notes){
-    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_TIMESIG);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, MIDI1_MSGS::FLEXDATA_COMMON, MIDI1_MSGS::FLEXDATA_COMMON_TIMESIG);
     umpMess[1] = ((uint32_t)numerator  << 24)
                + ((uint32_t)denominator << 16)
                + ((uint32_t)num32Notes  <<  8);
@@ -328,7 +328,7 @@ inline std::array<uint32_t, 4> mtDFlexMetronome(uint8_t group, uint8_t addrs, ui
                                                  uint8_t numClkpPriCli, uint8_t bAccP1,
                                                  uint8_t bAccP2, uint8_t bAccP3,
                                                  uint8_t numSubDivCli1, uint8_t numSubDivCli2){
-    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_METRONOME);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, MIDI1_MSGS::FLEXDATA_COMMON, MIDI1_MSGS::FLEXDATA_COMMON_METRONOME);
     umpMess[1] = ((uint32_t)numClkpPriCli << 24)
                + ((uint32_t)bAccP1        << 16)
                + ((uint32_t)bAccP2        <<  8)
@@ -340,7 +340,7 @@ inline std::array<uint32_t, 4> mtDFlexMetronome(uint8_t group, uint8_t addrs, ui
 
 inline std::array<uint32_t, 4> mtDFlexKeySig(uint8_t group, uint8_t addrs, uint8_t channel,
                                               uint8_t sharpFlats, uint8_t tonic){
-    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_KEYSIG);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, MIDI1_MSGS::FLEXDATA_COMMON, MIDI1_MSGS::FLEXDATA_COMMON_KEYSIG);
     umpMess[1] = ((uint32_t)sharpFlats << 24)
                + ((uint32_t)tonic      << 16);
     return umpMess;
@@ -357,7 +357,7 @@ inline std::array<uint32_t, 4> mtDFlexChord(uint8_t group, uint8_t addrs, uint8_
                                              uint8_t baType,
                                              uint8_t baAlt1Type, uint8_t baAlt1Deg,
                                              uint8_t baAlt2Type, uint8_t baAlt2Deg){
-    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, FLEXDATA_COMMON, FLEXDATA_COMMON_CHORD);
+    std::array<uint32_t, 4> umpMess = mtDFlexData(group, 0, addrs, channel, MIDI1_MSGS::FLEXDATA_COMMON, MIDI1_MSGS::FLEXDATA_COMMON_CHORD);
     umpMess[1] = (((uint32_t)chShrpFlt  & 0xF) << 28)
                + (((uint32_t)chTonic    & 0xF) << 24)
                + (((uint32_t)chType     & 0xFF) << 16)
@@ -395,25 +395,25 @@ inline std::array<uint32_t, 4> mtDFlexTextData(uint8_t group, uint8_t form, uint
 inline std::array<uint32_t, 4> mtDFlexPerformance(uint8_t group, uint8_t form, uint8_t addrs,
                                                    uint8_t channel, uint8_t status,
                                                    uint8_t* text, uint8_t textLen){
-    return mtDFlexTextData(group, form, addrs, channel, FLEXDATA_PERFORMANCE, status, text, textLen);
+    return mtDFlexTextData(group, form, addrs, channel, MIDI1_MSGS::FLEXDATA_PERFORMANCE, status, text, textLen);
 }
 
 inline std::array<uint32_t, 4> mtDFlexLyric(uint8_t group, uint8_t form, uint8_t addrs,
                                              uint8_t channel, uint8_t status,
                                              uint8_t* text, uint8_t textLen){
-    return mtDFlexTextData(group, form, addrs, channel, FLEXDATA_LYRIC, status, text, textLen);
+    return mtDFlexTextData(group, form, addrs, channel, MIDI1_MSGS::FLEXDATA_LYRIC, status, text, textLen);
 }
 
 inline std::array<uint32_t, 4> mtFMidiEndpoint(uint8_t filter){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-	umpMess[0] = (uint32_t) ((0xF << 28) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR);
+	umpMess[0] = (uint32_t) ((0xF << 28) + (MIDI1_MSGS::UMP_VER_MAJOR << 8) +  MIDI1_MSGS::UMP_VER_MINOR);
     umpMess[1] = filter;
 	return umpMess;
 }
 
 inline std::array<uint32_t, 4> mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock, bool m2, bool m1, bool rxjr, bool txjr){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDIENDPOINT_INFO_NOTIFICATION << 16) + (UMP_VER_MAJOR << 8) +  UMP_VER_MINOR);
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDI1_MSGS::MIDIENDPOINT_INFO_NOTIFICATION << 16) + (MIDI1_MSGS::UMP_VER_MAJOR << 8) +  MIDI1_MSGS::UMP_VER_MINOR);
     umpMess[1] = (numOfFuncBlock << 24)
             + (m2 << 9)
             + (m1 << 8)
@@ -425,7 +425,7 @@ inline std::array<uint32_t, 4> mtFMidiEndpointInfoNotify(uint8_t numOfFuncBlock,
 inline std::array<uint32_t, 4> mtFMidiEndpointDeviceInfoNotify(std::array<uint8_t, 3> manuId, std::array<uint8_t, 2> familyId,
                                                   std::array<uint8_t, 2> modelId, std::array<uint8_t, 4> version){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDIENDPOINT_DEVICEINFO_NOTIFICATION << 16)) /*+  numOfFuncBlock*/;
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDI1_MSGS::MIDIENDPOINT_DEVICEINFO_NOTIFICATION << 16)) /*+  numOfFuncBlock*/;
 
     umpMess[1] = (manuId[0] << 16)
                   + (manuId[1] << 8)
@@ -467,7 +467,7 @@ inline std::array<uint32_t, 4> mtFMidiEndpointTextNotify(uint16_t replyType, uin
 
 inline std::array<uint32_t, 4> mtFFunctionBlock(uint8_t fbIdx, uint8_t filter ){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK << 16) + (fbIdx << 8) + filter;
+    umpMess[0] = (0xF << 28) + (MIDI1_MSGS::FUNCTIONBLOCK << 16) + (fbIdx << 8) + filter;
     return umpMess;
 }
 
@@ -475,7 +475,7 @@ inline std::array<uint32_t, 4> mtFFunctionBlockInfoNotify(uint8_t fbIdx, bool ac
                                                  bool sender, bool recv, uint8_t firstGroup, uint8_t groupLength,
                                                  uint8_t midiCISupport, uint8_t isMIDI1, uint8_t maxS8Streams){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (0xF << 28) + (FUNCTIONBLOCK_INFO_NOTFICATION << 16)
+    umpMess[0] = (0xF << 28) + (MIDI1_MSGS::FUNCTIONBLOCK_INFO_NOTFICATION << 16)
                 + ((active?1:0) << 15)
                 + (fbIdx << 8)
                 + (recv << 4)
@@ -501,7 +501,7 @@ inline std::array<uint32_t, 4> mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t
             form = 3;
         }
     }
-    umpMess[0] = (0xF << 28) + (form << 26) + (FUNCTIONBLOCK_NAME_NOTIFICATION << 16)+ (fbIdx << 8);
+    umpMess[0] = (0xF << 28) + (form << 26) + (MIDI1_MSGS::FUNCTIONBLOCK_NAME_NOTIFICATION << 16)+ (fbIdx << 8);
     if(offset < textLen)umpMess[0] += text[offset++];
     for(uint8_t i=1;i<4;i++){
         if(offset < textLen)umpMess[i] += (text[offset++] << 24);
@@ -514,21 +514,21 @@ inline std::array<uint32_t, 4> mtFFunctionBlockNameNotify(uint8_t fbIdx, uint8_t
 
 inline std::array<uint32_t, 4> mtFStartOfSeq(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (uint32_t) ((0xF << 28) + (STARTOFSEQ << 16));
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDI1_MSGS::STARTOFSEQ << 16));
     return umpMess;
 
 }
 
 inline std::array<uint32_t, 4> mtFEndOfFile(){
     std::array<uint32_t, 4> umpMess = {0,0,0,0};
-    umpMess[0] = (uint32_t) ((0xF << 28) + (ENDOFFILE << 16));
+    umpMess[0] = (uint32_t) ((0xF << 28) + (MIDI1_MSGS::ENDOFFILE << 16));
     return umpMess;
 }
 
 
 inline std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_STREAMCONFIG_REQUEST << 16)
+    umpMess[0] = (0xF << 28) +  (MIDI1_MSGS::MIDIENDPOINT_STREAMCONFIG_REQUEST << 16)
             + (protocol << 8)
               + (jrrx << 1)
               + jrtx;
@@ -538,7 +538,7 @@ inline std::array<uint32_t, 4> mtFRequestProtocol(uint8_t protocol, bool jrrx, b
 
 inline std::array<uint32_t, 4> mtFNotifyProtocol( uint8_t protocol, bool jrrx, bool jrtx){
     std::array<uint32_t, 4> umpMess  = {0,0,0,0};
-    umpMess[0] = (0xF << 28) +  (MIDIENDPOINT_STREAMCONFIG_NOTIFICATION << 16)
+    umpMess[0] = (0xF << 28) +  (MIDI1_MSGS::MIDIENDPOINT_STREAMCONFIG_NOTIFICATION << 16)
                  + (protocol << 8)
                  + (jrrx << 1)
                  + jrtx;

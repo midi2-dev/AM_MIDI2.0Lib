@@ -57,11 +57,11 @@ private:
     {
         if (cTR[grChannel].valueMSB < 128 && cTR[grChannel].MSB < 128 && cTR[grChannel].LSB < 128)
         {
-            //So sometimes CC 38 is optional grrrr... handle this
+            //So sometimes MIDI1_MSGS::CC 38 is optional grrrr... handle this
             uint8_t group = grChannel >> 4;
             uint8_t channel = grChannel & 0xF;
             uint32_t out1 = ((0x04 << 4) + group) << 24;
-            out1 += cTR[grChannel].type == RPN ? 0b0010 << 20 : 0b0011 << 20;
+            out1 += cTR[grChannel].type == MIDI1_MSGS::RPN ? 0b0010 << 20 : 0b0011 << 20;
             out1 += channel << 16;
             out1 += (cTR[grChannel].MSB << 8) + cTR[grChannel].LSB;
             uint32_t val = (cTR[grChannel].valueMSB << 7);
@@ -119,17 +119,17 @@ public:
                 mType = UMP >> 28;
                 switch (mType)
                 {
-                case UMP_UTILITY: //32 bits Utility Messages
+                case MIDI1_MSGS::UMP_UTILITY: //32 bits Utility Messages
                 case 0x6: //32 Reserved
                 case 0x7: //32 Reserved
-                case UMP_SYSTEM:
+                case MIDI1_MSGS::UMP_SYSTEM:
                     {
                         //32 bits System Real Time and System Common Messages (except System Exclusive)
                         umpMess[writeIndex] = UMP;
                         increaseWrite();
                         break;
                     }
-                case UMP_M1CVM:
+                case MIDI1_MSGS::UMP_M1CVM:
                     {
                         //32 Bits MIDI 1.0 Channel Voice Messages
                         //Do Convert here!
@@ -184,22 +184,22 @@ public:
                                     cTP[grChannel].valueLSB = val2;
                                     break;
                                 case 101:
-                                    cTR[grChannel].type = RPN;
+                                    cTR[grChannel].type = MIDI1_MSGS::RPN;
                                     cTR[grChannel].valueMSB = 255;
                                     cTR[grChannel].MSB = val2;
                                     break;
                                 case 100:
-                                    cTR[grChannel].type = RPN;
+                                    cTR[grChannel].type = MIDI1_MSGS::RPN;
                                     cTR[grChannel].valueMSB = 255;
                                     cTR[grChannel].LSB = val2;
                                     break;
                                 case 99:
-                                    cTR[grChannel].type = NRPN;
+                                    cTR[grChannel].type = MIDI1_MSGS::NRPN;
                                     cTR[grChannel].valueMSB = 255;
                                     cTR[grChannel].MSB = val2;
                                     break;
                                 case 98:
-                                    cTR[grChannel].type = NRPN;
+                                    cTR[grChannel].type = MIDI1_MSGS::NRPN;
                                     cTR[grChannel].valueMSB = 255;
                                     cTR[grChannel].LSB = val2;
                                     break;
@@ -208,7 +208,7 @@ public:
                                     if(cTR[grChannel].MSB == 0x00 &&
                                         cTR[grChannel].LSB >= 0x02 && cTR[grChannel].LSB <= 0x06
                                         )
-                                    { //Force an RPN Out
+                                    { //Force an MIDI1_MSGS::RPN Out
                                         checkRPNOnChannel(grChannel);
                                     }
                                     break;
@@ -216,7 +216,7 @@ public:
                                     if(cTR[grChannel].valueMSB != 255)
                                     {
                                         out1 = ((0x04 << 4) + group) << 24;
-                                        out1 += cTR[grChannel].type == RPN ? 0b0010 << 20 : 0b0011 << 20;
+                                        out1 += cTR[grChannel].type == MIDI1_MSGS::RPN ? 0b0010 << 20 : 0b0011 << 20;
                                         out1 += channel << 16;
                                         out1 += (cTR[grChannel].MSB << 8) + cTR[grChannel].LSB;
                                         uint32_t val = (cTR[grChannel].valueMSB << 7) + val2;
@@ -296,8 +296,8 @@ public:
                 case 0x8: //64 Reserved
                 case 0x9: //64 Reserved
                 case 0xA: //64 Reserved
-                case UMP_M2CVM:
-                case UMP_SYSEX7: //64 bits Data Messages (including System Exclusive) part 2
+                case MIDI1_MSGS::UMP_M2CVM:
+                case MIDI1_MSGS::UMP_SYSEX7: //64 bits Data Messages (including System Exclusive) part 2
                     umpMess[writeIndex] = UMP;
                     increaseWrite();
                     UMPPos = 0;
