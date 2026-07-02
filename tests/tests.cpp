@@ -11,6 +11,8 @@
 
 #include "umpToMIDI2Protocol.h"
 
+void runMIDICITests();
+
 bytestreamToUMP BS2UMP;
 umpToBytestream UMP2BS;
 umpToMIDI1Protocol UMP2M1;
@@ -484,6 +486,9 @@ int main(){
     passFail(rtMetSub1, 4);
     passFail(rtMetSub2, 3);
     printf(" FlexMetronome roundtrip\n");
+
+    //***** MIDI-CI Tests *************
+    runMIDICITests();
 
     ///****************************
     printf("Tests Passed: %d    Failed : %d\n",testPassed, testFailed);

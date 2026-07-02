@@ -45,23 +45,23 @@ void midiCIProcessor::cleanupRequest(reqId peReqIdx){
 }
 
 void midiCIProcessor::processMIDICI(uint8_t s7Byte){
-    //printf("s7 Byte %d\n", s7Byte);
-	if(sysexPos == 3){
+    sysexPos++;
+	if(sysexPos == 4){
 		midici.ciType =  s7Byte;
 	}
 	
-	if(sysexPos == 4){
+	if(sysexPos == 5){
 	    midici.ciVer =  s7Byte;
 	}
-	if(sysexPos >= 5 && sysexPos <= 8){
-        midici.remoteMUID += s7Byte << (7 * (sysexPos - 5));
+	if(sysexPos >= 6 && sysexPos <= 9){
+        midici.remoteMUID += (uint32_t)s7Byte << (7 * (sysexPos - 6));
 	}
 	
-	if(sysexPos >= 9 && sysexPos <= 12){
-        midici.localMUID += s7Byte << (7 * (sysexPos - 9));
+	if(sysexPos >= 10 && sysexPos <= 13){
+        midici.localMUID += (uint32_t)s7Byte << (7 * (sysexPos - 10));
 	}
 	
-	if(sysexPos >= 12
+	if(sysexPos >= 13
        && midici.localMUID != M2_CI_BROADCAST
        && checkMUID && !checkMUID(midici.umpGroup, midici.localMUID, refpoint)
         ){
@@ -69,31 +69,31 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 	}
 	
 	//break up each Process based on ciType
-    if(sysexPos >= 12) {
+    if(sysexPos >= 13) {
         switch (midici.ciType) {
             case MIDICI_DISCOVERYREPLY: //Discovery Reply
             case MIDICI_DISCOVERY: { //Discovery Request
-                if (sysexPos >= 13 && sysexPos <= 23) {
-                    buffer[sysexPos - 13] = s7Byte;
+                if (sysexPos >= 14 && sysexPos <= 24) {
+                    buffer[sysexPos - 14] = s7Byte;
                 }
-                if (sysexPos == 24) {
+                if (sysexPos == 25) {
                     intTemp[0] = s7Byte; // ciSupport
                 }
-                if (sysexPos >= 25 && sysexPos <= 28) {
-                    intTemp[1] += s7Byte << (7 * (sysexPos - 25)); //maxSysEx
+                if (sysexPos >= 26 && sysexPos <= 29) {
+                    intTemp[1] += (uint16_t)s7Byte << (7 * (sysexPos - 26)); //maxSysEx
                 }
 
                 bool complete = false;
-                if (sysexPos == 28 && midici.ciVer == 1) {
+                if (sysexPos == 29 && midici.ciVer == 1) {
                     complete = true;
                 }
-                else if (sysexPos == 29){
+                else if (sysexPos == 30){
                     intTemp[2] = s7Byte; //output path id
                     if(midici.ciType==MIDICI_DISCOVERY) {
                         complete = true;
                     }
                 }
-                else if (sysexPos == 30){
+                else if (sysexPos == 31){
                     intTemp[3] = s7Byte; //fbIdx id
                     if(midici.ciType==MIDICI_DISCOVERYREPLY) {
                         complete = true;
@@ -140,13 +140,14 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 
             case MIDICI_INVALIDATEMUID: //MIDI-CI Invalidate MUID Message
 
-                if (sysexPos >= 13 && sysexPos <= 16) {
-                    buffer[sysexPos - 13] = s7Byte;
+                if (sysexPos >= 14 && sysexPos <= 17) {
+                    buffer[sysexPos - 14] = s7Byte;
                 }
 
                 //terminate MUID
-                if (sysexPos == 16 && recvInvalidateMUID != nullptr) {
-                    uint32_t terminateMUID = buffer[0]
+                if (sysexPos == 17 && recvInvalidateMUID != nullptr) {
+
+                    uint32_t terminateMUID = (uint32_t)buffer[0]
                             + ((uint32_t)buffer[1] << 7)
                             + ((uint32_t)buffer[2] << 14)
                             + ((uint32_t)buffer[3] << 21);
@@ -154,7 +155,7 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                 }
                 break;
             case MIDICI_ENDPOINTINFO:{
-                if (sysexPos == 13 && midici.ciVer > 1 && recvEndPointInfo!= nullptr) {
+                if (sysexPos == 14 && midici.ciVer > 1 && recvEndPointInfo!= nullptr) {
                     recvEndPointInfo(midici,s7Byte); // uint8_t origSubID,
                 }
                 break;
@@ -162,16 +163,16 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
             case MIDICI_ENDPOINTINFO_REPLY:{
                 bool complete = false;
                 if(midici.ciVer < 2) return;
-                if (sysexPos == 13 && recvEndPointInfo!= nullptr) {
+                if (sysexPos == 14 && recvEndPointInfo!= nullptr) {
                     intTemp[0] = s7Byte;
                 }
-                if(sysexPos == 14 || sysexPos == 15){
-                    intTemp[1] += s7Byte << (7 * (sysexPos - 14 ));
+                if(sysexPos == 15 || sysexPos == 16){
+                    intTemp[1] += (uint16_t)s7Byte << (7 * (sysexPos - 15 ));
                     return;
                 }
-                if (sysexPos >= 16 && sysexPos <= 15 + intTemp[1]){
-                    buffer[sysexPos - 16] = s7Byte; //Info Data
-                }if (sysexPos == 16 + intTemp[1]){
+                if (sysexPos >= 17 && sysexPos <= 16 + intTemp[1]){
+                    buffer[sysexPos - 17] = s7Byte; //Info Data
+                }if (sysexPos == 17 + intTemp[1]){
                     complete = true;
                 }
 
@@ -188,33 +189,35 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
             case MIDICI_NAK: {
                 bool complete = false;
 
-                if (sysexPos == 13 && midici.ciVer == 1) {
+                if (sysexPos == 14 && midici.ciVer == 1) {
                     complete = true;
-                } else if (sysexPos == 13 && midici.ciVer > 1) {
+                } else if (sysexPos == 14 && midici.ciVer > 1) {
                     intTemp[0] = s7Byte; // uint8_t origSubID,
                 }
 
-                if (sysexPos == 14) {
+                if (sysexPos == 15) {
                     intTemp[1] = s7Byte; //statusCode
                 }
 
-                if (sysexPos == 15) {
+                if (sysexPos == 16) {
                     intTemp[2] = s7Byte; //statusData
                 }
 
-                if (sysexPos >= 16 && sysexPos <= 20){
-                    buffer[sysexPos - 16] = s7Byte; //ackNakDetails
+                if (sysexPos >= 17 && sysexPos <= 21){
+                    buffer[sysexPos - 17] = s7Byte; //ackNakDetails
                 }
 
-                if(sysexPos == 21 || sysexPos == 22){
-                    intTemp[3] += s7Byte << (7 * (sysexPos - 21 ));
-                    return;
+                if(sysexPos == 22 || sysexPos == 23){
+                    intTemp[3] += (uint16_t)s7Byte << (7 * (sysexPos - 22 ));
                 }
 
-                if (sysexPos >= 23 && sysexPos <= 23 + intTemp[3]){
-                    buffer[sysexPos - 23] = s7Byte; //product ID
+            if (sysexPos >= 24 && sysexPos < 24 + intTemp[3]){
+                    buffer[sysexPos - 24] = s7Byte; //product ID
                 }
                 if (sysexPos == 23 + intTemp[3]){
+                    complete = true;
+                }
+                if (sysexPos == 23 && intTemp[3] == 0 && midici.ciVer > 1){
                     complete = true;
                 }
 
@@ -235,7 +238,6 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                             intTemp[3],
                             buffer
                     );
-
                     if (midici.ciType == MIDICI_ACK && midici.ciVer > 1 && recvACK != nullptr)
                         recvACK(
 
@@ -308,7 +310,6 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 
         }
     }
-    sysexPos++;
 }
 
 void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
@@ -317,20 +318,20 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
         case MIDICI_PROTOCOL_NEGOTIATION:
         case MIDICI_PROTOCOL_NEGOTIATION_REPLY: {
             //Authority Level
-            if (sysexPos == 13 ) {
+            if (sysexPos == 14 ) {
                 intTemp[0] = s7Byte;
             }
             //Number of Supported Protocols (np)
-            if (sysexPos == 14 ) {
+            if (sysexPos == 15 ) {
                 intTemp[1] = s7Byte;
             }
 
-            int protocolOffset = intTemp[1] * 5 + 14;
+            int protocolOffset = intTemp[1] * 5 + 15;
 
-            if (sysexPos >= 15 && sysexPos < protocolOffset) {
-                uint8_t pos = (sysexPos - 14) % 5;
+            if (sysexPos > 15 && sysexPos <= protocolOffset) {
+                uint8_t pos = (sysexPos - 16) % 5;
                 buffer[pos] = s7Byte;
-                if (pos == 4 && recvProtocolAvailable != nullptr) {
+                if ((sysexPos - 15) % 5 == 0 && recvProtocolAvailable != nullptr) {
                     uint8_t protocol[5] = {buffer[0], buffer[1],
                                            buffer[2], buffer[3],
                                            buffer[4]};
@@ -338,13 +339,10 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
                 }
             }
             if(midici.ciVer > 1){
-                if (sysexPos >= protocolOffset && sysexPos <= protocolOffset+5){
-                    buffer[sysexPos-protocolOffset] = s7Byte;
+                if (sysexPos > protocolOffset && sysexPos <= protocolOffset+5){
+                    buffer[sysexPos-protocolOffset-1] = s7Byte;
                 }
                 if (sysexPos == protocolOffset+5){
-//                    uint8_t protocol[5] = {buffer[0], buffer[1],
-//                                           buffer[2], buffer[3],
-//                                           buffer[4]};
                     if (recvSetProtocolConfirm != nullptr)recvSetProtocolConfirm(midici, (uint8_t) intTemp[0]);
                 }
             }
@@ -353,13 +351,13 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
 
         case MIDICI_PROTOCOL_SET: //Set Profile On Message
             //Authority Level
-            if (sysexPos == 13 ) {
+            if (sysexPos == 14 ) {
                 intTemp[0] = s7Byte;
             }
-            if(sysexPos >= 14 && sysexPos <= 18){
-                buffer[sysexPos-13] = s7Byte;
+            if(sysexPos >= 15 && sysexPos <= 19){
+                buffer[sysexPos-15] = s7Byte;
             }
-            if (sysexPos == 18 && recvSetProtocol != nullptr){
+            if (sysexPos == 19 && recvSetProtocol != nullptr){
                 uint8_t protocol[5] = {buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]};
                 recvSetProtocol(midici, (uint8_t) intTemp[0], protocol);
             }
@@ -368,16 +366,16 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
         case MIDICI_PROTOCOL_TEST_RESPONDER:
         case MIDICI_PROTOCOL_TEST:
             //Authority Level
-            if (sysexPos == 13 ) {
+            if (sysexPos == 14 ) {
                 intTemp[0] = s7Byte;
                 intTemp[1] = 1;
             }
-            if(sysexPos >= 14 && sysexPos <= 61){
-                if(s7Byte != sysexPos - 14){
+            if(sysexPos >= 15 && sysexPos <= 62){
+                if(s7Byte != sysexPos - 15){
                     intTemp[1] = 0;
                 }
             }
-            if (sysexPos == 61 && recvProtocolTest != nullptr){
+            if (sysexPos == 62 && recvProtocolTest != nullptr){
                 recvProtocolTest(midici, (uint8_t) intTemp[0], !!(intTemp[1]));
             }
 
@@ -386,7 +384,7 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
 
         case MIDICI_PROTOCOL_CONFIRM: //Set Profile Off Message
             //Authority Level
-            if (sysexPos == 13 ) {
+            if (sysexPos == 14 ) {
                 intTemp[0] = s7Byte;
                 if (recvSetProtocolConfirm != nullptr){
                     recvSetProtocolConfirm(midici, (uint8_t) intTemp[0]);
@@ -399,27 +397,27 @@ void midiCIProcessor::processProtocolSysex(uint8_t s7Byte){
 void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
     switch (midici.ciType){
         case MIDICI_PROFILE_INQUIRY: //Profile Inquiry
-            if (sysexPos == 12 && recvProfileInquiry != nullptr){
+            if (sysexPos == 13 && recvProfileInquiry != nullptr){
                 recvProfileInquiry(midici);
             }
             break;
         case MIDICI_PROFILE_INQUIRYREPLY: { //Reply to Profile Inquiry
             //Enabled Profiles Length
-            if (sysexPos == 13 || sysexPos == 14) {
-                intTemp[0] += s7Byte << (7 * (sysexPos - 13));
+            if (sysexPos == 14 || sysexPos == 15) {
+                intTemp[0] += (uint16_t)s7Byte << (7 * (sysexPos - 14));
             }
 
             //Disabled Profile Length
-            int enabledProfileOffset = intTemp[0] * 5 + 13;
+            int enabledProfileOffset = intTemp[0] * 5 + 14;
             if (
                     sysexPos == enabledProfileOffset
                     || sysexPos == 1 + enabledProfileOffset
-                    ) {
-                intTemp[1] += s7Byte << (7 * (sysexPos - enabledProfileOffset));
+            ) {
+                intTemp[1] += (uint16_t)s7Byte << (7 * (sysexPos - enabledProfileOffset));
             }
 
-            if (sysexPos >= 15 && sysexPos < enabledProfileOffset) {
-                uint8_t pos = (sysexPos - 13) % 5;
+            if (sysexPos >= 16 && sysexPos < enabledProfileOffset) {
+                uint8_t pos = (sysexPos - 14) % 5;
                 buffer[pos] = s7Byte;
                 if (pos == 4 && recvSetProfileEnabled != nullptr) {
 
@@ -431,7 +429,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
 
             if (sysexPos >= 2 + enabledProfileOffset &&
                 sysexPos < enabledProfileOffset + intTemp[1] * 5) {
-                uint8_t pos = (sysexPos - 13) % 5;
+                uint8_t pos = (sysexPos - 14) % 5;
                 buffer[pos] = s7Byte;
                 if (pos == 4 && recvSetProfileDisabled != nullptr) {
                     recvSetProfileDisabled(midici, {buffer[0], buffer[1],
@@ -450,18 +448,18 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
         case MIDICI_PROFILE_SETOFF:
         case MIDICI_PROFILE_SETON: { //Set Profile On Message
             bool complete = false;
-            if (sysexPos >= 13 && sysexPos <= 17) {
-                buffer[sysexPos - 13] = s7Byte;
+            if (sysexPos >= 14 && sysexPos <= 18) {
+                buffer[sysexPos - 14] = s7Byte;
             }
-            if (sysexPos == 17 &&
+            if (sysexPos == 18 &&
                 (midici.ciVer == 1 || midici.ciType==MIDICI_PROFILE_ADD || midici.ciType==MIDICI_PROFILE_REMOVE)
                     ){
                 complete = true;
             }
-            if(midici.ciVer > 1 && (sysexPos == 18 || sysexPos == 19)){
-                intTemp[0] += s7Byte << (7 * (sysexPos - 18 ));
+            if(midici.ciVer > 1 && (sysexPos == 19 || sysexPos == 20)){
+                intTemp[0] += (uint16_t)s7Byte << (7 * (sysexPos - 19 ));
             }
-            if (sysexPos == 19 && midici.ciVer > 1){
+            if (sysexPos == 20 && midici.ciVer > 1){
                 complete = true;
             }
 
@@ -501,10 +499,10 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
         }
 
         case MIDICI_PROFILE_DETAILS_INQUIRY:{
-            if (sysexPos >= 13 && sysexPos <= 17) {
-                buffer[sysexPos - 13] = s7Byte;
+            if (sysexPos >= 14 && sysexPos <= 18) {
+                buffer[sysexPos - 14] = s7Byte;
             }
-            if (sysexPos == 18 && recvSetProfileDetailsInquiry != nullptr){ //Inquiry Target
+            if (sysexPos == 19 && recvSetProfileDetailsInquiry != nullptr){ //Inquiry Target
                 recvSetProfileDetailsInquiry(midici, {buffer[0], buffer[1],
                                                       buffer[2], buffer[3],
                                                       buffer[4]}, s7Byte);
@@ -514,22 +512,22 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
         }
 
         case MIDICI_PROFILE_DETAILS_REPLY:{
-            if (sysexPos >= 13 && sysexPos <= 17) {
-                buffer[sysexPos - 13] = s7Byte;
+            if (sysexPos >= 14 && sysexPos <= 18) {
+                buffer[sysexPos - 14] = s7Byte;
             }
-            if (sysexPos == 18){//Inquiry Target
+            if (sysexPos == 19){//Inquiry Target
                 buffer[5] = s7Byte;
             }
 
-            if(sysexPos == 19 || sysexPos == 20){ //Inquiry Target Data length (dl)
-                intTemp[0] += s7Byte << (7 * (sysexPos - 19 ));
+            if(sysexPos == 20 || sysexPos == 21){ //Inquiry Target Data length (dl)
+                intTemp[0] += (uint16_t)s7Byte << (7 * (sysexPos - 20 ));
             }
 
-            if (sysexPos >= 21 && sysexPos <= 21 + intTemp[0]){
-                buffer[sysexPos - 22 + 6] = s7Byte; //product ID
+            if (sysexPos >= 22 && sysexPos <= 22 + intTemp[0]){
+                buffer[sysexPos - 23 + 6] = s7Byte; //product ID
             }
 
-            if (sysexPos == 21 + intTemp[0] && recvSetProfileDetailsInquiry != nullptr){
+            if (sysexPos == 22 + intTemp[0] && recvSetProfileDetailsInquiry != nullptr){
                 recvSetProfileDetailsReply(midici, {buffer[0], buffer[1],
                                                     buffer[2], buffer[3],
                                                     buffer[4]},
@@ -544,12 +542,12 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
 
         case MIDICI_PROFILE_SPECIFIC_DATA:
             //Profile
-            if(sysexPos >= 13 && sysexPos <= 17){
-                buffer[sysexPos-13] = s7Byte;
+            if(sysexPos >= 14 && sysexPos <= 18){
+                buffer[sysexPos-14] = s7Byte;
                 return;
             }
-            if(sysexPos >= 18 && sysexPos <= 21){ //Length of Following Profile Specific Data
-                intTemp[0] += s7Byte << (7 * (sysexPos - 18 ));
+            if(sysexPos >= 19 && sysexPos <= 22){ //Length of Following Profile Specific Data
+                intTemp[0] += (uint32_t)s7Byte << (7 * (sysexPos - 19 ));
                 intTemp[1] = 1;
                 return;
             }
@@ -557,18 +555,18 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
 
             //******************
 
-            uint16_t charOffset = (sysexPos - 22) % S7_BUFFERLEN;
+            uint16_t charOffset = (sysexPos - 23) % S7_BUFFERLEN;
             uint16_t dataLength = intTemp[0];
             if(
-                    (sysexPos >= 22 && sysexPos <= 21 + dataLength)
-                    || 	(dataLength == 0 && sysexPos == 21)
+                    (sysexPos >= 23 && sysexPos <= 22 + dataLength)
+                    || 	(dataLength == 0 && sysexPos == 22)
                     ){
                 if(dataLength != 0 )buffer[charOffset] = s7Byte;
 
-                bool lastByteOfSet = (sysexPos == 21 + dataLength);
+                bool lastByteOfSet = (sysexPos == 22 + dataLength);
 
                 if(charOffset == S7_BUFFERLEN -1
-                   || sysexPos == 21 + dataLength
+                   || sysexPos == 22 + dataLength
                    || dataLength == 0
                         ){
                     recvProfileSpecificData(midici, {buffer[0], buffer[1],
@@ -592,18 +590,18 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
         case MIDICI_PE_CAPABILITYREPLY:{
             bool complete = false;
 
-            if(sysexPos == 13){
+            if(sysexPos == 14){
                 buffer[0] = s7Byte;
             }
 
-            if(sysexPos == 13 && midici.ciVer == 1){
+            if(sysexPos == 14 && midici.ciVer == 1){
                 complete = true;
             }
 
-            if(sysexPos == 14){
+            if(sysexPos == 15){
                 buffer[1] = s7Byte;
             }
-            if(sysexPos == 15){
+            if(sysexPos == 16){
                 buffer[2] = s7Byte;
                 complete = true;
             }
@@ -629,7 +627,7 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
         }
         default: {
 
-            if (sysexPos == 13) {
+            if (sysexPos == 14) {
                 midici._peReqIdx = std::make_tuple(midici.remoteMUID,s7Byte);
                 midici._reqTupleSet = true; //Used for cleanup
                 //peRequestDetails[midici._peReqIdx] = peHeader();
@@ -639,24 +637,24 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
             }
 
 
-            if (sysexPos == 14 || sysexPos == 15) { //header Length
-                intTemp[0] += s7Byte << (7 * (sysexPos - 14));
+            if (sysexPos == 15 || sysexPos == 16) { //header Length
+                intTemp[0] += s7Byte << (7 * (sysexPos - 15));
                 return;
             }
 
             uint16_t headerLength = intTemp[0];
 
-            if (sysexPos == 16 && midici.numChunk == 1){
+            if (sysexPos == 17 && midici.numChunk == 1){
                 peHeaderStr[midici._peReqIdx] = "";
             }
 
-            if (sysexPos >= 16 && sysexPos <= 15 + headerLength) {
-                uint16_t charOffset = (sysexPos - 16);
+            if (sysexPos >= 17 && sysexPos <= 16 + headerLength) {
+                uint16_t charOffset = (sysexPos - 17);
                 buffer[charOffset] = s7Byte;
                 peHeaderStr[midici._peReqIdx].push_back(s7Byte);
 
 
-                if (sysexPos == 15 + headerLength) {
+                if (sysexPos == 16 + headerLength) {
 
                     switch (midici.ciType) {
                         case MIDICI_PE_GET:
@@ -687,27 +685,27 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                 }
             }
 
-            if (sysexPos == 16 + headerLength || sysexPos == 17 + headerLength) {
+            if (sysexPos == 17 + headerLength || sysexPos == 18 + headerLength) {
                 midici.totalChunks +=
-                        s7Byte << (7 * (sysexPos - 16 - headerLength));
+                        s7Byte << (7 * (sysexPos - 17 - headerLength));
                 return;
             }
 
-            if (sysexPos == 18 + headerLength || sysexPos == 19 + headerLength) {
-                midici.numChunk += s7Byte << (7 * (sysexPos - 18 - headerLength));
+            if (sysexPos == 19 + headerLength || sysexPos == 20 + headerLength) {
+                midici.numChunk += s7Byte << (7 * (sysexPos - 19 - headerLength));
                 return;
             }
 
-            if (sysexPos == 20 + headerLength) { //Body Length
+            if (sysexPos == 21 + headerLength) { //Body Length
                 intTemp[1] = s7Byte;
                 return;
             }
-            if (sysexPos == 21 + headerLength) { //Body Length
+            if (sysexPos == 22 + headerLength) { //Body Length
                 intTemp[1] += s7Byte << 7;
             }
 
             uint16_t bodyLength = intTemp[1];
-            uint16_t initPos = 22 + headerLength;
+            uint16_t initPos = 23 + headerLength;
             uint16_t charOffset = (sysexPos - initPos) % S7_BUFFERLEN;
 
             if (
@@ -755,34 +753,34 @@ void midiCIProcessor::processPISysex(uint8_t s7Byte) {
 
     switch (midici.ciType) {
         case MIDICI_PI_CAPABILITY: {
-            if (sysexPos == 12 && recvPICapabilities != nullptr) {
+            if (sysexPos == 13 && recvPICapabilities != nullptr) {
                 recvPICapabilities(midici);
             }
             break;
         }
         case MIDICI_PI_CAPABILITYREPLY: {
-            if (sysexPos == 13 && recvPICapabilitiesReply != nullptr) {
+            if (sysexPos == 14 && recvPICapabilitiesReply != nullptr) {
                 recvPICapabilitiesReply(midici,s7Byte);
             }
             break;
         }
         case MIDICI_PI_MM_REPORT_END: {
-            if (sysexPos == 12 && recvPIMMReportEnd != nullptr) {
+            if (sysexPos == 13 && recvPIMMReportEnd != nullptr) {
                 recvPIMMReportEnd(midici);
             }
             break;
         }
         case MIDICI_PI_MM_REPORT:{
-            if (sysexPos == 13) {//MDC
+            if (sysexPos == 14) {//MDC
                 buffer[0] = s7Byte;
             }
-            if (sysexPos == 14) {//Bitmap of requested System Message Types
+            if (sysexPos == 15) {//Bitmap of requested System Message Types
                 buffer[1] = s7Byte;
             }
-            if (sysexPos == 16) {//Bitmap of requested Channel Controller Message Types
+            if (sysexPos == 17) {//Bitmap of requested Channel Controller Message Types
                 buffer[2] = s7Byte;
             }
-            if (sysexPos == 17 && recvPIMMReport != nullptr){
+            if (sysexPos == 18 && recvPIMMReport != nullptr){
                 recvPIMMReport(midici,
                                buffer[0],
                                buffer[1],
@@ -792,13 +790,13 @@ void midiCIProcessor::processPISysex(uint8_t s7Byte) {
             break;
         }
         case MIDICI_PI_MM_REPORT_REPLY: {
-            if (sysexPos == 13) {//Bitmap of requested System Message Types
+            if (sysexPos == 14) {//Bitmap of requested System Message Types
                 buffer[0] = s7Byte;
             }
-            if (sysexPos == 15) {//Bitmap of requested Channel Controller Message Types
+            if (sysexPos == 16) {//Bitmap of requested Channel Controller Message Types
                 buffer[1] = s7Byte;
             }
-            if (sysexPos == 16 && recvPIMMReportReply != nullptr){
+            if (sysexPos == 17 && recvPIMMReportReply != nullptr){
                 recvPIMMReportReply(midici,
                                     buffer[0],
                                     buffer[1],

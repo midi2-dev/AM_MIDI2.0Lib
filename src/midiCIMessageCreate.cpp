@@ -176,8 +176,9 @@ uint16_t CIMessage::sendNAK(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID,
 
 uint16_t CIMessage::sendInvalidateMUID(uint8_t *sysex, uint8_t midiCIVer, uint32_t srcMUID, uint32_t terminateMuid) {
     createCIHeader(sysex, 0x7F, MIDICI_INVALIDATEMUID, midiCIVer, srcMUID, M2_CI_BROADCAST);
-    setBytesFromNumbers(sysex, terminateMuid, 0, 4);
-    return 17;
+    uint16_t length = 13;
+    setBytesFromNumbers(sysex, terminateMuid, &length, 4);
+    return length;
 }
 
 

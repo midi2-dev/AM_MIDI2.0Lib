@@ -46,6 +46,6 @@ install(EXPORT ${LIBMIDI2_EXPORT_NAME}
 
 install(FILES ${LIBMIDI2_HEADERS} DESTINATION "include/${PROJECT_NAME}")
 
-add_executable(test tests/tests.cpp)
+add_executable(test tests/tests.cpp tests/testMIDICI.cpp)
 target_link_libraries(test PRIVATE libmidi2)
 setupTarget(test)
