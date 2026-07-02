@@ -87,13 +87,13 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                 if (sysexPos == 28 && midici.ciVer == 1) {
                     complete = true;
                 }
-                else if (sysexPos == 28){
+                else if (sysexPos == 29){
                     intTemp[2] = s7Byte; //output path id
                     if(midici.ciType==MIDICI_DISCOVERY) {
                         complete = true;
                     }
                 }
-                else if (sysexPos == 29){
+                else if (sysexPos == 30){
                     intTemp[3] = s7Byte; //fbIdx id
                     if(midici.ciType==MIDICI_DISCOVERYREPLY) {
                         complete = true;
