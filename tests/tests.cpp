@@ -545,6 +545,52 @@ int main(){
     passFail(only_mds, 7);
     printf(" MDS Payload guard\n");
 
+    //***** Running status cancelled by System Common / SysEx **********
+    printf("Running status cancellation \n");
+
+    // RS-1: System Common (SPP, F2) cancels running status.
+    umpToBytestream rc;
+    rc.enableRunningStatus = true;
+    uint8_t rcOut[32]; int rcLen = 0;
+    uint32_t rcCC1 = UMPMessage::mt2CC(0, 0, 7, 0);       // B0 07 00
+    uint32_t rcSPP = UMPMessage::mt1SPP(0, 100);          // F2 64 00
+    uint32_t rcCC2 = UMPMessage::mt2CC(0, 0, 7, 0);       // must re-emit B0
+    rc.UMPStreamParse(rcCC1); while(rc.availableBS()) rcOut[rcLen++]=rc.readBS();
+    rc.UMPStreamParse(rcSPP); while(rc.availableBS()) rcOut[rcLen++]=rc.readBS();
+    rc.UMPStreamParse(rcCC2); while(rc.availableBS()) rcOut[rcLen++]=rc.readBS();
+    passFail(rcLen, 9);          // 3 + 3 + 3 (status re-emitted after F2)
+    passFail(rcOut[6], 0xB0);
+    printf(" RS-1 System Common cancels running status\n");
+
+    // RS-2: System Exclusive cancels running status.
+    umpToBytestream rx;
+    rx.enableRunningStatus = true;
+    uint8_t rxOut[32]; int rxLen = 0;
+    uint32_t rxCC1 = UMPMessage::mt2CC(0, 0, 7, 0);       // B0 07 00
+    auto rxSx = UMPMessage::mt3Sysex7(0, 0, 2, {0xAA,0xBB,0,0,0,0}); // F0 2A 3B F7
+    uint32_t rxCC2 = UMPMessage::mt2CC(0, 0, 7, 0);       // must re-emit B0
+    rx.UMPStreamParse(rxCC1); while(rx.availableBS()) rxOut[rxLen++]=rx.readBS();
+    for(int i=0;i<2;i++){ rx.UMPStreamParse(rxSx[i]); while(rx.availableBS()) rxOut[rxLen++]=rx.readBS(); }
+    rx.UMPStreamParse(rxCC2); while(rx.availableBS()) rxOut[rxLen++]=rx.readBS();
+    passFail(rxLen, 10);         // 3 + 4 + 3 (status re-emitted after SysEx)
+    passFail(rxOut[7], 0xB0);
+    printf(" RS-2 SysEx cancels running status\n");
+
+    // RS-3: Real Time (F8 clock) does NOT cancel running status (regression guard).
+    umpToBytestream rt;
+    rt.enableRunningStatus = true;
+    uint8_t rtOut[32]; int rtLen = 0;
+    uint32_t rtCC1 = UMPMessage::mt2CC(0, 0, 7, 0);       // B0 07 00
+    uint32_t rtClk = UMPMessage::mt1TimingClock(0);       // F8 (real time)
+    uint32_t rtCC2 = UMPMessage::mt2CC(0, 0, 7, 0);       // status stays elided
+    rt.UMPStreamParse(rtCC1); while(rt.availableBS()) rtOut[rtLen++]=rt.readBS();
+    rt.UMPStreamParse(rtClk); while(rt.availableBS()) rtOut[rtLen++]=rt.readBS();
+    rt.UMPStreamParse(rtCC2); while(rt.availableBS()) rtOut[rtLen++]=rt.readBS();
+    passFail(rtLen, 6);          // 3 + 1 + 2 (status elided, real time did not cancel)
+    passFail(rtOut[3], 0xF8);
+    passFail(rtOut[4], 0x07);    // no status byte: running status preserved
+    printf(" RS-3 Real Time preserves running status\n");
+
     //***** MIDI-CI Tests *************
     runMIDICITests();
 
