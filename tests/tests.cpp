@@ -487,6 +487,64 @@ int main(){
     passFail(rtMetSub2, 3);
     printf(" FlexMetronome roundtrip\n");
 
+    //***** MDS Roundtrip (create -> processUMP -> callback) *******************
+    printf("MDS Roundtrip \n");
+    umpProcessor mdsProc;
+
+    // Capture slots
+    uint8_t  mdsH_mds = 255, mdsH_group = 255;
+    uint16_t mdsH_numBytes = 0, mdsH_totalChunks = 0, mdsH_chunkNo = 0;
+    uint16_t mdsH_manu = 0, mdsH_dev = 0, mdsH_sub1 = 0, mdsH_sub2 = 0;
+    mdsProc.setMDSHeaderNotify([&](uint8_t group, uint8_t mds, uint16_t numBytes,
+        uint16_t totalChunks, uint16_t chunkNo, uint16_t manu, uint16_t dev,
+        uint16_t sub1, uint16_t sub2){
+        mdsH_group = group; mdsH_mds = mds; mdsH_numBytes = numBytes;
+        mdsH_totalChunks = totalChunks; mdsH_chunkNo = chunkNo;
+        mdsH_manu = manu; mdsH_dev = dev; mdsH_sub1 = sub1; mdsH_sub2 = sub2;
+    });
+
+    // Header round-trip: mds id comes from word[0], not totalChunks low nibble
+    auto rtMdsH = UMPMessage::mt5MDSHeader(2, 5, 0x00AB, 0x0031, 0x0007,
+                                           0x1234, 0x5678, 0x9ABC, 0xDEF0);
+    for(int i=0; i<4; i++) mdsProc.processUMP(rtMdsH[i]);
+    passFail(mdsH_mds, 5);
+    passFail(mdsH_group, 2);
+    passFail(mdsH_numBytes, 0x00AB);
+    passFail(mdsH_totalChunks, 0x0031);
+    passFail(mdsH_chunkNo, 0x0007);
+    passFail(mdsH_manu, 0x1234);
+    passFail(mdsH_dev, 0x5678);
+    passFail(mdsH_sub1, 0x9ABC);
+    passFail(mdsH_sub2, 0xDEF0);
+    printf(" MDS Header roundtrip\n");
+
+    // Payload round-trip: both callbacks registered (payload dispatch needs the header pointer set)
+    uint8_t mdsP_mds = 255, mdsP_group = 255, mdsP_len = 0;
+    uint8_t mdsP_data[14] = {0};
+    mdsProc.setMDSPayloadNotify([&](uint8_t group, uint8_t mds, uint8_t* data,
+        uint8_t dataLength){
+        mdsP_group = group; mdsP_mds = mds; mdsP_len = dataLength;
+        for(uint8_t k=0; k<dataLength && k<14; k++) mdsP_data[k] = data[k];
+    });
+    uint8_t payload14[14] = {10,11,12,13,14,15,16,17,18,19,20,21,22,23};
+    auto rtMdsP = UMPMessage::mt5MDSPayload(2, 5, payload14, 14);
+    for(int i=0; i<4; i++) mdsProc.processUMP(rtMdsP[i]);
+    passFail(mdsP_mds, 5);
+    passFail(mdsP_group, 2);
+    passFail(mdsP_len, 14);
+    for(uint8_t k=0; k<14; k++) passFail(mdsP_data[k], payload14[k]);
+    printf(" MDS Payload roundtrip\n");
+
+    // Payload fires with only the payload callback registered
+    umpProcessor mdsProcB;
+    uint8_t only_mds = 255;
+    mdsProcB.setMDSPayloadNotify([&](uint8_t group, uint8_t mds, uint8_t* data,
+        uint8_t dataLength){ (void)group;(void)data;(void)dataLength; only_mds = mds; });
+    auto rtMdsP2 = UMPMessage::mt5MDSPayload(0, 7, payload14, 14);
+    for(int i=0; i<4; i++) mdsProcB.processUMP(rtMdsP2[i]);
+    passFail(only_mds, 7);
+    printf(" MDS Payload guard\n");
+
     //***** MIDI-CI Tests *************
     runMIDICITests();
 
