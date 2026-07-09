@@ -487,6 +487,77 @@ int main(){
     passFail(rtMetSub2, 3);
     printf(" FlexMetronome roundtrip\n");
 
+    //***** Cross-Group RPN (issue #30) ***************************************
+    printf("Cross-Group RPN (issue #30) \n");
+
+    // Test #30-1: reproduce cross-group contamination. Same channel, same param.
+    umpToBytestream xg;
+    auto g0 = UMPMessage::mt4RPN(0, 0, 1, 2, 0); // group 0, ch 0, bank 1, idx 2
+    auto g1 = UMPMessage::mt4RPN(1, 0, 1, 2, 0); // group 1, ch 0, bank 1, idx 2
+    uint8_t xgOut[64]; int xgLen = 0;
+    for(int i=0;i<2;i++){ xg.UMPStreamParse(g0[i]); while(xg.availableBS()) xgOut[xgLen++]=xg.readBS(); }
+    for(int i=0;i<2;i++){ xg.UMPStreamParse(g1[i]); while(xg.availableBS()) xgOut[xgLen++]=xg.readBS(); }
+    // Both group segments must carry the parameter number (24 bytes).
+    uint8_t xgExpected[24] = {
+        0xB0,0x65,0x01, 0xB0,0x64,0x02, 0xB0,0x06,0x00, 0xB0,0x26,0x00,
+        0xB0,0x65,0x01, 0xB0,0x64,0x02, 0xB0,0x06,0x00, 0xB0,0x26,0x00
+    };
+    passFail(xgLen, 24);
+    for(int i=0;i<24 && i<xgLen;i++) passFail(xgOut[i], xgExpected[i]);
+    printf(" #30-1 cross-group RPN re-emits parameter number\n");
+
+    // Test #30-2: single-group regression, output must stay identical to current.
+    umpToBytestream sg;
+    auto s0 = UMPMessage::mt4RPN(0, 0, 1, 2, 0);
+    auto s1 = UMPMessage::mt4RPN(0, 0, 1, 2, 0); // same group, cache hit expected
+    uint8_t sgOut[64]; int sgLen = 0;
+    for(int i=0;i<2;i++){ sg.UMPStreamParse(s0[i]); while(sg.availableBS()) sgOut[sgLen++]=sg.readBS(); }
+    for(int i=0;i<2;i++){ sg.UMPStreamParse(s1[i]); while(sg.availableBS()) sgOut[sgLen++]=sg.readBS(); }
+    // Second RPN suppresses the parameter number (cache hit): 12 + 6 = 18 bytes.
+    passFail(sgLen, 18);
+    passFail(sgOut[0], 0xB0);   // first RPN carries the parameter number
+    passFail(sgOut[1], 0x65);
+    passFail(sgOut[12], 0xB0);  // second RPN starts straight at data entry (CC6)
+    passFail(sgOut[13], 0x06);
+    printf(" #30-2 single-group unchanged (param suppressed on repeat)\n");
+
+    // Test #30-3: running status re-emitted across a group boundary (MT4/M2CVM).
+    umpToBytestream rs;
+    rs.enableRunningStatus = true;
+    auto rc0 = UMPMessage::mt4CC(0, 0, 7, 0); // group 0 ch 0 CC7
+    auto rc1 = UMPMessage::mt4CC(1, 0, 7, 0); // group 1 ch 0 CC7
+    uint8_t rsOut[32]; int rsLen = 0;
+    for(int i=0;i<2;i++){ rs.UMPStreamParse(rc0[i]); while(rs.availableBS()) rsOut[rsLen++]=rs.readBS(); }
+    for(int i=0;i<2;i++){ rs.UMPStreamParse(rc1[i]); while(rs.availableBS()) rsOut[rsLen++]=rs.readBS(); }
+    passFail(rsOut[0], 0xB0);
+    passFail(rsOut[3], 0xB0); // status re-emitted after group change
+    printf(" #30-3 running status reset on group change\n");
+
+    // Test #30-4: setFilterGroup still isolates a single group (no spurious reset).
+    umpToBytestream fg;
+    fg.setFilterGroup(0);
+    auto f0 = UMPMessage::mt4RPN(0, 0, 1, 2, 0);
+    auto f1 = UMPMessage::mt4RPN(1, 0, 1, 2, 0); // filtered out
+    uint8_t fgOut[64]; int fgLen = 0;
+    for(int i=0;i<2;i++){ fg.UMPStreamParse(f0[i]); while(fg.availableBS()) fgOut[fgLen++]=fg.readBS(); }
+    for(int i=0;i<2;i++){ fg.UMPStreamParse(f1[i]); while(fg.availableBS()) fgOut[fgLen++]=fg.readBS(); }
+    passFail(fgLen, 12); // only group 0 passes; full RPN, no group-1 bytes
+    passFail(fgOut[0], 0xB0);   // group 0 full RPN present
+    passFail(fgOut[1], 0x65);
+    printf(" #30-4 setFilterGroup unaffected\n");
+
+    // Test #30-5: same as #30-3 but on the M1CVM branch (MT2, MIDI 1.0 CVM).
+    umpToBytestream rs1;
+    rs1.enableRunningStatus = true;
+    uint32_t m1c0 = UMPMessage::mt2CC(0, 0, 7, 0); // group 0 ch 0 CC7 (single word)
+    uint32_t m1c1 = UMPMessage::mt2CC(1, 0, 7, 0); // group 1 ch 0 CC7
+    uint8_t m1Out[16]; int m1Len = 0;
+    rs1.UMPStreamParse(m1c0); while(rs1.availableBS()) m1Out[m1Len++]=rs1.readBS();
+    rs1.UMPStreamParse(m1c1); while(rs1.availableBS()) m1Out[m1Len++]=rs1.readBS();
+    passFail(m1Out[0], 0xB0);
+    passFail(m1Out[3], 0xB0); // status re-emitted after group change
+    printf(" #30-5 M1CVM running status reset on group change\n");
+
     //***** MIDI-CI Tests *************
     runMIDICITests();
 
