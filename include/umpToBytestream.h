@@ -44,6 +44,21 @@ class umpToBytestream{
         uint8_t lastRPN_LSB[16];
         uint8_t lastNRPN_MSB[16];
         uint8_t lastNRPN_LSB[16];
+        uint8_t lastGroupSeen = 255;
+
+        void resetGroupState(){
+            lastRunningStatus = 255;
+            for (int ch = 0; ch < 16; ch++) {
+                lastRPN_MSB[ch] = 255;
+                lastRPN_LSB[ch] = 255;
+                lastNRPN_MSB[ch] = 255;
+                lastNRPN_LSB[ch] = 255;
+            }
+        }
+
+        void checkGroupChange(){
+            if (group != lastGroupSeen) { resetGroupState(); lastGroupSeen = group; }
+        }
 
 		void increaseWrite(){
 			bufferLength++;
@@ -86,13 +101,8 @@ class umpToBytestream{
             readIndex = 0;
             writeIndex = 0;
             bufferLength = 0;
-            lastRunningStatus = 255;
-            for (int ch = 0; ch < 16; ch++) {
-                lastRPN_MSB[ch] = 255;
-                lastRPN_LSB[ch] = 255;
-                lastNRPN_MSB[ch] = 255;
-                lastNRPN_LSB[ch] = 255;
-            }
+            resetGroupState();
+            lastGroupSeen = 255;
         }
 
 		bool availableBS(){
@@ -151,6 +161,7 @@ class umpToBytestream{
                             if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
+                            checkGroupChange();
                             uint8_t stsCh = UMP >> 16 & 0xFF;
 
                             checkRunningStatusAndAddByte(stsCh);
@@ -231,6 +242,7 @@ class umpToBytestream{
                             if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
+                            checkGroupChange();
                             uint8_t status = ump64word1 >> 16 & 0xF0;
                             uint8_t channel = ump64word1 >> 16 & 0xF;
                             uint8_t val1 = ump64word1 >> 8 & 0x7F;
