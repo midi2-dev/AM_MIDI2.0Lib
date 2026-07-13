@@ -144,6 +144,8 @@ class umpToBytestream{
                                 bsOut[writeIndex] = UMP & 0x7F;
                                 increaseWrite();
                             }
+                            // System Common (F1-F6) cancels running status; Real Time (F8+) does not.
+                            if (sysByte < 0xF8) { lastRunningStatus = 255; }
                             return;
                             break;
                         }
@@ -224,6 +226,8 @@ class umpToBytestream{
                                 bsOut[writeIndex] = SYSEX_STOP;
                                 increaseWrite();
                             }
+                            // System Exclusive cancels running status.
+                            lastRunningStatus = 255;
                             break;
                         }
                         case UMP_M2CVM:{
