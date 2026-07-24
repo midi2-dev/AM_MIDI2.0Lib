@@ -154,6 +154,10 @@ class bytestreamToUMP{
 					dumpSysex7State(true);
 				}
                 else if (midi1Byte == SYSEX_STOP){
+                	if (sysex7State == 0) {
+                		//This is a bad Sysex End Byte - received before a 0xF0
+                		return;
+                	}
                     umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
                     umpMess[writeIndex] +=  ((sysex7State == 1?0:3) + 0L) << 20;
                     umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16) ;
@@ -162,6 +166,7 @@ class bytestreamToUMP{
                     umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5];
                     increaseWrite();
                     sysex7State = 0;
+                	sysex7Pos = 0;
                     M2Utils::clear(sysex, 0, sizeof(sysex));
                 }
 			} else if(sysex7State >= 1){

@@ -43,8 +43,10 @@ void testRun_bsToUmp(const char* heading, uint8_t *bytes, int btyelength, uint32
 
     for(int i=0; i<btyelength; i++){
         BS2UMP.bytestreamParse(bytes[i]);
+       // printf(" byte in %#02x \n", bytes[i]);
         while(BS2UMP.availableUMP()){
             uint32_t ump = BS2UMP.readUMP();
+            //printf(" UMP out %#08x \n", ump);
             //ump contains a ump 32 bit value. UMP messages that have 64bit will produce 2 UMP words
             passFail (ump, testCheck[testCounter++]);
 
@@ -201,6 +203,28 @@ int main(){
     };
 
     testRun_bsToUmp(" Test 11 sysex 2 w/Timing Clock : ", bytesSyesex, 70, testsSysex2,29);
+
+    uint8_t bytesF7F7[] =
+    {
+        0xF0, 0x01, 0x02, 0x03, 0x04, 0x05,                     // Scenario 1: 5 data bytes no f7
+        0xF0, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,   // Scenario 2: 8 data bytes no f7
+        0xF0, 0x21, 0x22, 0x23, 0x24, 0x25, 0xF7, 0xF7,         // Scenario 3: 5 data bytes, two f7
+        0xF0, 0xF0, 0x31, 0x32, 0x33, 0x34, 0xF7,               // Scenario 4: 4 data bytes, two f0
+    };
+
+    uint32_t expectedWordsF7F7[] =
+    {
+        0x30150102, 0x03040500,                             // Scenario 1: Just SysEx Start - No End.
+        0x30161112, 0x13141516, 0x30221718, 0x00000000,     // Scenario 2: SysEx Start + Continue with 8 data bytes, no F7, so no SysEx End
+        0x30052122, 0x23242500,                             // Scenario 3: SysEx Complete in one message with 5 data bytes
+                                                            // Scenario 3: Extra F7 causes data corruption currently. Should just be ignored, but produces a 30350000 - using same data byte count as previous message
+        0x30043132, 0x33340000,                             // Scenario 4:  SysEx Complete in one message with 4 data bytes
+
+    };
+
+    testRun_bsToUmp(" Test 12 BAD sysex with double F0,F7 : ", bytesF7F7, 30, expectedWordsF7F7,10);
+
+
 
     //******** UMP ByteSteam  ***************
     printf("UMP to ByteSteam \n");
