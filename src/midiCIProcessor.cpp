@@ -408,7 +408,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
             }
 
             //Disabled Profile Length
-            int enabledProfileOffset = intTemp[0] * 5 + 14;
+            int enabledProfileOffset = intTemp[0] * 5 + 16;
             if (
                     sysexPos == enabledProfileOffset
                     || sysexPos == 1 + enabledProfileOffset
@@ -417,7 +417,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
             }
 
             if (sysexPos >= 16 && sysexPos < enabledProfileOffset) {
-                uint8_t pos = (sysexPos - 14) % 5;
+                uint8_t pos = (sysexPos - 16) % 5;
                 buffer[pos] = s7Byte;
                 if (pos == 4 && recvSetProfileEnabled != nullptr) {
 
@@ -428,8 +428,8 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
             }
 
             if (sysexPos >= 2 + enabledProfileOffset &&
-                sysexPos < enabledProfileOffset + intTemp[1] * 5) {
-                uint8_t pos = (sysexPos - 14) % 5;
+                sysexPos < 2 + enabledProfileOffset + intTemp[1] * 5) {
+                uint8_t pos = (sysexPos - 2 - enabledProfileOffset) % 5;
                 buffer[pos] = s7Byte;
                 if (pos == 4 && recvSetProfileDisabled != nullptr) {
                     recvSetProfileDisabled(midici, {buffer[0], buffer[1],
@@ -614,7 +614,7 @@ void midiCIProcessor::processPESysex(uint8_t s7Byte){
                                        buffer[2]
                     );
 
-                if(midici.ciType == MIDICI_PE_CAPABILITYREPLY && recvPECapabilities != nullptr)
+                if(midici.ciType == MIDICI_PE_CAPABILITYREPLY && recvPECapabilitiesReplies != nullptr)
                     recvPECapabilitiesReplies(midici,
                                               buffer[0],
                                               buffer[1],
