@@ -229,7 +229,6 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
 
                     if (midici.ciType == MIDICI_NAK && recvNAK != nullptr)
                         recvNAK(
-
                             midici,
                             (uint8_t) intTemp[0],
                             (uint8_t) intTemp[1],
@@ -240,7 +239,6 @@ void midiCIProcessor::processMIDICI(uint8_t s7Byte){
                     );
                     if (midici.ciType == MIDICI_ACK && midici.ciVer > 1 && recvACK != nullptr)
                         recvACK(
-
                             midici,
                             (uint8_t) intTemp[0],
                             (uint8_t) intTemp[1],

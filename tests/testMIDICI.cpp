@@ -157,6 +157,55 @@ void testProfiles() {
     passFailCI(profileSpecificReceived, "Profile Specific Data received");
 }
 
+void testProfileInquiryReply() {
+    printf("Test Profile Inquiry Reply\n");
+    uint8_t sysex[512];
+    uint32_t srcMUID = 0xBBBBBBB;
+    uint32_t destMUID = 0xCCCCCC;
+    std::array<uint8_t, 5> enabledProfile = {{0x7F, 0x01, 0x02, 0x03, 0x04}};
+    std::array<uint8_t, 5> disabledProfile = {{0x7F, 0x0A, 0x0B, 0x0C, 0x0D}};
+
+    midiCIProcessor processor;
+
+    bool enabledReceived = false;
+    bool disabledReceived = false;
+    processor.setRecvProfileEnabled([&](MIDICI ciDetails, std::array<uint8_t, 5> rProfile, uint8_t channels) {
+        enabledReceived = true;
+        passFailCI(rProfile == enabledProfile, "Profile Inquiry Reply Enabled profile matches");
+        passFailCI(channels == 0, "Profile Inquiry Reply enabled channels is 0");
+        passFailCI(ciDetails.remoteMUID == srcMUID, "Profile Inquiry Reply MUID matches");
+    });
+    processor.setRecvProfileDisabled([&](MIDICI ciDetails, std::array<uint8_t, 5> rProfile, uint8_t channels) {
+        disabledReceived = true;
+        passFailCI(rProfile == disabledProfile, "Profile Inquiry Reply Disabled profile matches");
+        passFailCI(channels == 0, "Profile Inquiry Reply disabled channels is 0");
+    });
+
+    uint16_t len = CIMessage::sendProfileListResponse(sysex, 0x02, srcMUID, destMUID, 0x7F, 1, enabledProfile.data(), 1, disabledProfile.data());
+    processor.startSysex7(0, 0x7F);
+    for (uint16_t i = 0; i < len; i++) processor.processMIDICI(sysex[i]);
+    processor.endSysex7();
+    passFailCI(enabledReceived, "Profile Inquiry Reply enabled profile received");
+    passFailCI(disabledReceived, "Profile Inquiry Reply disabled profile received");
+
+    // Test with no enabled and no disabled profiles
+    processor.setRecvProfileEnabled([&](MIDICI ciDetails, std::array<uint8_t, 5> rProfile, uint8_t channels) {
+        (void)rProfile; (void)channels;
+    });
+    processor.setRecvProfileDisabled([&](MIDICI ciDetails, std::array<uint8_t, 5> rProfile, uint8_t channels) {
+        (void)rProfile; (void)channels;
+    });
+    len = CIMessage::sendProfileListResponse(sysex, 0x02, srcMUID, destMUID, 0x7F, 0, nullptr, 0, nullptr);
+    processor.startSysex7(0, 0x7F);
+    for (uint16_t i = 0; i < len; i++)
+    {
+        //printf(" %d: %#02x",i,sysex[i]);
+        processor.processMIDICI(sysex[i]);
+    }
+    processor.endSysex7();
+    passFailCI(len == 17, "Empty Profile Inquiry Reply length is correct");
+}
+
 void testInvalidateMUID() {
     printf("Test Invalidate MUID\n");
     uint8_t sysex[512];
@@ -175,6 +224,45 @@ void testInvalidateMUID() {
     for (uint16_t i = 0; i < len; i++) processor.processMIDICI(sysex[i]);
     processor.endSysex7();
     passFailCI(invalidateReceived, "Invalidate MUID received");
+}
+
+void testPECapabilities() {
+    printf("Test Property Exchange Capabilities Messages\n");
+    uint8_t sysex[512];
+    uint32_t srcMUID = 0xDDDDDDD;
+    uint32_t destMUID = 0xEEEEEEE;
+
+    midiCIProcessor processor;
+
+    // PE Capabilities Request
+    bool peCapRequestReceived = false;
+    processor.setPECapabilities([&](MIDICI ciDetails, uint8_t numSimul, uint8_t maj, uint8_t min) {
+        peCapRequestReceived = true;
+        passFailCI(ciDetails.remoteMUID == srcMUID, "PE Capabilities Request MUID matches");
+        passFailCI(numSimul == 2, "PE Capabilities Request numSimul matches");
+        passFailCI(maj == 1, "PE Capabilities Request majVer matches");
+        passFailCI(min == 0, "PE Capabilities Request minVer matches");
+    });
+    uint16_t len = CIMessage::sendPECapabilityRequest(sysex, 0x02, srcMUID, destMUID, 2, 1, 0);
+    processor.startSysex7(0, 0x7F);
+    for (uint16_t i = 0; i < len; i++) processor.processMIDICI(sysex[i]);
+    processor.endSysex7();
+    passFailCI(peCapRequestReceived, "PE Capabilities Request received");
+
+    // PE Capabilities Reply
+    bool peCapReplyReceived = false;
+    processor.setPECapabilitiesReply([&](MIDICI ciDetails, uint8_t numSimul, uint8_t maj, uint8_t min) {
+        peCapReplyReceived = true;
+        passFailCI(ciDetails.remoteMUID == srcMUID, "PE Capabilities Reply MUID matches");
+        passFailCI(numSimul == 4, "PE Capabilities Reply numSimul matches");
+        passFailCI(maj == 0, "PE Capabilities Reply majVer matches");
+        passFailCI(min == 0, "PE Capabilities Reply minVer matches");
+    });
+    len = CIMessage::sendPECapabilityReply(sysex, 0x02,  srcMUID, destMUID, 4, 0, 0);
+    processor.startSysex7(0, 0x7F);
+    for (uint16_t i = 0; i < len; i++) processor.processMIDICI(sysex[i]);
+    processor.endSysex7();
+    passFailCI(peCapReplyReceived, "PE Capabilities Reply received");
 }
 
 void testACKNAK() {
@@ -287,8 +375,10 @@ void runMIDICITests() {
     testDiscovery();
    // testProtocols();
     testProfiles();
+    testProfileInquiryReply();
     testInvalidateMUID();
     testACKNAK();
+    testPECapabilities();
     testPE();
     testProcessInquiry();
 }
