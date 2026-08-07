@@ -148,7 +148,8 @@ void testProfiles() {
     uint8_t specData[] = {0x10, 0x20, 0x30, 0x40};
     processor.setRecvProfileSpecificData([&](MIDICI ciDetails, std::array<uint8_t, 5> rProfile, uint16_t dLen, uint8_t* data, uint16_t part, bool last) {
         profileSpecificReceived = true;
-        passFailCI(dLen == 4 && data[0] == 0x10, "Profile Specific Data matches");
+        passFailCI(rProfile == profile, "Profile Specific Data profile matches");
+        passFailCI(dLen == 4 && data[0] == 0x10 && data[3] == 0x40, "Profile Specific Data matches");
     });
     len = CIMessage::sendProfileSpecificData(sysex, 0x02, srcMUID, destMUID, 0x7F, profile, 4, specData);
     processor.startSysex7(0, 0x7F);
