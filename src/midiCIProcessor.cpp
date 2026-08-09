@@ -559,7 +559,10 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
                     (sysexPos >= 23 && sysexPos <= 22 + dataLength)
                     || 	(dataLength == 0 && sysexPos == 22)
                     ){
-                if(dataLength != 0 )buffer[charOffset] = s7Byte;
+                // Buffer the data *past* the 5-byte profile id held in buffer[0..4]
+                // (as MIDICI_PROFILE_DETAILS_REPLY does), so the payload does not
+                // clobber the profile we report to the callback.
+                if(dataLength != 0 )buffer[5 + charOffset] = s7Byte;
 
                 bool lastByteOfSet = (sysexPos == 22 + dataLength);
 
@@ -569,7 +572,7 @@ void midiCIProcessor::processProfileSysex(uint8_t s7Byte){
                         ){
                     recvProfileSpecificData(midici, {buffer[0], buffer[1],
                                                 buffer[2], buffer[3],
-                                                buffer[4]}, charOffset+1, buffer, intTemp[1], lastByteOfSet);
+                                                buffer[4]}, charOffset+1, &buffer[5], intTemp[1], lastByteOfSet);
                     intTemp[1]++;
                 }
             }
