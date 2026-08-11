@@ -132,6 +132,15 @@ int main(){
 
     //******** ByteSteam to UMP ***************
     printf("ByteSteam to UMP \n");
+
+    uint8_t bytesF8[] =
+    {
+        // 12 bytes total. This reflects what happens with inMusic drivers
+        0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    uint32_t testF8[] = {0x10f80000};
+    testRun_bsToUmp(" Test InMusic F8: ", bytesF8, 12, testF8,1);
+
     uint8_t bytes1[] = {0x81, 0x60, 0x50, 0x70, 0x70};
     uint32_t tests1[] = {0x20816050, 0x20817070};
     testRun_bsToUmp(" Test 1 Note On w/running status: ", bytes1, 5, tests1,2);
@@ -154,6 +163,8 @@ int main(){
         0x30360000,0x10000000
     };
     testRun_bsToUmp(" Test 4 Sysex : ", bytes4, 32, tests4,10);
+
+    testRun_bsToUmp(" ReTest InMusic F8: ", bytesF8, 12, testF8,1);
 
     //Let's Send bad UMP Data
     uint32_t tests5_bad[] = {0x10F47F7F};

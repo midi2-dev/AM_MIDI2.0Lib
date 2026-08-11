@@ -29,8 +29,8 @@
 class bytestreamToUMP{
 
 	private:
-		uint8_t d0;
-		uint8_t d1;
+		uint8_t d0=0;
+		uint8_t d1=0;
 		
 		uint8_t sysex7State = 0;
 		uint8_t sysex7Pos = 0;
@@ -94,6 +94,8 @@ class bytestreamToUMP{
             clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
             clear(rpnMsb, 255, sizeof(rpnMsb));
             clear(rpnLsb, 255, sizeof(rpnLsb));
+			d0=0;
+			d1=0;
         }
 
         void resetBuffer(){
