@@ -30,7 +30,7 @@ class bytestreamToUMP{
 
 	private:
 		uint8_t d0=0;
-		uint8_t d1=0;
+		uint8_t d1=255;
 		
 		uint8_t sysex7State = 0;
 		uint8_t sysex7Pos = 0;
@@ -95,7 +95,7 @@ class bytestreamToUMP{
             clear(rpnMsb, 255, sizeof(rpnMsb));
             clear(rpnLsb, 255, sizeof(rpnLsb));
 			d0=0;
-			d1=0;
+			d1=255;
         }
 
         void resetBuffer(){
@@ -150,6 +150,10 @@ class bytestreamToUMP{
 			}
 
 			if (midi1Byte & NOTE_OFF) { // Status byte received
+				if (sysex7State==1 && midi1Byte != SYSEX_STOP){
+					dumpSysex7State(true);
+					sysex7State = 0;
+				}
 				d0 = midi1Byte;
 				d1 = 255;
 				if (midi1Byte == SYSEX_START){

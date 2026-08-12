@@ -235,6 +235,47 @@ int main(){
 
     testRun_bsToUmp(" Test 12 BAD sysex with double F0,F7 : ", bytesF7F7, 30, expectedWordsF7F7,10);
 
+    uint8_t bytesF790[] =
+    {
+    0xF0, 0x11 , 0x22 , 0x70 , 0x3C , 0x7F , 0x90 , 0x3E , 0x7F
+    };
+
+    uint32_t expectedWordsF790[] =
+    {
+        0x30151122, 0x0703C7F00,                             // Scenario 1: Just SysEx Start - No End.
+        0x20903E7F
+    };
+
+    testRun_bsToUmp(" Test 13 BAD sysex with F0,90 : ", bytesF790, 9, expectedWordsF790,3);
+
+    uint8_t bytesF7902[] ={
+        0xF0 , 0x11 , 0x22 ,
+        0x90 , 0x3C , 0x7F ,
+        0xF7 ,
+        0x90 , 0x3E , 0x7F};
+
+    uint32_t expectedWordsF7902[] =
+    {
+        0x30121122, 0x00000000,                             // Scenario 1: Just SysEx Start - No End.
+        0x20903C7F,
+        0x20903E7F
+    };
+
+    testRun_bsToUmp(" Test 15 BAD sysex with  F0,90, F7, 90 : ", bytesF7902, 10, expectedWordsF7902,4);
+
+
+    uint8_t bytesF7903[] ={
+        0xF0 , 0x11 , 0x12 ,
+        0xF0 , 0x31 , 0x32 , 0x33 , 0x34 , 0xF7};
+
+    uint32_t expectedWordsF7903[] =
+    {
+        0x30121112, 0x00000000,                             // Scenario 1: Just SysEx Start - No End.
+        0x30043132, 0x33340000,
+    };
+
+    testRun_bsToUmp(" Test 16 BAD sysex with  F0,F0, F7 : ", bytesF7903, 9, expectedWordsF7903,4);
+
 
 
     //******** UMP ByteSteam  ***************
