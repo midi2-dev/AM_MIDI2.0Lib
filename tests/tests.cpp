@@ -277,6 +277,21 @@ int main(){
     testRun_bsToUmp(" Test 16 BAD sysex with  F0,F0, F7 : ", bytesF7903, 9, expectedWordsF7903,4);
 
 
+    uint8_t bytesF7904[] ={
+        0xF0 , 0x01 , 0x02 , 0x03 , 0x04 , 0x05 , 0x06 ,
+        0x07 , 0x08 ,
+        0x90 , 0x3C , 0x7F};
+
+    uint32_t expectedWordsF7904[] =
+    {
+        0x30160102, 0x03040506,                             // Start, buffer full
+        0x30220708, 0x00000000,                             // Continue with the bytes held when 0x90 arrived
+        0x20903C7F
+    };
+
+    testRun_bsToUmp(" Test 17 BAD sysex with  F0, 8 bytes, 90 : ", bytesF7904, 12, expectedWordsF7904,5);
+
+
 
     //******** UMP ByteSteam  ***************
     printf("UMP to ByteSteam \n");
