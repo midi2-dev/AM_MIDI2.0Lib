@@ -150,7 +150,7 @@ class bytestreamToUMP{
 			}
 
 			if (midi1Byte & NOTE_OFF) { // Status byte received
-				if (sysex7State==1 && midi1Byte != SYSEX_STOP){
+				if (sysex7State>=1 && midi1Byte != SYSEX_STOP){
 					dumpSysex7State(true);
 					sysex7State = 0;
 				}
