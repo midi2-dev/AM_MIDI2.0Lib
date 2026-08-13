@@ -52,14 +52,14 @@ class bytestreamToUMP{
 		void bsToUMP(uint8_t b0, uint8_t b1, uint8_t b2){
 		  uint8_t status = b0 & 0xF0;
 
-		   if(b0 >= TIMING_CODE){
-			  umpMess[writeIndex] = ((UMP_SYSTEM << 4) + defaultGroup + 0L) << 24;
+		   if(b0 >= MIDI1_MSGS::TIMING_CODE){
+			  umpMess[writeIndex] = ((MIDI1_MSGS::UMP_SYSTEM << 4) + defaultGroup + 0L) << 24;
 			  umpMess[writeIndex] +=  (b0 + 0L) << 16;
 			  umpMess[writeIndex] +=  b1  << 8;
 			  umpMess[writeIndex] +=  b2;
 		   	  increaseWrite();
-		   }else if(status>=NOTE_OFF && status<=PITCH_BEND){
-			  umpMess[writeIndex] = ((UMP_M1CVM << 4) + defaultGroup + 0L) << 24;
+		   }else if(status>=MIDI1_MSGS::NOTE_OFF && status<=MIDI1_MSGS::PITCH_BEND){
+			  umpMess[writeIndex] = ((MIDI1_MSGS::UMP_M1CVM << 4) + defaultGroup + 0L) << 24;
 			  umpMess[writeIndex] +=  (b0 + 0L) << 16;
 			  umpMess[writeIndex] +=  b1  << 8;
 			  umpMess[writeIndex] +=  b2;
@@ -121,7 +121,7 @@ class bytestreamToUMP{
 		void dumpSysex7State(bool reset) {
 			if (sysex7State > 0 && sysex7Pos > 0) {
 				//Then dump current bytes
-				umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
+				umpMess[writeIndex] = ((MIDI1_MSGS::UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
 				umpMess[writeIndex] +=  (sysex7State + 0L) << 20;
 				umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16);
 				umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
@@ -137,29 +137,29 @@ class bytestreamToUMP{
 		}
 		
 		void bytestreamParse(uint8_t midi1Byte){
-			if (midi1Byte == TUNEREQUEST
-                || midi1Byte ==  TIMINGCLOCK
-                || midi1Byte ==  SEQSTART
-                || midi1Byte ==  SEQCONT
-                || midi1Byte ==  SEQSTOP
-                || midi1Byte ==  ACTIVESENSE
-                || midi1Byte ==  SYSTEMRESET
+			if (midi1Byte == MIDI1_MSGS::TUNEREQUEST
+                || midi1Byte ==  MIDI1_MSGS::TIMINGCLOCK
+                || midi1Byte ==  MIDI1_MSGS::SEQSTART
+                || midi1Byte ==  MIDI1_MSGS::SEQCONT
+                || midi1Byte ==  MIDI1_MSGS::SEQSTOP
+                || midi1Byte ==  MIDI1_MSGS::ACTIVESENSE
+                || midi1Byte ==  MIDI1_MSGS::SYSTEMRESET
                 ) {
 				bsToUMP(midi1Byte,0,0);
 				return;
 			}
 
-			if (midi1Byte & NOTE_OFF) { // Status byte received
+			if (midi1Byte & MIDI1_MSGS::NOTE_OFF) { // Status byte received
 				if (sysex7State>=1 && midi1Byte != SYSEX_STOP){
 					dumpSysex7State(true);
 					sysex7State = 0;
 				}
 				d0 = midi1Byte;
 				d1 = 255;
-				if (midi1Byte == SYSEX_START){
+				if (midi1Byte == MIDI1_MSGS::SYSEX_START){
 					dumpSysex7State(true);
 				}
-                else if (midi1Byte == SYSEX_STOP){
+                else if (midi1Byte == MIDI1_MSGS::SYSEX_STOP){
                 	if (sysex7State == 0) {
                 		//This is a bad Sysex End Byte - received before a 0xF0
                 		return;
@@ -177,7 +177,7 @@ class bytestreamToUMP{
                 }
 			} else if(sysex7State >= 1){
 				if(sysex7Pos%6 == 0 && sysex7Pos !=0){
-                    umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
+                    umpMess[writeIndex] = ((MIDI1_MSGS::UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
 					umpMess[writeIndex] +=  (sysex7State + 0L) << 20;
 					umpMess[writeIndex] +=  6L << 16;
 					umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
@@ -193,24 +193,24 @@ class bytestreamToUMP{
             else if (d1 != 255) { // Second byte
                 bsToUMP(d0, d1, midi1Byte);
                 d1 = 255;
-            	if (!(enableRunningStatus && d0 < SYSEX_START)){
+            	if (!(enableRunningStatus && d0 < MIDI1_MSGS::SYSEX_START)){
             		d0 = 0;
             	}
             }
             else if (d0){ // status byte set
                 if (
-                        (d0 & 0xF0) == PROGRAM_CHANGE
-                        || (d0 & 0xF0) == CHANNEL_PRESSURE
-                        || d0 == TIMING_CODE
-                        || d0 == SONG_SELECT
+                        (d0 & 0xF0) == MIDI1_MSGS::PROGRAM_CHANGE
+                        || (d0 & 0xF0) == MIDI1_MSGS::CHANNEL_PRESSURE
+                        || d0 == MIDI1_MSGS::TIMING_CODE
+                        || d0 == MIDI1_MSGS::SONG_SELECT
                         ) {
                     bsToUMP(d0, midi1Byte, 0);
-                	if (!(enableRunningStatus && d0 < SYSEX_START)){
+                	if (!(enableRunningStatus && d0 < MIDI1_MSGS::SYSEX_START)){
                 		d0 = 0;
                 	}
                 } else if (d0 == 0xF4 || d0 == 0xF5 || d0 == 0xFD || d0==0xF9) {
                     resetBuffer();
-                } else if (d0 < SYSEX_START || d0 == SPP) { // First data byte
+                } else if (d0 < MIDI1_MSGS::SYSEX_START || d0 == MIDI1_MSGS::SPP) { // First data byte
                     d1=midi1Byte;
                 }
             }

@@ -72,19 +72,19 @@ class umpToMIDI1Protocol{
                 //First part of a UMP Message
                 mType = UMP >> 28;
                 switch (mType) {
-                    case UMP_UTILITY: //32 bits Utility Messages
+                    case MIDI1_MSGS::UMP_UTILITY: //32 bits Utility Messages
                     case 0x6: //32 Reserved
                     case 0x7: //32 Reserved
                         return;
                         break;
-                    case UMP_M1CVM: //32 Bits MIDI 1.0 Channel Voice Messages
-                    case UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
+                    case MIDI1_MSGS::UMP_M1CVM: //32 Bits MIDI 1.0 Channel Voice Messages
+                    case MIDI1_MSGS::UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
                         umpMess[writeIndex] = UMP;increaseWrite();
                         return;
                         break;
                     }
-                    case UMP_SYSEX7: //64 bits Data Messages (including System Exclusive)
-                    case UMP_M2CVM: //MIDI2.0 Channel Voice Messages
+                    case MIDI1_MSGS::UMP_SYSEX7: //64 bits Data Messages (including System Exclusive)
+                    case MIDI1_MSGS::UMP_M2CVM: //MIDI2.0 Channel Voice Messages
                         ump64word1 = UMP;
                         UMPPos++;
                         break;
@@ -101,7 +101,7 @@ class umpToMIDI1Protocol{
                     case 0xA: //64 Reserved
                         UMPPos=0;
                         break;
-                    case UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
+                    case MIDI1_MSGS::UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
                         UMPPos = 0;
                         umpMess[writeIndex] = ump64word1;
                         increaseWrite();
@@ -109,7 +109,7 @@ class umpToMIDI1Protocol{
                         increaseWrite();
                         break;
                     }
-                    case UMP_M2CVM:{
+                    case MIDI1_MSGS::UMP_M2CVM:{
                         UMPPos=0;
                         uint8_t status = (ump64word1 >> 16) & 0xF0;
                         uint8_t channel = (ump64word1 >> 16) & 0xF;
@@ -119,7 +119,7 @@ class umpToMIDI1Protocol{
 
                         switch (status)
                         {
-                        case NOTE_OFF:
+                        case MIDI1_MSGS::NOTE_OFF:
                             {
                                 //note off
                                 uint8_t velocity = (uint8_t)M2Utils::scaleDown((UMP >> 16), 16, 7);
@@ -127,7 +127,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case NOTE_ON:
+                        case MIDI1_MSGS::NOTE_ON:
                             {
                                 //note on
                                 uint8_t velocity = (uint8_t)M2Utils::scaleDown((UMP >> 16), 16, 7);
@@ -139,7 +139,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case KEY_PRESSURE:
+                        case MIDI1_MSGS::KEY_PRESSURE:
                             {
                                 //poly aftertouch
                                 uint8_t value = (uint8_t)M2Utils::scaleDown(UMP, 32, 7);
@@ -147,15 +147,15 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case CC:
+                        case MIDI1_MSGS::CC:
                             {
-                                //CC
+                                //MIDI1_MSGS::CC
                                 uint8_t value = (uint8_t)M2Utils::scaleDown(UMP, 32, 7);
                                 umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, val1, value);
                                 increaseWrite();
                                 break;
                             }
-                        case CHANNEL_PRESSURE:
+                        case MIDI1_MSGS::CHANNEL_PRESSURE:
                             {
                                 //Channel Pressure
                                 uint8_t value = (uint8_t)M2Utils::scaleDown(UMP, 32, 7);
@@ -163,7 +163,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case NRPN:
+                        case MIDI1_MSGS::NRPN:
                             {
                                 umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 99, val1);
                                 increaseWrite();
@@ -176,7 +176,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case RPN:
+                        case MIDI1_MSGS::RPN:
                             {
                                 //rpn
                                 umpMess[writeIndex] = UMPMessage::mt2CC(group, channel, 101, val1);
@@ -190,7 +190,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case PROGRAM_CHANGE:
+                        case MIDI1_MSGS::PROGRAM_CHANGE:
                             {
                                 //Program change
                                 if (ump64word1 & 0x1)
@@ -205,7 +205,7 @@ class umpToMIDI1Protocol{
                                 increaseWrite();
                                 break;
                             }
-                        case PITCH_BEND: //Pitch bend
+                        case MIDI1_MSGS::PITCH_BEND: //Pitch bend
                             umpMess[writeIndex] = UMPMessage::mt2PitchBend(group, channel, UMP >> 18);
                             increaseWrite();
                             break;

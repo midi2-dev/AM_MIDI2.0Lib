@@ -334,19 +334,19 @@ int main(){
 
     uint32_t inMt2_RPN1[] = {0x20B66500, 0x20B66406, 0x20B60608};
     uint32_t outMt4_RPN1[] = {0x40260006,0x10000000};
-    testRun_umpToM2(" Test 6 MT 2 RPN 0x6 no 38 : ", inMt2_RPN1, 3, outMt4_RPN1,2);
+    testRun_umpToM2(" Test 6 MT 2 MIDI1_MSGS::RPN 0x6 no 38 : ", inMt2_RPN1, 3, outMt4_RPN1,2);
 
     uint32_t inMt2_RPN2[] = {0x20B66500, 0x20B66406, 0x20B60608, 0x20B62600};
-    testRun_umpToM2(" Test 6 MT 2 RPN 0x6 with 38 : ", inMt2_RPN2, 4, outMt4_RPN1,2);
+    testRun_umpToM2(" Test 6 MT 2 MIDI1_MSGS::RPN 0x6 with 38 : ", inMt2_RPN2, 4, outMt4_RPN1,2);
 
     uint32_t inMt2_RPN3[] = {0x20B66520, 0x20B66406, 0x20B60608, 0x20B60609, 0x20B607EE};
     uint32_t outMt2_RPN3[] = {0x40262006,0x10000000,0x40262006,0x12000000,0x40b60700,0xdd75d75d};
-    testRun_umpToM2(" Test 6 MT 2 RPN 0x2006 no 38 twice followed by a Volume CC : ",
+    testRun_umpToM2(" Test 6 MT 2 MIDI1_MSGS::RPN 0x2006 no 38 twice followed by a Volume MIDI1_MSGS::CC : ",
         inMt2_RPN3, 5, outMt2_RPN3,6);
 
     uint32_t inMt2_RPN4[] = {0x20B66520, 0x20B66406, 0x20B60608, 0x20B62601, 0x20B60609 , 0x20B62602};
     uint32_t outMt2_RPN4[] = {0x40262006,0x10040000,0x40262006,0x12080000};
-    testRun_umpToM2(" Test 6 MT 2 RPN 0x2006 with 38 twice  : ",
+    testRun_umpToM2(" Test 6 MT 2 MIDI1_MSGS::RPN 0x2006 with 38 twice  : ",
         inMt2_RPN4, 6, outMt2_RPN4,4);
 
     //***** UMP Meesage Create *************
@@ -526,7 +526,7 @@ int main(){
     for(int i=0; i<2; i++) proc.processUMP(rtPNPB[i]);
     passFail(rtPNNote, 60);
     passFail(rtPNValue, 0x80000000);
-    passFail(rtPNStatus, PITCH_BEND_PERNOTE);
+    passFail(rtPNStatus, MIDI1_MSGS::PITCH_BEND_PERNOTE);
     printf(" PerNotePitchBend roundtrip\n");
 
     auto rtPNCC = UMPMessage::mt4PerNoteCC(0, 3, 48, 74, 0xABCD1234);
@@ -535,8 +535,8 @@ int main(){
     passFail(rtPNValue, 0xABCD1234);
     printf(" PerNoteCC roundtrip\n");
 
-    // mt4PerNoteRPN: group=1, ch=2, note=64, index=5 (RPN bank 0), value=0x12345678
-    // word0: MT=4 group=1 status=0x00(RPN_PERNOTE) ch=2 note=64 index=5
+    // mt4PerNoteRPN: group=1, ch=2, note=64, index=5 (MIDI1_MSGS::RPN bank 0), value=0x12345678
+    // word0: MT=4 group=1 status=0x00(MIDI1_MSGS::RPN_PERNOTE) ch=2 note=64 index=5
     //        0x41024005
     auto pnrpn = UMPMessage::mt4PerNoteRPN(1, 2, 64, 5, 0x12345678);
     uint32_t inPNRPN[] = {pnrpn[0], pnrpn[1]};
@@ -544,7 +544,7 @@ int main(){
     testRun_umpToump(" mt4PerNoteRPN note=64 idx=5 : ", inPNRPN, 2, outPNRPN);
 
     // mt4PerNoteManage: group=0, ch=0, note=60, optionFlags=3 (detach+reset)
-    // word0: MT=4 group=0 status=0xF0(PERNOTE_MANAGE) ch=0 note=60 flags=3
+    // word0: MT=4 group=0 status=0xF0(MIDI1_MSGS::PERNOTE_MANAGE) ch=0 note=60 flags=3
     //        0x40F03c03
     auto pnman = UMPMessage::mt4PerNoteManage(0, 0, 60, 3);
     uint32_t inPNMan[] = {pnman[0], pnman[1]};

@@ -116,12 +116,12 @@ class umpToBytestream{
                     mType = UMP >> 28;
                     group = UMP >> 24 & 0xF;
                     switch (mType) {
-                        case UMP_UTILITY: //32 bits Utility Messages
+                        case MIDI1_MSGS::UMP_UTILITY: //32 bits Utility Messages
                         case 0x6: //32 Reserved
                         case 0x7: //32 Reserved
                             return;
                             break;
-                        case UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
+                        case MIDI1_MSGS::UMP_SYSTEM: { //32 bits System Real Time and System Common Messages (except System Exclusive)
                             if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
@@ -149,7 +149,7 @@ class umpToBytestream{
                             return;
                             break;
                         }
-                        case UMP_M1CVM: {//32 Bits MIDI 1.0 Channel Voice Message
+                        case MIDI1_MSGS::UMP_M1CVM: {//32 Bits MIDI 1.0 Channel Voice Message
                             if(filterByGroup<16 && group != filterByGroup){
                                 return;
                             }
@@ -166,8 +166,8 @@ class umpToBytestream{
                             return;
                             break;
                         }
-                        case UMP_SYSEX7: //64 bits Data Messages (including System Exclusive)
-                        case UMP_M2CVM: //MIDI2.0 Channel Voice Messages
+                        case MIDI1_MSGS::UMP_SYSEX7: //64 bits Data Messages (including System Exclusive)
+                        case MIDI1_MSGS::UMP_M2CVM: //MIDI2.0 Channel Voice Messages
                             ump64word1 = UMP;
                             UMPPos++;
                             break;
@@ -184,7 +184,7 @@ class umpToBytestream{
                         case 0xA: //64 Reserved
                             UMPPos=0;
                             break;
-                        case UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
+                        case MIDI1_MSGS::UMP_SYSEX7: { //64 bits Data Messages (including System Exclusive) part 2
                                 UMPPos = 0;
                                 if(filterByGroup<16 && group != filterByGroup){
                                     return;
@@ -195,7 +195,7 @@ class umpToBytestream{
 
 
                             if (status <= 1) {
-                                bsOut[writeIndex] = SYSEX_START;
+                                bsOut[writeIndex] = MIDI1_MSGS::SYSEX_START;
                                 increaseWrite();
                             }
                             if (numSysexbytes > 0) {
@@ -223,14 +223,14 @@ class umpToBytestream{
                                 increaseWrite();
                             }
                             if (status == 0 || status == 3) {
-                                bsOut[writeIndex] = SYSEX_STOP;
+                                bsOut[writeIndex] = MIDI1_MSGS::SYSEX_STOP;
                                 increaseWrite();
                             }
                             // System Exclusive cancels running status.
                             lastRunningStatus = 255;
                             break;
                         }
-                        case UMP_M2CVM:{
+                        case MIDI1_MSGS::UMP_M2CVM:{
                             UMPPos=0;
                             if(filterByGroup<16 && group != filterByGroup){
                                 return;
@@ -242,36 +242,36 @@ class umpToBytestream{
                             uint8_t stsCh = status + channel;
 
                             switch (status) {
-                                case NOTE_OFF: //note off
-                                case NOTE_ON: { //note on
+                                case MIDI1_MSGS::NOTE_OFF: //note off
+                                case MIDI1_MSGS::NOTE_ON: { //note on
                                     checkRunningStatusAndAddByte(stsCh);
 
                                     bsOut[writeIndex] = val1; increaseWrite();
 
                                     uint8_t velocity = (uint8_t) M2Utils::scaleDown((UMP >> 16), 16, 7);
-                                    if (velocity == 0 && status == NOTE_ON) {
+                                    if (velocity == 0 && status == MIDI1_MSGS::NOTE_ON) {
                                         velocity = 1;
                                     }
                                     bsOut[writeIndex] = velocity; increaseWrite();
 
                                     break;
                                 }
-                                case KEY_PRESSURE: //poly aftertouch
-                                case CC: {//CC
+                                case MIDI1_MSGS::KEY_PRESSURE: //poly aftertouch
+                                case MIDI1_MSGS::CC: {//MIDI1_MSGS::CC
                                     checkRunningStatusAndAddByte(stsCh);
                                     bsOut[writeIndex] = val1; increaseWrite();
                                     uint8_t value = (uint8_t)M2Utils::scaleDown(UMP , 32, 7);
                                     bsOut[writeIndex] = value; increaseWrite();
                                     break;
                                 }
-                                case CHANNEL_PRESSURE: { //Channel Pressure
+                                case MIDI1_MSGS::CHANNEL_PRESSURE: { //Channel Pressure
                                         checkRunningStatusAndAddByte(stsCh);
                                     uint8_t value = (uint8_t) M2Utils::scaleDown(UMP, 32, 7);
                                     bsOut[writeIndex] = value; increaseWrite();
                                     break;
                                 }
-                                case RPN: {//rpn
-                                        stsCh = CC + channel;
+                                case MIDI1_MSGS::RPN: {//rpn
+                                        stsCh = MIDI1_MSGS::CC + channel;
                                         if(lastRPN_MSB[channel] != val1 || lastRPN_LSB[channel] != val2)
                                         {
                                             checkRunningStatusAndAddByte(stsCh);
@@ -289,19 +289,19 @@ class umpToBytestream{
 
                                         uint16_t val14bit = (uint16_t)M2Utils::scaleDown(UMP , 32, 14);
 
-                                        //bsOut[writeIndex] = CC + channel;increaseWrite();
+                                        //bsOut[writeIndex] = MIDI1_MSGS::CC + channel;increaseWrite();
                                         checkRunningStatusAndAddByte(stsCh);
                                         bsOut[writeIndex] = 6;increaseWrite();
                                         bsOut[writeIndex] = (val14bit >> 7) & 0x7F;increaseWrite();
-                                        //bsOut[writeIndex] = CC + channel;increaseWrite();
+                                        //bsOut[writeIndex] = MIDI1_MSGS::CC + channel;increaseWrite();
                                         checkRunningStatusAndAddByte(stsCh);
                                         bsOut[writeIndex] = 38;increaseWrite();
                                         bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
 
                                         break;
                                     }
-                                case NRPN: { //nrpn
-                                        stsCh = CC + channel;
+                                case MIDI1_MSGS::NRPN: { //nrpn
+                                        stsCh = MIDI1_MSGS::CC + channel;
                                         if(lastNRPN_MSB[channel] != val1 || lastNRPN_LSB[channel] != val2)
                                         {
                                             checkRunningStatusAndAddByte(stsCh);
@@ -326,26 +326,26 @@ class umpToBytestream{
                                         bsOut[writeIndex] = val14bit & 0x7F;increaseWrite();
                                         break;
                                     }
-                                case PROGRAM_CHANGE: { //Program change
+                                case MIDI1_MSGS::PROGRAM_CHANGE: { //Program change
                                     if (ump64word1 & 0x1) {
-                                        checkRunningStatusAndAddByte(CC + channel);
+                                        checkRunningStatusAndAddByte(MIDI1_MSGS::CC + channel);
                                         bsOut[writeIndex] = 0;
                                         increaseWrite();
                                         bsOut[writeIndex] = (UMP >> 8) & 0x7F;
                                         increaseWrite();
 
-                                        checkRunningStatusAndAddByte(CC + channel);
+                                        checkRunningStatusAndAddByte(MIDI1_MSGS::CC + channel);
                                         bsOut[writeIndex] = 32;
                                         increaseWrite();
                                         bsOut[writeIndex] = UMP & 0x7F;
                                         increaseWrite();
                                     }
-                                    checkRunningStatusAndAddByte( PROGRAM_CHANGE + channel);
+                                    checkRunningStatusAndAddByte( MIDI1_MSGS::PROGRAM_CHANGE + channel);
                                     bsOut[writeIndex] = (UMP >> 24) & 0x7F;
                                     increaseWrite();
                                     break;
                                 }
-                                case PITCH_BEND: //Pitch bend
+                                case MIDI1_MSGS::PITCH_BEND: //Pitch bend
                                     checkRunningStatusAndAddByte((ump64word1 >> 16) & 0xFF);
                                     bsOut[writeIndex] = (UMP >> 18) & 0x7F;increaseWrite();
                                     bsOut[writeIndex] = (UMP >> 25) & 0x7F;increaseWrite();

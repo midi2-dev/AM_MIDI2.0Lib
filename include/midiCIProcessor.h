@@ -32,7 +32,7 @@
 typedef std::tuple<uint32_t, uint8_t> reqId;  //muid-requestId
 
 struct MIDICI{
-    MIDICI() : umpGroup(255), deviceId(FUNCTION_BLOCK),ciType(255),ciVer(1), remoteMUID(0), localMUID(0),
+    MIDICI() : umpGroup(255), deviceId(MIDI1_MSGS::FUNCTION_BLOCK),ciType(255),ciVer(1), remoteMUID(0), localMUID(0),
         _reqTupleSet(false), totalChunks(0), numChunk(0), partialChunkCount(0), requestId(255) {}
     uint8_t umpGroup;
     uint8_t deviceId;
