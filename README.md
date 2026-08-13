@@ -1,17 +1,17 @@
 # AM MIDI 2.0 Lib 
 A MIDI 2.0 Library
 
-This is a general purposes Library for building MIDI 2.0 Devices and Applications. This library aims to work on 
-everything from embedded devices through to large scale applications. It provides the building blocks, processing and 
+This is a general-purpose Library for building MIDI 2.0 Devices and Applications. This library aims to work on 
+everything from embedded devices through to large-scale applications. It provides the building blocks, processing and 
 translations needed for most MIDI 2.0 Devices and Applications
 
 ## IMPORTANT! Please read first
 I hope that this library is useful to everyone making MIDI 2.0 Devices.
-If you do use this library please let me know! I am keen to see all the MIDI 2.0 Projects. This code is also available 
-for DIY and commercial use (MIT Licence). Please note that use of this library is at your own risk.
+If you do use this library, please let me know! I am keen to see all the MIDI 2.0 Projects. This code is also available 
+for DIY and commercial use (MIT License). Please note that use of this library is at your own risk.
 
-THIS LIBRARY IS CURRENTLY UNDER DEVELOPMENT - 
-The code is still being adjusted as it is being prototyped and changes do occur, however the WIKI attempts to reflect 
+THIS LIBRARY IS CURRENTLY UNDER DEVELOPMENT – 
+The code is still being adjusted as it is being prototyped and changes do occur. However, the WIKI attempts to reflect 
 the latest code.
 
 If you see code here that :
@@ -41,15 +41,15 @@ only working with MIDI 1.0 Byte streams and just need a MIDI-CI handler? Then gr
 
 Note it is upto the application to:
  * Store Remote MIDI-CI Device details
- * Upon receiving MIDI-CI Message to interpret the Messages data structure (e.g. Profile Id bytes, Note On Articulation 
+ * Upon receiving MIDI-CI Message to interpret the Messages data structure (e.g. Profile Id bytes, Note On Articulation, 
 etc.)
  * Handle logic and NAK sending and receiving.
 
-This means the overheads for a simple MIDI 2.0 device is down to a compiled size of around 10k (possibly less?), with a 
+This means the overheads for a simple MIDI 2.0 device are down to a compiled size of around 10k (possibly less?), with a 
 memory footprint of around 1k.
 
 ## Documentation
-Can be found on the [docs folder](https://github.com/midi2-dev/AM_MIDI2.0Lib/tree/main/docs)
+Can be found in the [docs folder](https://github.com/midi2-dev/AM_MIDI2.0Lib/tree/main/docs)
 
 ### Example: Translate MIDI 1.0 Byte stream to UMP
 

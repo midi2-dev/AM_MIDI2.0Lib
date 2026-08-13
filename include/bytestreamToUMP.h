@@ -29,8 +29,8 @@
 class bytestreamToUMP{
 
 	private:
-		uint8_t d0;
-		uint8_t d1;
+		uint8_t d0=0;
+		uint8_t d1=255;
 		
 		uint8_t sysex7State = 0;
 		uint8_t sysex7Pos = 0;
@@ -94,6 +94,8 @@ class bytestreamToUMP{
             clear(rpnMsbValue, 255, sizeof(rpnMsbValue));
             clear(rpnMsb, 255, sizeof(rpnMsb));
             clear(rpnLsb, 255, sizeof(rpnLsb));
+			d0=0;
+			d1=255;
         }
 
         void resetBuffer(){
@@ -148,13 +150,21 @@ class bytestreamToUMP{
 			}
 
 			if (midi1Byte & MIDI1_MSGS::NOTE_OFF) { // Status byte received
+				if (sysex7State>=1 && midi1Byte != SYSEX_STOP){
+					dumpSysex7State(true);
+					sysex7State = 0;
+				}
 				d0 = midi1Byte;
 				d1 = 255;
 				if (midi1Byte == MIDI1_MSGS::SYSEX_START){
 					dumpSysex7State(true);
 				}
                 else if (midi1Byte == MIDI1_MSGS::SYSEX_STOP){
-                    umpMess[writeIndex] = ((MIDI1_MSGS::UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
+                	if (sysex7State == 0) {
+                		//This is a bad Sysex End Byte - received before a 0xF0
+                		return;
+                	}
+                    umpMess[writeIndex] = ((UMP_SYSEX7 << 4) + defaultGroup + 0L) << 24;
                     umpMess[writeIndex] +=  ((sysex7State == 1?0:3) + 0L) << 20;
                     umpMess[writeIndex] +=  ((sysex7Pos + 0L) << 16) ;
                     umpMess[writeIndex] += (sysex[0] << 8) + sysex[1];
@@ -162,6 +172,7 @@ class bytestreamToUMP{
                     umpMess[writeIndex] = ((sysex[2] + 0L) << 24) + ((sysex[3] + 0L)<< 16) + (sysex[4] << 8) + sysex[5];
                     increaseWrite();
                     sysex7State = 0;
+                	sysex7Pos = 0;
                     M2Utils::clear(sysex, 0, sizeof(sysex));
                 }
 			} else if(sysex7State >= 1){
