@@ -395,6 +395,17 @@ int main(){
     passFail(receivedCVM.index, 0x89AB);
     printf(" MT4 Note On receive\n");
 
+    uint8_t unknownLength = 0;
+    uint32_t unknownFirstWord = 0;
+    cvmProc.setUnknownUMP([&](uint32_t * ump, uint8_t length){
+        unknownFirstWord = ump[0];
+        unknownLength = length;
+    });
+    cvmProc.processUMP(0x23000000);
+    passFail(unknownLength, 1);
+    passFail(unknownFirstWord, 0x23000000);
+    printf(" MT2 unknown message length\n");
+
     //***** Flex Data (MT=0xD) *************
     printf("Flex Data MT=0xD Create \n");
 

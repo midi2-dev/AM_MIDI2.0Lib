@@ -109,7 +109,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         channelVoiceMessage(mess);
                         break;
                     default:
-                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
+                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 1);
                         break;
 			}				
 		}
