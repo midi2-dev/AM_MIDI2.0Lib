@@ -682,6 +682,91 @@ int main(){
     passFail(rtOut[4], 0x07);    // no status byte: running status preserved
     printf(" RS-3 Real Time preserves running status\n");
 
+    //***** Channel Voice Processing *****
+    printf("UMP Processor Channel Voice \n");
+    umpProcessor losslessProc;
+    losslessProc.refpoint = nullptr;
+    umpM1CVM receivedM1CVM;
+    uint32_t losslessCount = 0;
+    uint32_t legacyCount = 0;
+    umpCVM receivedLegacyCVM;
+    losslessProc.setM1CVM([&](struct umpM1CVM mess){
+        receivedM1CVM = mess;
+        losslessCount++;
+    });
+    losslessProc.setCVM([&](struct umpCVM mess){
+        receivedLegacyCVM = mess;
+        legacyCount++;
+    });
+
+    losslessProc.processUMP(UMPMessage::mt2NoteOn(4, 6, 60, 73));
+    passFail(losslessCount, 1);
+    passFail(legacyCount, 0);
+    passFail(receivedM1CVM.umpGroup, 4);
+    passFail(receivedM1CVM.status, NOTE_ON);
+    passFail(receivedM1CVM.channel, 6);
+    passFail(receivedM1CVM.data1, 60);
+    passFail(receivedM1CVM.data2, 73);
+    printf(" MT2 lossless Note On receive\n");
+
+    losslessProc.processUMP(UMPMessage::mt2CC(1, 2, 74, 99));
+    passFail(losslessCount, 2);
+    passFail(legacyCount, 0);
+    passFail(receivedM1CVM.status, CC);
+    passFail(receivedM1CVM.data1, 74);
+    passFail(receivedM1CVM.data2, 99);
+    printf(" MT2 lossless CC receive\n");
+
+    losslessProc.processUMP(UMPMessage::mt2ProgramChange(3, 4, 41));
+    passFail(losslessCount, 3);
+    passFail(legacyCount, 0);
+    passFail(receivedM1CVM.status, PROGRAM_CHANGE);
+    passFail(receivedM1CVM.data1, 41);
+    passFail(receivedM1CVM.data2, 0);
+    printf(" MT2 lossless Program Change receive\n");
+
+    losslessProc.processUMP(UMPMessage::mt2PitchBend(5, 7, (0x45 << 7) + 0x23));
+    passFail(losslessCount, 4);
+    passFail(legacyCount, 0);
+    passFail(receivedM1CVM.status, PITCH_BEND);
+    passFail(receivedM1CVM.data1, 0x23);
+    passFail(receivedM1CVM.data2, 0x45);
+    printf(" MT2 lossless Pitch Bend receive\n");
+
+    auto losslessMt4 = UMPMessage::mt4NoteOn(0, 1, 62, 0x2345, 0, 0);
+    losslessProc.processUMP(losslessMt4[0]);
+    losslessProc.processUMP(losslessMt4[1]);
+    passFail(losslessCount, 4);
+    passFail(legacyCount, 1);
+    passFail(receivedLegacyCVM.messageType, UMP_M2CVM);
+    passFail(receivedLegacyCVM.value, 0x2345);
+    printf(" MT4 legacy CVM receive with lossless callback\n");
+
+    losslessProc.clearUMP();
+    losslessProc.processUMP(UMPMessage::mt2NoteOff(2, 3, 64, 55));
+    passFail(losslessCount, 5);
+    passFail(legacyCount, 1);
+    passFail(receivedM1CVM.status, NOTE_OFF);
+    passFail(receivedM1CVM.data2, 55);
+    printf(" MT2 lossless callback after clearUMP\n");
+
+    umpProcessor legacyProc;
+    legacyProc.refpoint = nullptr;
+    uint32_t fallbackCount = 0;
+    umpCVM fallbackCVM;
+    legacyProc.setCVM([&](struct umpCVM mess){
+        fallbackCVM = mess;
+        fallbackCount++;
+    });
+    legacyProc.processUMP(UMPMessage::mt2NoteOn(1, 2, 65, 0x45));
+    passFail(fallbackCount, 1);
+    passFail(fallbackCVM.messageType, UMP_M1CVM);
+    passFail(fallbackCVM.umpGroup, 1);
+    passFail(fallbackCVM.channel, 2);
+    passFail(fallbackCVM.note, 65);
+    passFail(fallbackCVM.value, M2Utils::scaleUp(0x45, 7, 16));
+    printf(" MT2 legacy fallback receive\n");
+
     //***** MIDI-CI Tests *************
     runMIDICITests();
 

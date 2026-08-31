@@ -9,6 +9,7 @@ umpProcessor UMPHandler;
 
 UMPHandler.setUtility(utilityCallback);
 UMPHandler.setCVM(handleChannelVoiceMessages);
+UMPHandler.setM1CVM(handleMIDI1ChannelVoiceMessages);
 UMPHandler.setSystem(handleSystemMessages);
 UMPHandler.setSysEx(processUMPSysex);
 
@@ -35,6 +36,22 @@ struct umpCVM{
     bool flag2;
 };
 ```
+
+### umpM1CVM - Lossless MIDI 1.0 Channel Voice Message
+Message Type 0x2 values are presented without scaling when a callback is registered with `setM1CVM`.
+```c++
+struct umpM1CVM{
+    uint8_t umpGroup;
+    uint8_t status;
+    uint8_t channel;
+    uint8_t data1;
+    uint8_t data2;
+    void * refpoint;
+};
+```
+
+`data1` and `data2` contain the original 7-bit UMP fields. `data2` is unused for Program Change and Channel Pressure messages.
+
 ### umpGeneric - UMP Generic Structure
 UMP messages of Message Type 0x0 and 0x1 are presented in this format. See below for the value meaning for each status.
 ```c++
@@ -84,6 +101,16 @@ __Values in the umpGeneric struct:__
 
 
 ## Common Channel Voice Message Handler
+
+### inline void setM1CVM(handleMIDI1ChannelVoiceMessages)
+Set the callable function for lossless Message Type 0x2 processing.
+```c++
+void handleMIDI1ChannelVoiceMessages(struct umpM1CVM mess){
+    printf("->M1 CVM: Group %d CH %d Data1: %d Data2: %d", mess.umpGroup, mess.channel, mess.data1, mess.data2);
+}
+```
+
+When this callback is registered, Message Type 0x2 messages are sent only to this callback and are not sent to the callback registered with `setCVM`. When it is not registered, Message Type 0x2 processing through `setCVM` is unchanged. Message Type 0x4 messages always use `setCVM`.
 
 ### inline void setCVM(handleChannelVoiceMessages)
 Set the callable function when a Channel Voice Message is processed by ```processUMP```

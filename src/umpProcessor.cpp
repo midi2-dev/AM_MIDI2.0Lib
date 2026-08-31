@@ -68,7 +68,17 @@ void umpProcessor::processUMP(uint32_t UMP){
                         break;
                 }
 		
-	    } else 
+	    } else
+            if(mt == UMP_M1CVM && midi1ChannelVoiceMessage != nullptr){
+                umpM1CVM mess = umpM1CVM();
+                mess.refpoint = refpoint;
+                mess.umpGroup = group;
+                mess.status = umpMess[0] >> 16 & 0xF0;
+                mess.channel = (umpMess[0] >> 16) & 0xF;
+                mess.data1 = (umpMess[0] >> 8) & 0x7F;
+                mess.data2 = umpMess[0] & 0x7F;
+                midi1ChannelVoiceMessage(mess);
+	    } else
             if(mt == UMP_M1CVM && channelVoiceMessage != nullptr){ //32 Bits MIDI 1.0 Channel Voice Messages
                 umpCVM mess = umpCVM();
                 mess.refpoint = refpoint;
