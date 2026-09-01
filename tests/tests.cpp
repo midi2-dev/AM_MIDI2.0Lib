@@ -359,6 +359,53 @@ int main(){
     uint32_t outUmp2[] = {0x18f80000};
     testRun_umpToump(" UMP Timing Clock : ", inUmp2,  1, outUmp2);
 
+    //***** Channel Voice Processing *****
+    printf("UMP Processor Channel Voice \n");
+    umpProcessor cvmProc;
+    cvmProc.refpoint = nullptr;
+    umpCVM receivedCVM;
+    uint32_t cvmCount = 0;
+    cvmProc.setCVM([&](struct umpCVM mess){
+        receivedCVM = mess;
+        cvmCount++;
+    });
+
+    cvmProc.processUMP(UMPMessage::mt2PolyPressure(3, 5, 60, 127));
+    passFail(cvmCount, 1);
+    passFail(receivedCVM.messageType, UMP_M1CVM);
+    passFail(receivedCVM.umpGroup, 3);
+    passFail(receivedCVM.status, KEY_PRESSURE);
+    passFail(receivedCVM.channel, 5);
+    passFail(receivedCVM.note, 60);
+    passFail(receivedCVM.value, 0xFFFFFFFF);
+    printf(" MT2 Poly Pressure receive\n");
+
+    auto cvmMt4Note = UMPMessage::mt4NoteOn(2, 3, 64, 0x4567, 2, 0x89AB);
+    cvmProc.processUMP(cvmMt4Note[0]);
+    passFail(cvmCount, 1);
+    cvmProc.processUMP(cvmMt4Note[1]);
+    passFail(cvmCount, 2);
+    passFail(receivedCVM.messageType, UMP_M2CVM);
+    passFail(receivedCVM.umpGroup, 2);
+    passFail(receivedCVM.status, NOTE_ON);
+    passFail(receivedCVM.channel, 3);
+    passFail(receivedCVM.note, 64);
+    passFail(receivedCVM.value, 0x4567);
+    passFail(receivedCVM.bank, 2);
+    passFail(receivedCVM.index, 0x89AB);
+    printf(" MT4 Note On receive\n");
+
+    uint8_t unknownLength = 0;
+    uint32_t unknownFirstWord = 0;
+    cvmProc.setUnknownUMP([&](uint32_t * ump, uint8_t length){
+        unknownFirstWord = ump[0];
+        unknownLength = length;
+    });
+    cvmProc.processUMP(0x23000000);
+    passFail(unknownLength, 1);
+    passFail(unknownFirstWord, 0x23000000);
+    printf(" MT2 unknown message length\n");
+
     //***** Flex Data (MT=0xD) *************
     printf("Flex Data MT=0xD Create \n");
 

@@ -82,9 +82,13 @@ void umpProcessor::processUMP(uint32_t UMP){
                 switch(mess.status){
                     case NOTE_OFF: //Note Off
                     case NOTE_ON: //Note On
-                    case KEY_PRESSURE: //Poly Pressure
                         mess.note = val1;
                         mess.value = M2Utils::scaleUp(val2,7,16);
+                        channelVoiceMessage(mess);
+                        break;
+                    case KEY_PRESSURE: //Poly Pressure
+                        mess.note = val1;
+                        mess.value = M2Utils::scaleUp(val2,7,32);
                         channelVoiceMessage(mess);
                         break;
                     case CHANNEL_PRESSURE: //Channel Pressure
@@ -105,7 +109,7 @@ void umpProcessor::processUMP(uint32_t UMP){
                         channelVoiceMessage(mess);
                         break;
                     default:
-                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 2);
+                        if(unknownUMPMessage)unknownUMPMessage(umpMess, 1);
                         break;
 			}				
 		}
