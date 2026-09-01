@@ -42,6 +42,16 @@ struct umpCVM{
     void * refpoint;
 };
 
+struct umpM1CVM{
+    umpM1CVM() : umpGroup(255), status(0), channel(255), data1(0), data2(0) {}
+    uint8_t umpGroup;
+    uint8_t status;
+    uint8_t channel;
+    uint8_t data1;
+    uint8_t data2;
+    void * refpoint;
+};
+
 struct umpGeneric{
     umpGeneric() : umpGroup(255), status(0),  value(0) {}
     uint8_t umpGroup;
@@ -88,6 +98,7 @@ class umpProcessor{
 
 	// MIDI 1 and 2 CVM  callbacks
     std::function<void(struct umpCVM mess)> channelVoiceMessage = nullptr;
+    std::function<void(struct umpM1CVM mess)> midi1ChannelVoiceMessage = nullptr;
     
    //System Messages  callbacks
    std::function<void(struct umpGeneric mess)> systemMessage = nullptr;
@@ -149,6 +160,7 @@ class umpProcessor{
 		//-----------------------Handlers ---------------------------
     inline void setUtility(std::function<void(struct umpGeneric mess)> fptr){ utilityMessage = fptr; }
     inline void setCVM(std::function<void(struct umpCVM mess)> fptr ){ channelVoiceMessage = fptr; }
+        inline void setM1CVM(std::function<void(struct umpM1CVM mess)> fptr ){ midi1ChannelVoiceMessage = fptr; }
     inline void setSystem(std::function<void(struct umpGeneric mess)> fptr) { systemMessage = fptr; }
     inline void setSysEx(std::function<void(struct umpData mess)> fptr ){sendOutSysex = fptr; }
 
